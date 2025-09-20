@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const Student = require('../models/Student');
-const auth = require('../middlewares/auth');
+const { auth, adminAuth, optionalAuth, sensitiveOperationLimit } = require('../middlewares/auth');
 
 const router = express.Router();
 
