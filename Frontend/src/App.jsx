@@ -25,13 +25,13 @@ import Profile from './pages/Student/Profile';
 import Leaderboard from './pages/Student/Leaderboard';
 
 // Admin Pages
-import AdminDashboard from './pages/Admin/Dashboard';
-import ManageCompanies from './pages/Admin/Companies';
-import ManageTests from './pages/Admin/Tests';
-import ManageStudents from './pages/Admin/Students';
-import AdminResults from './pages/Admin/Results';
-import ManagePayments from './pages/Admin/Payments';
-import AdminSettings from './pages/Admin/Settings';
+// import AdminDashboard from './pages/Admin/Dashboard';
+// import ManageCompanies from './pages/Admin/Companies';
+// import ManageTests from './pages/Admin/Tests';
+// import ManageStudents from './pages/Admin/Students';
+// import AdminResults from './pages/Admin/Results';
+// import ManagePayments from './pages/Admin/Payments';
+// import AdminSettings from './pages/Admin/Settings';
 
 import './index.css';
 
@@ -73,7 +73,7 @@ function App() {
               </ProtectedRoute>
             } />
 
-            {/* Admin Dashboard Routes */}
+            {/* Admin Dashboard Routes 
             <Route path="/admin" element={
               <ProtectedRoute requiredRole="admin">
                 <AdminLayout />
@@ -87,6 +87,8 @@ function App() {
               <Route path="payments" element={<ManagePayments />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
+            */}
+            
           </Routes>
         </Router>
       </ToastProvider>

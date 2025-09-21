@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   BookOpen, Clock, Trophy, TrendingUp, 
-  Play, Calendar, DollarSign, Award 
+  Play, CreditCard, DollarSign, Award ,BarChart3
 } from 'lucide-react';
 import api from '../../api/axios';
 import LoadingSpinner from '../../components/LoadingSpinner';

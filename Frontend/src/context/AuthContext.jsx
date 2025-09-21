@@ -61,20 +61,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (userData) => {
-    try {
-      const response = await api.post('/auth/register', userData);
-      if (response.data.success) {
-        return { success: true, message: response.data.message };
-      }
-      return { success: false, message: response.data.message };
-    } catch (error) {
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Registration failed' 
-      };
-    }
-  };
+const register = async (userData) => {
+  try {
+    const response = await api.post("/auth/register", userData);
+    return { success: response.data.success, message: response.data.message };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.response?.data?.message || "Registration failed",
+    };
+  }
+};
+
 
   const logout = () => {
     // Call logout API

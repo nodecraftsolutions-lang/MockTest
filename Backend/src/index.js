@@ -24,22 +24,25 @@ const server = createServer(app);
 // ✅ Initialize socket.io
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: "http://localhost:5173",
     methods: ["GET", "POST"]
   }
 });
+
+app.use(cors({
+  origin: "http://localhost:5173",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+app.options("*", cors());
 
 // Security middleware
 app.use(helmet());
 app.use(compression());
 app.use(morgan('combined'));
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100
-});
-app.use('/api/', limiter);
+
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
@@ -64,14 +67,6 @@ app.use('/api/v1/tests', testRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
-});
 
 // Error handler
 app.use((err, req, res, next) => {
