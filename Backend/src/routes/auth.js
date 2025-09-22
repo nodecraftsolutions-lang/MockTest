@@ -95,7 +95,7 @@ router.post('/register', authLimiter, registerValidation, async (req, res) => {
       });
     }
 
-    const { name, email, mobile, password } = req.body;
+    const { name, email, mobile, password,role } = req.body;
 
     // Check if student already exists
     const existingStudent = await Student.findOne({

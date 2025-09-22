@@ -24,13 +24,13 @@ const server = createServer(app);
 // ✅ Initialize socket.io
 const io = new Server(server, {
   cors: {
-    origin: "https://mock-test-ten.vercel.app/",
+    origin: "http://localhost:5173",
     methods: ["GET", "POST"]
   }
 });
 
 app.use(cors({
-  origin: "https://mock-test-ten.vercel.app/",
+  origin: "http://localhost:5173",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
