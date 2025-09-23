@@ -1,24 +1,30 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Clock, CheckCircle } from "lucide-react";
+import Cookies from 'js-cookie';
 import api from "../../api/axios";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { useToast } from "../../context/ToastContext";
 
 const ExamInterface = () => {
   const { testId } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [duration, setDuration] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
-  const [attemptId, setAttemptId] = useState(null); // ✅ store attemptId
+  const [attemptId, setAttemptId] = useState(searchParams.get('attemptId')); // ✅ get from URL
   const [loading, setLoading] = useState(true);
   const { showError, showSuccess } = useToast();
 
   useEffect(() => {
-    startTest();
+    if (attemptId) {
+      fetchQuestions(attemptId);
+    } else {
+      startTest();
+    }
   }, [testId]);
 
   useEffect(() => {
@@ -29,6 +35,16 @@ const ExamInterface = () => {
     const timer = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearInterval(timer);
   }, [timeLeft]);
+
+  // Auto-save answers every 20 seconds
+  useEffect(() => {
+    if (Object.keys(answers).length > 0) {
+      const autoSave = setInterval(() => {
+        saveAnswersToServer();
+      }, 20000);
+      return () => clearInterval(autoSave);
+    }
+  }, [answers]);
 
   // ✅ Step 1: Launch test
   const startTest = async () => {
@@ -54,12 +70,41 @@ const ExamInterface = () => {
       const res = await api.get(`/tests/${testId}/questions?attemptId=${id}`);
       if (res.data.success) {
         setQuestions(res.data.data.questions);
+        // Load saved answers
+        const savedAnswers = res.data.data.savedAnswers || [];
+        const answersMap = {};
+        savedAnswers.forEach(ans => {
+          answersMap[ans.questionId] = {
+            answer: ans.selectedOptions[0] || '',
+            isMarkedForReview: ans.isMarkedForReview
+          };
+        });
+        setAnswers(answersMap);
       }
     } catch (error) {
       console.error("Fetch questions error:", error);
       showError("Failed to load questions");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Save answers to server
+  const saveAnswersToServer = async () => {
+    if (!attemptId || Object.keys(answers).length === 0) return;
+    
+    try {
+      await api.post(`/tests/${testId}/save-answer`, {
+        attemptId,
+        answers: Object.entries(answers).map(([qId, ans]) => ({
+          questionId: qId,
+          selectedOptions: [ans.answer],
+          isMarkedForReview: ans.isMarkedForReview,
+          section: questions.find(q => q._id === qId)?.section || 'General'
+        }))
+      });
+    } catch (error) {
+      console.error('Auto-save error:', error);
     }
   };
 
@@ -79,7 +124,6 @@ const ExamInterface = () => {
       if (res.data.success) {
         showSuccess("Test submitted successfully");
         navigate("/student/results"); // ✅ redirect to results
-        // or navigate("/student/results") if you want results list
       }
     } catch (error) {
       console.error("Submit error:", error);
@@ -92,7 +136,17 @@ const ExamInterface = () => {
       ...prev,
       [qId]: {
         answer: option.text,
-        optionId: option.id // Store option ID if available
+        isMarkedForReview: prev[qId]?.isMarkedForReview || false
+      }
+    }));
+  };
+
+  const toggleMarkForReview = (qId) => {
+    setAnswers((prev) => ({
+      ...prev,
+      [qId]: {
+        ...prev[qId],
+        isMarkedForReview: !prev[qId]?.isMarkedForReview
       }
     }));
   };
@@ -128,6 +182,16 @@ const ExamInterface = () => {
           Q{currentIndex + 1}. {currentQ.questionText}
         </p>
         <div className="space-y-2">
+          <button
+            onClick={() => toggleMarkForReview(currentQ._id)}
+            className={`px-3 py-1 rounded-full text-sm ${
+              answers[currentQ._id]?.isMarkedForReview
+                ? 'bg-yellow-100 text-yellow-800'
+                : 'bg-gray-100 text-gray-600'
+            }`}
+          >
+            {answers[currentQ._id]?.isMarkedForReview ? 'Marked for Review' : 'Mark for Review'}
+          </button>
           {currentQ.options.map((opt, i) => (
             <label
               key={i}
@@ -189,8 +253,27 @@ const ExamInterface = () => {
               }`}
             >
               {idx + 1}
+              {answers[q._id]?.isMarkedForReview && (
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full"></div>
+              )}
             </button>
           ))}
+        </div>
+        <div className="flex items-center space-x-4 mt-4 text-sm">
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 bg-green-100 rounded-full"></div>
+            <span>Answered</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 bg-gray-100 rounded-full"></div>
+            <span>Not Answered</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 bg-yellow-100 rounded-full relative">
+              <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-yellow-400 rounded-full"></div>
+            </div>
+            <span>Marked for Review</span>
+          </div>
         </div>
       </div>
     </div>

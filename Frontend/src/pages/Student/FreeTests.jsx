@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Play, Clock, FileText, Users, ChevronRight } from 'lucide-react';
+import Cookies from 'js-cookie';
 import api from '../../api/axios';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useToast } from '../../context/ToastContext';
@@ -11,6 +12,7 @@ const FreeTests = () => {
   const [loading, setLoading] = useState(true);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const { showError, showSuccess } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchCompanies();
@@ -41,29 +43,24 @@ const FreeTests = () => {
     }
   };
 
-  // ✅ inside FreeTests.jsx
-const handleLaunchTest = async (testId) => {
-  try {
-    const token = Cookies.get("token");
+  const handleLaunchTest = async (testId) => {
+    try {
+      // 1. Launch the test (creates attempt)
+      const response = await api.post(`/tests/${testId}/launch`, {
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      });
 
-    // 1. Launch the test (creates attempt)
-    const response = await api.post(
-      `/tests/${testId}/launch`,
-      { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    if (response.data.success) {
-      const { attemptId } = response.data.data;
-
-      // 2. Redirect student to exam page (✅ fixed route)
-      navigate(`/student/exam/${testId}?attemptId=${attemptId}`);
+      if (response.data.success) {
+        const { attemptId } = response.data.data;
+        showSuccess('Test launched successfully!');
+        // 2. Redirect student to exam page
+        navigate(`/student/exam/${testId}?attemptId=${attemptId}`);
+      }
+    } catch (error) {
+      console.error("Start test error:", error);
+      showError(error.response?.data?.message || "Failed to start test");
     }
-  } catch (error) {
-    console.error("Start test error:", error);
-    showError(error.response?.data?.message || "Failed to start test");
-  }
-};
+  };
 
   const getTestsByCompany = (companyId) => {
     return tests.filter(test => test.companyId._id === companyId);

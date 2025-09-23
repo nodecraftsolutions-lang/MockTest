@@ -34,7 +34,7 @@ const MyCourses = () => {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">My Courses</h1>
-        <p className="text-gray-600">Here are the courses you’re enrolled in</p>
+        <p className="text-gray-600">Here are the courses you're enrolled in</p>
       </div>
 
       {/* Courses List */}

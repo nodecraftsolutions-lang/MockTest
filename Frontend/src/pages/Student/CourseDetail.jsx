@@ -146,7 +146,7 @@ const CourseDetails = () => {
       {course.outcomes?.length > 0 && (
         <div className="card">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            What you’ll learn
+            What you'll learn
           </h3>
           <ul className="space-y-2 text-gray-700">
             {course.outcomes.map((o, i) => (

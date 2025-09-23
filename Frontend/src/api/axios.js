@@ -1,12 +1,26 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
+// ✅ Dynamic base URL for deployment flexibility
+const getBaseURL = () => {
+  if (typeof window !== 'undefined') {
+    // In browser, try to detect backend URL
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:5000/api/v1';
+    }
+    // For production, assume backend is on same domain with /api prefix
+    return `${window.location.protocol}//${hostname}/api/v1`;
+  }
+  return 'http://localhost:5000/api/v1';
+};
+
 const api = axios.create({
-  baseURL: "http://localhost:8000/api/v1",
+  baseURL: getBaseURL(),
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: false,
+  withCredentials: false
 });
 
 // Add auth token to requests

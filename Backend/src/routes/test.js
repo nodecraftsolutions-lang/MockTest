@@ -406,6 +406,61 @@ router.get('/:id/questions', auth, async (req, res) => {
   }
 });
 
+// @route   POST /api/v1/tests/:id/save-answer
+// @desc    Save answer during exam
+// @access  Private
+router.post('/:id/save-answer', auth, async (req, res) => {
+  try {
+    const { attemptId, questionId, selectedOptions, isMarkedForReview, section } = req.body;
+    
+    const attempt = await Attempt.findOne({
+      _id: attemptId,
+      studentId: req.student.id,
+      status: 'in-progress'
+    });
+
+    if (!attempt) {
+      return res.status(404).json({
+        success: false,
+        message: 'Active attempt not found'
+      });
+    }
+
+    // Find existing answer or create new one
+    let answerIndex = attempt.answers.findIndex(
+      answer => answer.questionId.toString() === questionId
+    );
+
+    const answerData = {
+      questionId: questionId,
+      selectedOptions: selectedOptions || [],
+      isMarkedForReview: isMarkedForReview || false,
+      section: section,
+      timeSpent: 0
+    };
+
+    if (answerIndex >= 0) {
+      attempt.answers[answerIndex] = { ...attempt.answers[answerIndex], ...answerData };
+    } else {
+      attempt.answers.push(answerData);
+    }
+
+    await attempt.save();
+
+    res.json({
+      success: true,
+      message: 'Answer saved successfully'
+    });
+
+  } catch (error) {
+    console.error('Save answer error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to save answer'
+    });
+  }
+});
+
 
 
 // Admin routes below this point
