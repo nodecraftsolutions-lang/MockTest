@@ -8,7 +8,7 @@ import AdminLayout from './layouts/AdminLayout';
 
 // Public Pages
 import Home from './pages/Home';
-import MockTests from './pages/MockTests';
+import MockTests from './pages/MockTests'; // public page
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Auth from './pages/Auth';
@@ -20,15 +20,16 @@ import FreeTests from './pages/Student/FreeTests';
 import PaidTests from './pages/Student/PaidTests';
 import ExamInterface from './pages/Student/ExamInterface';
 import Results from './pages/Student/Results';
-import ResultDetail from './pages/Student/ResultDetail'; // ✅ import
+import ResultDetail from './pages/Student/ResultDetail';
 import Orders from './pages/Student/Orders';
 import Profile from './pages/Student/Profile';
 import Leaderboard from './pages/Student/Leaderboard';
 import Courses from './pages/Student/Courses';
 import MyCourses from './pages/Student/MyCourses';
 import CourseDetails from './pages/Student/CourseDetail';
-import CompanyList from './pages/Student/CompanyList'; // ✅ import
-import CompanyDetails from './pages/Student/CompanyDetails'; // ✅ import
+import StudentMockTests from './pages/Student/MockTests'; // ✅ student company list
+import CompanyDetails from './pages/Student/CompanyDetails';
+
 // Admin Pages
 import AdminDashboard from './pages/Admin/Dashboard';
 import ManageCompanies from './pages/Admin/Companies';
@@ -68,21 +69,22 @@ function App() {
               <Route path="exam-pattern" element={<ExamPattern />} />
               <Route path="free-tests" element={<FreeTests />} />
               <Route path="paid-tests" element={<PaidTests />} />
-              {/* Exam Interface */}
               <Route path="exam/:testId" element={<ExamInterface />} />
-              {/* ✅ Company Tests */}
-              <Route path="mock-tests" element={<CompanyList />} />
+              
+              {/* Mock Tests */}
+              <Route path="mock-tests" element={<StudentMockTests />} />
               <Route path="mock-tests/:companyId" element={<CompanyDetails />} />
-              <Route path="exam/:testId" element={<ExamInterface />} />
 
-              {/* ✅ Courses */}
+              {/* Courses */}
               <Route path="courses" element={<Courses />} />
               <Route path="courses/:id" element={<CourseDetails />} />
               <Route path="my-courses" element={<MyCourses />} />
-              {/* ✅ Results */}
+
+              {/* Results */}
               <Route path="results" element={<Results />} />
               <Route path="results/:attemptId" element={<ResultDetail />} />
-              {/* ✅ Other Pages */}
+
+              {/* Other Pages */}
               <Route path="orders" element={<Orders />} />
               <Route path="profile" element={<Profile />} />
               <Route path="leaderboard" element={<Leaderboard />} />

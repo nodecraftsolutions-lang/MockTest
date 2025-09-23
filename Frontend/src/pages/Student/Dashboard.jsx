@@ -1,12 +1,18 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { 
-  BookOpen, Clock, Trophy, TrendingUp, 
-  Play, CreditCard, DollarSign, Award ,BarChart3
-} from 'lucide-react';
-import api from '../../api/axios';
-import LoadingSpinner from '../../components/LoadingSpinner';
-import { useToast } from '../../context/ToastContext';
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import {
+  BookOpen,
+  Trophy,
+  TrendingUp,
+  Award,
+  Play,
+  CreditCard,
+  DollarSign,
+  BarChart3,
+} from "lucide-react";
+import api from "../../api/axios";
+import LoadingSpinner from "../../components/LoadingSpinner";
+import { useToast } from "../../context/ToastContext";
 
 const StudentDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
@@ -19,13 +25,13 @@ const StudentDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await api.get('/students/dashboard');
+      const response = await api.get("/students/dashboard");
       if (response.data.success) {
         setDashboardData(response.data.data);
       }
     } catch (error) {
-      showError('Failed to load dashboard data');
-      console.error('Dashboard error:', error);
+      showError("Failed to load dashboard data");
+      console.error("Dashboard error:", error);
     } finally {
       setLoading(false);
     }
@@ -35,37 +41,37 @@ const StudentDashboard = () => {
     return <LoadingSpinner size="large" />;
   }
 
-  const { statistics, recentAttempts, recentOrders } = dashboardData || {};
+  if (!dashboardData) {
+    return <div className="p-6 text-gray-600">No dashboard data available.</div>;
+  }
+
+  const { statistics, recentAttempts, recentOrders } = dashboardData;
 
   const statCards = [
     {
-      title: 'Total Attempts',
+      title: "Total Attempts",
       value: statistics?.totalAttempts || 0,
       icon: BookOpen,
-      color: 'bg-blue-500',
-      change: '+12%'
+      color: "bg-blue-500",
     },
     {
-      title: 'Completed Tests',
+      title: "Completed Tests",
       value: statistics?.completedAttempts || 0,
       icon: Trophy,
-      color: 'bg-green-500',
-      change: '+8%'
+      color: "bg-green-500",
     },
     {
-      title: 'Average Score',
-      value: `${statistics?.averageScore || 0}%`,
+      title: "Average Score",
+      value: statistics?.averageScore || 0,
       icon: TrendingUp,
-      color: 'bg-purple-500',
-      change: '+5%'
+      color: "bg-purple-500",
     },
     {
-      title: 'Pass Rate',
+      title: "Pass Rate",
       value: `${statistics?.passRate || 0}%`,
       icon: Award,
-      color: 'bg-orange-500',
-      change: '+15%'
-    }
+      color: "bg-orange-500",
+    },
   ];
 
   return (
@@ -74,10 +80,12 @@ const StudentDashboard = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600">Welcome back! Here's your progress overview.</p>
+          <p className="text-gray-600">
+            Welcome back! Here's your progress overview.
+          </p>
         </div>
-        <Link 
-          to="/student/free-tests" 
+        <Link
+          to="/student/free-tests"
           className="btn-primary flex items-center"
         >
           <Play className="w-4 h-4 mr-2" />
@@ -93,11 +101,16 @@ const StudentDashboard = () => {
             <div key={index} className="card">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                  <p className="text-sm text-green-600">{stat.change} from last month</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    {stat.title}
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stat.value}
+                  </p>
                 </div>
-                <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}>
+                <div
+                  className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}
+                >
                   <Icon className="w-6 h-6 text-white" />
                 </div>
               </div>
@@ -111,31 +124,48 @@ const StudentDashboard = () => {
         {/* Recent Attempts */}
         <div className="card">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Attempts</h3>
-            <Link to="/student/results" className="text-primary-600 hover:text-primary-700 text-sm">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Recent Attempts
+            </h3>
+            <Link
+              to="/student/results"
+              className="text-primary-600 hover:text-primary-700 text-sm"
+            >
               View All
             </Link>
           </div>
-          
+
           {recentAttempts && recentAttempts.length > 0 ? (
             <div className="space-y-3">
               {recentAttempts.map((attempt) => (
-                <div key={attempt._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div
+                  key={attempt._id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
                       <BookOpen className="w-5 h-5 text-primary-600" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{attempt.testId?.title}</p>
+                      <p className="font-medium text-gray-900">
+                        {attempt.testId?.title}
+                      </p>
                       <p className="text-sm text-gray-600">
-                        {attempt.testId?.companyId?.name} • {new Date(attempt.createdAt).toLocaleDateString()}
+                        {attempt.testId?.companyId?.name || "Unknown"} •{" "}
+                        {new Date(attempt.createdAt).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-gray-900">{attempt.score}%</p>
-                    <p className={`text-sm ${attempt.isPassed ? 'text-green-600' : 'text-red-600'}`}>
-                      {attempt.isPassed ? 'Passed' : 'Failed'}
+                    <p className="font-semibold text-gray-900">
+                      {attempt.score}
+                    </p>
+                    <p
+                      className={`text-sm ${
+                        attempt.isPassed ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
+                      {attempt.isPassed ? "Passed" : "Failed"}
                     </p>
                   </div>
                 </div>
@@ -145,7 +175,10 @@ const StudentDashboard = () => {
             <div className="text-center py-8">
               <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-3" />
               <p className="text-gray-600">No attempts yet</p>
-              <Link to="/student/free-tests" className="text-primary-600 hover:text-primary-700 text-sm">
+              <Link
+                to="/student/free-tests"
+                className="text-primary-600 hover:text-primary-700 text-sm"
+              >
                 Take your first test
               </Link>
             </div>
@@ -155,34 +188,52 @@ const StudentDashboard = () => {
         {/* Recent Orders */}
         <div className="card">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Orders</h3>
-            <Link to="/student/orders" className="text-primary-600 hover:text-primary-700 text-sm">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Recent Orders
+            </h3>
+            <Link
+              to="/student/orders"
+              className="text-primary-600 hover:text-primary-700 text-sm"
+            >
               View All
             </Link>
           </div>
-          
+
           {recentOrders && recentOrders.length > 0 ? (
             <div className="space-y-3">
               {recentOrders.map((order) => (
-                <div key={order._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div
+                  key={order._id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                       <DollarSign className="w-5 h-5 text-green-600" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">Order #{order.orderId}</p>
+                      <p className="font-medium text-gray-900">
+                        Order #{order.orderId || order._id}
+                      </p>
                       <p className="text-sm text-gray-600">
-                        {order.items?.length} test(s) • {new Date(order.createdAt).toLocaleDateString()}
+                        {order.items?.length || 0} item(s) •{" "}
+                        {new Date(order.createdAt).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-gray-900">₹{order.totalAmount}</p>
-                    <p className={`text-sm ${
-                      order.paymentStatus === 'completed' ? 'text-green-600' : 
-                      order.paymentStatus === 'failed' ? 'text-red-600' : 'text-yellow-600'
-                    }`}>
-                      {order.paymentStatus}
+                    <p className="font-semibold text-gray-900">
+                      ₹{order.totalAmount || 0}
+                    </p>
+                    <p
+                      className={`text-sm ${
+                        order.paymentStatus === "completed"
+                          ? "text-green-600"
+                          : order.paymentStatus === "failed"
+                          ? "text-red-600"
+                          : "text-yellow-600"
+                      }`}
+                    >
+                      {order.paymentStatus || "pending"}
                     </p>
                   </div>
                 </div>
@@ -192,7 +243,10 @@ const StudentDashboard = () => {
             <div className="text-center py-8">
               <DollarSign className="w-12 h-12 text-gray-400 mx-auto mb-3" />
               <p className="text-gray-600">No orders yet</p>
-              <Link to="/student/paid-tests" className="text-primary-600 hover:text-primary-700 text-sm">
+              <Link
+                to="/student/paid-tests"
+                className="text-primary-600 hover:text-primary-700 text-sm"
+              >
                 Browse paid tests
               </Link>
             </div>
@@ -202,44 +256,45 @@ const StudentDashboard = () => {
 
       {/* Quick Actions */}
       <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Quick Actions
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link 
-            to="/student/free-tests" 
-            className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors"
-          >
-            <Play className="w-8 h-8 text-primary-600 mr-3" />
-            <div>
-              <p className="font-medium text-gray-900">Take Free Test</p>
-              <p className="text-sm text-gray-600">Practice with free mock tests</p>
-            </div>
-          </Link>
-          
-          <Link 
-            to="/student/paid-tests" 
-            className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors"
-          >
-            <CreditCard className="w-8 h-8 text-primary-600 mr-3" />
-            <div>
-              <p className="font-medium text-gray-900">Buy Premium Tests</p>
-              <p className="text-sm text-gray-600">Access premium test series</p>
-            </div>
-          </Link>
-          
-          <Link 
-            to="/student/results" 
-            className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors"
-          >
-            <BarChart3 className="w-8 h-8 text-primary-600 mr-3" />
-            <div>
-              <p className="font-medium text-gray-900">View Results</p>
-              <p className="text-sm text-gray-600">Check your performance</p>
-            </div>
-          </Link>
+          <QuickAction
+            to="/student/free-tests"
+            icon={Play}
+            title="Take Free Test"
+            description="Practice with free mock tests"
+          />
+          <QuickAction
+            to="/student/paid-tests"
+            icon={CreditCard}
+            title="Buy Premium Tests"
+            description="Access premium test series"
+          />
+          <QuickAction
+            to="/student/results"
+            icon={BarChart3}
+            title="View Results"
+            description="Check your performance"
+          />
         </div>
       </div>
     </div>
   );
 };
+
+const QuickAction = ({ to, icon: Icon, title, description }) => (
+  <Link
+    to={to}
+    className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors"
+  >
+    <Icon className="w-8 h-8 text-primary-600 mr-3" />
+    <div>
+      <p className="font-medium text-gray-900">{title}</p>
+      <p className="text-sm text-gray-600">{description}</p>
+    </div>
+  </Link>
+);
 
 export default StudentDashboard;

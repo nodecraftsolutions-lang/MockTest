@@ -1,0 +1,32 @@
+[
+  {
+    "questionText": "What is 2+2?",
+    "questionType": "single",
+    "option1": "3",
+    "option2": "4",
+    "option3": "5",
+    "option4": "6",
+    "correctAnswer": "2",
+    "section": "Aptitude",
+    "difficulty": "Easy",
+    "marks": 1,
+    "negativeMarks": 0,
+    "explanation": "Simple addition",
+    "tags": "math,basic"
+  },
+  {
+    "questionText": "Which shape has 3 sides?",
+    "questionType": "single",
+    "option1": "Square",
+    "option2": "Triangle",
+    "option3": "Circle",
+    "option4": "Pentagon",
+    "correctAnswer": "2",
+    "section": "Reasoning",
+    "difficulty": "Medium",
+    "marks": 2,
+    "negativeMarks": 0.25,
+    "explanation": "Triangle has 3 sides",
+    "tags": "geometry,shapes"
+  }
+]

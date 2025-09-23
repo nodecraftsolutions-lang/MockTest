@@ -113,18 +113,18 @@ const testSchema = new mongoose.Schema({
     min: [1, 'Duration must be at least 1 minute']
   },
   totalQuestions: {
-    type: Number,
-    required: [true, 'Total questions is required'],
-    min: [1, 'At least 1 question is required']
-  },
-  totalMarks: {
-    type: Number,
-    default: 0
-  },
-  passingMarks: {
-    type: Number,
-    default: 0
-  },
+  type: Number,
+  default: 0 // no longer required
+},
+totalMarks: {
+  type: Number,
+  default: 0
+},
+passingMarks: {
+  type: Number,
+  default: 0
+},
+
   attemptsAllowed: {
     type: Number,
     default: 1,
@@ -142,10 +142,11 @@ const testSchema = new mongoose.Schema({
       min: 1
     },
     duration: {
-      type: Number,
-      required: true,
-      min: 1
-    },
+  type: Number,
+  default: 0,
+  min: [0, 'Duration cannot be negative']
+},
+
     negativeMarking: {
       type: Number,
       default: 0,

@@ -219,50 +219,40 @@ router.get('/:id/preview', async (req, res) => {
 });
 
 // @route   POST /api/v1/tests/:id/launch
-// @desc    Launch test (create attempt)
+// @desc    Launch test (create or resume attempt)
 // @access  Private
 router.post('/:id/launch', auth, async (req, res) => {
   try {
-    const test = await Test.findOne({ 
-      _id: req.params.id, 
-      isActive: true 
-    });
-
+    const test = await Test.findOne({ _id: req.params.id, isActive: true });
     if (!test) {
-      return res.status(404).json({
-        success: false,
-        message: 'Test not found'
-      });
+      return res.status(404).json({ success: false, message: 'Test not found' });
     }
 
     // Check if test is available
     if (!test.isAvailable()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Test is not currently available'
-      });
+      return res.status(400).json({ success: false, message: 'Test is not currently available' });
     }
 
     // Check existing attempts
     const existingAttempts = await Attempt.getStudentAttempts(req.student.id, test._id);
-    
-    if (existingAttempts.length >= test.attemptsAllowed) {
-      return res.status(400).json({
-        success: false,
-        message: `Maximum ${test.attemptsAllowed} attempt(s) allowed for this test`
-      });
-    }
 
-    // Check if there's an in-progress attempt
-    const inProgressAttempt = existingAttempts.find(attempt => attempt.status === 'in-progress');
+    // Handle in-progress attempt
+    const inProgressAttempt = existingAttempts.find(a => a.status === 'in-progress');
     if (inProgressAttempt) {
-      return res.status(400).json({
-        success: false,
-        message: 'You have an in-progress attempt for this test',
-        data: {
-          attemptId: inProgressAttempt._id
-        }
-      });
+      if (inProgressAttempt.isExpired()) {
+        await inProgressAttempt.autoSubmitIfExpired();
+      } else {
+        return res.json({
+          success: true,
+          message: 'Resuming your in-progress attempt',
+          data: {
+            attemptId: inProgressAttempt._id,
+            startTime: inProgressAttempt.startTime,
+            duration: inProgressAttempt.duration,
+            serverTime: new Date().toISOString()
+          }
+        });
+      }
     }
 
     // For paid tests, verify purchase
@@ -272,7 +262,6 @@ router.post('/:id/launch', auth, async (req, res) => {
         'items.testId': test._id,
         paymentStatus: 'completed'
       });
-      
       if (!purchasedOrder) {
         return res.status(403).json({
           success: false,
@@ -285,6 +274,7 @@ router.post('/:id/launch', auth, async (req, res) => {
     const attempt = new Attempt({
       studentId: req.student.id,
       testId: test._id,
+      status: 'in-progress',   // ✅ explicitly set
       startTime: new Date(),
       duration: test.duration,
       totalQuestions: test.totalQuestions,
@@ -308,13 +298,9 @@ router.post('/:id/launch', auth, async (req, res) => {
         serverTime: new Date().toISOString()
       }
     });
-
   } catch (error) {
     console.error('Launch test error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to launch test'
-    });
+    res.status(500).json({ success: false, message: 'Failed to launch test' });
   }
 });
 
@@ -324,7 +310,11 @@ router.post('/:id/launch', auth, async (req, res) => {
 router.get('/:id/questions', auth, async (req, res) => {
   try {
     const { attemptId } = req.query;
-    
+
+    console.log("🔍 Questions API called");
+    console.log("AttemptId from query:", attemptId);
+    console.log("Student from token:", req.student?.id);
+
     if (!attemptId) {
       return res.status(400).json({
         success: false,
@@ -332,23 +322,43 @@ router.get('/:id/questions', auth, async (req, res) => {
       });
     }
 
-    // Verify attempt belongs to student and is in progress
-    const attempt = await Attempt.findOne({
-      _id: attemptId,
-      studentId: req.student.id,
-      testId: req.params.id,
-      status: 'in-progress'
-    });
+    // Find attempt
+    const attempt = await Attempt.findById(attemptId);
+    console.log("Found attempt:", attempt);
 
     if (!attempt) {
       return res.status(404).json({
         success: false,
-        message: 'Active attempt not found'
+        message: 'Attempt not found'
       });
     }
 
-    // Check if attempt is expired
-    if (attempt.isExpired()) {
+    // Validate student
+    if (attempt.studentId.toString() !== req.student.id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'This attempt does not belong to the logged in student'
+      });
+    }
+
+    // Validate test
+    if (attempt.testId.toString() !== req.params.id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Attempt does not match the requested test'
+      });
+    }
+
+    // Validate status
+    if (attempt.status !== 'in-progress') {
+      return res.status(400).json({
+        success: false,
+        message: `Attempt is not active (status: ${attempt.status})`
+      });
+    }
+
+    // Expiry check
+    if (attempt.isExpired && attempt.isExpired()) {
       await attempt.autoSubmitIfExpired();
       return res.status(410).json({
         success: false,
@@ -356,9 +366,8 @@ router.get('/:id/questions', auth, async (req, res) => {
       });
     }
 
-    const test = await Test.findById(req.params.id)
-      .select('questions sections instructions');
-
+    // Fetch test
+    const test = await Test.findById(req.params.id).select('questions sections instructions');
     if (!test) {
       return res.status(404).json({
         success: false,
@@ -366,36 +375,38 @@ router.get('/:id/questions', auth, async (req, res) => {
       });
     }
 
-    // Remove correct answers from questions
-    const questionsForAttempt = test.questions.map(question => ({
-      _id: question._id,
-      questionText: question.questionText,
-      questionType: question.questionType,
-      options: question.options.map(option => ({ text: option.text })),
-      section: question.section,
-      difficulty: question.difficulty,
-      marks: question.marks,
-      mediaUrls: question.mediaUrls
+    // Strip correct answers
+    const questionsForAttempt = test.questions.map(q => ({
+      _id: q._id,
+      questionText: q.questionText,
+      questionType: q.questionType,
+      options: q.options.map(opt => ({ text: opt.text })),
+      section: q.section,
+      difficulty: q.difficulty,
+      marks: q.marks,
+      mediaUrls: q.mediaUrls
     }));
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         questions: questionsForAttempt,
         sections: test.sections,
         instructions: test.instructions,
-        savedAnswers: attempt.answers
+        savedAnswers: attempt.answers || []
       }
     });
-
   } catch (error) {
-    console.error('Get test questions error:', error);
+    console.error('❌ Get test questions error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to get test questions'
+      message: 'Failed to get test questions',
+      error: error.message
     });
   }
 });
+
+
 
 // Admin routes below this point
 // @route   POST /api/v1/tests
@@ -416,8 +427,9 @@ router.post('/', adminAuth, [
     .isNumeric({ min: 0 })
     .withMessage('Price must be a positive number'),
   body('duration')
-    .isInt({ min: 1 })
-    .withMessage('Duration must be at least 1 minute'),
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('Duration must be at least 0 '),
   body('sections')
     .isArray({ min: 1 })
     .withMessage('At least one section is required')
@@ -643,6 +655,85 @@ router.post('/:id/upload-questions', adminAuth, upload.single('questionsFile'), 
       message: 'Failed to upload questions',
       error: process.env.NODE_ENV === 'development' ? error.message : 'File processing error'
     });
+  }
+});
+
+// @route   POST /api/v1/students/attempts/:id/submit
+// @desc    Submit test attempt with answers
+// @access  Private
+router.post('/attempts/:id/submit', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { answers } = req.body;
+
+    // Find attempt
+    const attempt = await Attempt.findById(id).populate('testId');
+    if (!attempt) {
+      return res.status(404).json({ success: false, message: 'Attempt not found' });
+    }
+
+    // Ensure attempt belongs to logged-in student
+    if (attempt.studentId.toString() !== req.student.id.toString()) {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    // Ensure attempt is still in-progress
+    if (attempt.status !== 'in-progress') {
+      return res.status(400).json({ success: false, message: 'Attempt already submitted or expired' });
+    }
+
+    const test = attempt.testId;
+
+    // Auto-grade answers
+    let score = 0;
+    let correctAnswers = 0;
+    let incorrectAnswers = 0;
+    let unansweredQuestions = 0;
+
+    test.questions.forEach((q) => {
+      const studentAnswer = answers[q._id];
+      if (!studentAnswer) {
+        unansweredQuestions++;
+        return;
+      }
+      const correctOption = q.options.find((opt) => opt.isCorrect);
+      if (correctOption && correctOption.text === studentAnswer) {
+        score += q.marks || 1;
+        correctAnswers++;
+      } else {
+        score -= q.negativeMarks || 0;
+        incorrectAnswers++;
+      }
+    });
+
+    // Update attempt
+    attempt.answers = Object.entries(answers).map(([qId, option]) => ({
+      questionId: qId,
+      answer: option
+    }));
+    attempt.score = score;
+    attempt.correctAnswers = correctAnswers;
+    attempt.incorrectAnswers = incorrectAnswers;
+    attempt.unansweredQuestions = unansweredQuestions;
+    attempt.status = 'submitted';
+    attempt.submittedAt = new Date();
+
+    await attempt.save();
+
+    res.json({
+      success: true,
+      message: 'Attempt submitted successfully',
+      data: {
+        attemptId: attempt._id,
+        score,
+        correctAnswers,
+        incorrectAnswers,
+        unansweredQuestions,
+      },
+    });
+  } catch (error) {
+    console.error('Submit attempt error:', error);
+    res.status(500).json({ success: false, message: 'Failed to submit attempt' });
   }
 });
 

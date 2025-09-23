@@ -41,19 +41,29 @@ const FreeTests = () => {
     }
   };
 
-  const handleLaunchTest = async (testId) => {
-    try {
-      const response = await api.post(`/tests/${testId}/launch`);
-      if (response.data.success) {
-        const { attemptId } = response.data.data;
-        showSuccess('Test launched successfully!');
-        // Navigate to exam interface
-        window.location.href = `/exam/${attemptId}`;
-      }
-    } catch (error) {
-      showError(error.response?.data?.message || 'Failed to launch test');
+  // ✅ inside FreeTests.jsx
+const handleLaunchTest = async (testId) => {
+  try {
+    const token = Cookies.get("token");
+
+    // 1. Launch the test (creates attempt)
+    const response = await api.post(
+      `/tests/${testId}/launch`,
+      { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    if (response.data.success) {
+      const { attemptId } = response.data.data;
+
+      // 2. Redirect student to exam page (✅ fixed route)
+      navigate(`/student/exam/${testId}?attemptId=${attemptId}`);
     }
-  };
+  } catch (error) {
+    console.error("Start test error:", error);
+    showError(error.response?.data?.message || "Failed to start test");
+  }
+};
 
   const getTestsByCompany = (companyId) => {
     return tests.filter(test => test.companyId._id === companyId);
@@ -171,11 +181,12 @@ const FreeTests = () => {
                           </Link>
                           <button
                             onClick={() => handleLaunchTest(test._id)}
-                            className="btn-primary flex items-center"
+                            className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
                           >
-                            <Play className="w-4 h-4 mr-2" />
                             Start Test
                           </button>
+
+
                         </div>
                       </div>
                     </div>

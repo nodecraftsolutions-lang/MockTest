@@ -15,6 +15,7 @@ const companyRoutes = require('./routes/company');
 const testRoutes = require('./routes/test');
 const adminRoutes = require('./routes/admin');
 const paymentRoutes = require('./routes/payment');
+const courseRoutes = require('./routes/course');
 
 const socketConfig = require('./socket/socketConfig');
 
@@ -66,7 +67,7 @@ app.use('/api/v1/companies', companyRoutes);
 app.use('/api/v1/tests', testRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/payments', paymentRoutes);
-
+app.use('/api/v1/courses', courseRoutes);
 
 // Error handler
 app.use((err, req, res, next) => {
@@ -82,7 +83,7 @@ app.use('*', (req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8000;
 
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
