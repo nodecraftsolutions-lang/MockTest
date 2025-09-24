@@ -527,3 +527,9 @@ router.delete('/account', auth, [
     const isPasswordValid = await student.comparePassword(password);
     if (!isPasswordValid) {
       return res.status(400).json({
+      }
+      )
+    }
+  }
+}
+)
