@@ -255,6 +255,18 @@ router.post('/:id/launch', auth, async (req, res) => {
       }
     }
 
+    // Check if student has already completed this test
+    const completedAttempts = existingAttempts.filter(a => 
+      a.status === 'submitted' || a.status === 'auto-submitted'
+    );
+    
+    if (completedAttempts.length >= test.attemptsAllowed) {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already completed this test. Only one attempt is allowed.'
+      });
+    }
+
     // For paid tests, verify purchase
     if (test.type === 'paid') {
       const purchasedOrder = await Order.findOne({
@@ -274,7 +286,7 @@ router.post('/:id/launch', auth, async (req, res) => {
     const attempt = new Attempt({
       studentId: req.student.id,
       testId: test._id,
-      status: 'in-progress',   // ✅ explicitly set
+      status: 'in-progress',
       startTime: new Date(),
       duration: test.duration,
       totalQuestions: test.totalQuestions,
@@ -625,13 +637,13 @@ router.post('/:id/upload-questions', adminAuth, upload.single('questionsFile'), 
             .on('data', (row) => {
               try {
                 const question = {
-                  questionText: row.question || row.questionText,
+                  questionText: row.questionText || row.question,
                   questionType: row.type || row.questionType || 'single',
                   options: [
-                    { text: row.option1 || row.optionA, isCorrect: false },
-                    { text: row.option2 || row.optionB, isCorrect: false },
-                    { text: row.option3 || row.optionC, isCorrect: false },
-                    { text: row.option4 || row.optionD, isCorrect: false }
+                    { text: row.option1, isCorrect: false },
+                    { text: row.option2, isCorrect: false },
+                    { text: row.option3, isCorrect: false },
+                    { text: row.option4, isCorrect: false }
                   ].filter(opt => opt.text), // Remove empty options
                   correctAnswer: row.correctAnswer || row.correct,
                   explanation: row.explanation || '',
@@ -643,7 +655,7 @@ router.post('/:id/upload-questions', adminAuth, upload.single('questionsFile'), 
                 };
 
                 // Mark correct option
-                const correctIndex = ['A', 'B', 'C', 'D', '1', '2', '3', '4'].indexOf(question.correctAnswer);
+                const correctIndex = parseInt(question.correctAnswer) - 1;
                 if (correctIndex >= 0 && correctIndex < question.options.length) {
                   question.options[correctIndex].isCorrect = true;
                 }
@@ -660,7 +672,34 @@ router.post('/:id/upload-questions', adminAuth, upload.single('questionsFile'), 
         // Parse JSON file
         const fileContent = fs.readFileSync(filePath, 'utf8');
         const jsonData = JSON.parse(fileContent);
-        questions.push(...jsonData);
+        
+        jsonData.forEach(item => {
+          const question = {
+            questionText: item.questionText,
+            questionType: item.questionType || 'single',
+            options: [
+              { text: item.option1, isCorrect: false },
+              { text: item.option2, isCorrect: false },
+              { text: item.option3, isCorrect: false },
+              { text: item.option4, isCorrect: false }
+            ].filter(opt => opt.text),
+            correctAnswer: item.correctAnswer,
+            explanation: item.explanation || '',
+            section: item.section || 'General',
+            difficulty: item.difficulty || 'Medium',
+            marks: parseFloat(item.marks) || 1,
+            negativeMarks: parseFloat(item.negativeMarks) || 0,
+            tags: item.tags ? item.tags.split(',').map(tag => tag.trim()) : []
+          };
+
+          // Mark correct option
+          const correctIndex = parseInt(question.correctAnswer) - 1;
+          if (correctIndex >= 0 && correctIndex < question.options.length) {
+            question.options[correctIndex].isCorrect = true;
+          }
+
+          questions.push(question);
+        });
       }
 
       // Validate questions
@@ -713,78 +752,129 @@ router.post('/:id/upload-questions', adminAuth, upload.single('questionsFile'), 
   }
 });
 
-// @route   POST /api/v1/students/attempts/:id/submit
+// @route   POST /api/v1/tests/attempts/:id/submit
 // @desc    Submit test attempt with answers
 // @access  Private
 router.post('/attempts/:id/submit', auth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { answers } = req.body;
+    const { answers: submittedAnswers } = req.body;
 
-    // Find attempt
     const attempt = await Attempt.findById(id).populate('testId');
     if (!attempt) {
       return res.status(404).json({ success: false, message: 'Attempt not found' });
     }
 
-    // Ensure attempt belongs to logged-in student
     if (attempt.studentId.toString() !== req.student.id.toString()) {
       return res.status(403).json({ success: false, message: 'Not authorized' });
     }
 
-    // Ensure attempt is still in-progress
     if (attempt.status !== 'in-progress') {
       return res.status(400).json({ success: false, message: 'Attempt already submitted or expired' });
     }
 
     const test = attempt.testId;
 
-    // Auto-grade answers
+    // Calculate scores and validate answers
     let score = 0;
     let correctAnswers = 0;
     let incorrectAnswers = 0;
     let unansweredQuestions = 0;
+    const processedAnswers = [];
+    const sectionWiseScore = {};
 
     test.questions.forEach((q) => {
-      const studentAnswer = answers[q._id];
+      const studentAnswer = submittedAnswers[q._id];
+      const section = q.section || 'General';
+      
+      // Initialize section if not exists
+      if (!sectionWiseScore[section]) {
+        sectionWiseScore[section] = {
+          sectionName: section,
+          totalQuestions: 0,
+          attemptedQuestions: 0,
+          correctAnswers: 0,
+          score: 0,
+          timeSpent: 0
+        };
+      }
+      
+      sectionWiseScore[section].totalQuestions++;
+      
+      let isCorrect = false;
+      let marksAwarded = 0;
+      
       if (!studentAnswer) {
         unansweredQuestions++;
-        return;
-      }
-      const correctOption = q.options.find((opt) => opt.isCorrect);
-      if (correctOption && correctOption.text === studentAnswer) {
-        score += q.marks || 1;
-        correctAnswers++;
       } else {
-        score -= q.negativeMarks || 0;
-        incorrectAnswers++;
+        sectionWiseScore[section].attemptedQuestions++;
+        
+        // Find correct option
+        const correctOption = q.options.find((opt) => opt.isCorrect);
+        if (correctOption && correctOption.text === studentAnswer) {
+          isCorrect = true;
+          marksAwarded = q.marks || 1;
+          score += marksAwarded;
+          correctAnswers++;
+          sectionWiseScore[section].correctAnswers++;
+          sectionWiseScore[section].score += marksAwarded;
+        } else {
+          const negativeMarks = q.negativeMarks || 0;
+          marksAwarded = -negativeMarks;
+          score -= negativeMarks;
+          incorrectAnswers++;
+        }
       }
+      
+      // Store processed answer
+      processedAnswers.push({
+        questionId: q._id,
+        selectedOptions: studentAnswer ? [studentAnswer] : [],
+        isMarkedForReview: false,
+        timeSpent: 0,
+        isCorrect: isCorrect,
+        marksAwarded: marksAwarded,
+        section: section
+      });
     });
 
-    // Update attempt
-    attempt.answers = Object.entries(answers).map(([qId, option]) => ({
-      questionId: qId,
-      answer: option
-    }));
+    // Calculate percentage and pass status
+    const percentage = test.totalQuestions > 0 ? Math.round((score / test.totalMarks) * 100) : 0;
+    const isPassed = percentage >= (test.passingMarks || 60);
+    
+    // Update attempt with all calculated data
+    attempt.answers = processedAnswers;
     attempt.score = score;
+    attempt.percentage = percentage;
     attempt.correctAnswers = correctAnswers;
     attempt.incorrectAnswers = incorrectAnswers;
     attempt.unansweredQuestions = unansweredQuestions;
+    attempt.attemptedQuestions = correctAnswers + incorrectAnswers;
+    attempt.sectionWiseScore = Object.values(sectionWiseScore);
+    attempt.isPassed = isPassed;
     attempt.status = 'submitted';
+    attempt.endTime = new Date();
     attempt.submittedAt = new Date();
 
     await attempt.save();
+    
+    // Calculate rank and percentile
+    await attempt.calculateRankAndPercentile();
 
     res.json({
       success: true,
-      message: 'Attempt submitted successfully',
+      message: 'Test submitted successfully',
       data: {
         attemptId: attempt._id,
         score,
+        percentage,
         correctAnswers,
         incorrectAnswers,
         unansweredQuestions,
-      },
+        isPassed,
+        rank: attempt.rank,
+        percentile: attempt.percentile
+      }
     });
   } catch (error) {
     console.error('Submit attempt error:', error);

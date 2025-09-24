@@ -333,7 +333,7 @@ router.get('/attempts/:id', auth, async (req, res) => {
       _id: req.params.id,
       studentId: req.student.id
     })
-    .populate('testId', 'title type companyId duration totalQuestions questions')
+    .populate('testId')
     .populate('testId.companyId', 'name logoUrl');
 
     if (!attempt) {
@@ -354,10 +354,34 @@ router.get('/attempts/:id', auth, async (req, res) => {
       });
     }
 
+    // Get detailed analysis with correct answers
+    const detailedAnswers = attempt.answers.map(answer => {
+      const question = attempt.testId.questions.find(q => 
+        q._id.toString() === answer.questionId.toString()
+      );
+      
+      if (question) {
+        const correctOption = question.options.find(opt => opt.isCorrect);
+        return {
+          ...answer.toObject(),
+          question: {
+            text: question.questionText,
+            options: question.options,
+            correctAnswer: correctOption ? correctOption.text : null,
+            explanation: question.explanation
+          }
+        };
+      }
+      return answer;
+    });
+
     res.json({
       success: true,
       data: {
-        attempt
+        attempt: {
+          ...attempt.toObject(),
+          detailedAnswers
+        }
       }
     });
 
@@ -503,101 +527,3 @@ router.delete('/account', auth, [
     const isPasswordValid = await student.comparePassword(password);
     if (!isPasswordValid) {
       return res.status(400).json({
-        success: false,
-        message: 'Incorrect password'
-      });
-    }
-
-    // Soft delete - deactivate account instead of hard delete
-    student.isActive = false;
-    student.activeSessionId = null;
-    student.email = `deleted_${Date.now()}_${student.email}`;
-    await student.save();
-
-    res.json({
-      success: true,
-      message: 'Account deleted successfully'
-    });
-
-  } catch (error) {
-    console.error('Delete account error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete account'
-    });
-  }
-});
-
-// @route   POST /api/v1/students/attempts/:id/submit
-// @desc    Submit test attempt with answers
-// @access  Private
-router.post('/attempts/:id/submit', auth, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { answers: submittedAnswers } = req.body;
-
-    const attempt = await Attempt.findById(id).populate('testId');
-    if (!attempt) {
-      return res.status(404).json({ success: false, message: 'Attempt not found' });
-    }
-
-    if (attempt.studentId.toString() !== req.student.id.toString()) {
-      return res.status(403).json({ success: false, message: 'Not authorized' });
-    }
-
-    if (attempt.status !== 'in-progress') {
-      return res.status(400).json({ success: false, message: 'Attempt already submitted or expired' });
-    }
-
-    const test = attempt.testId;
-
-    let score = 0, correctAnswers = 0, incorrectAnswers = 0, unansweredQuestions = 0;
-
-    test.questions.forEach((q) => {
-      const studentAnswer = submittedAnswers[q._id];
-      if (!studentAnswer) {
-        unansweredQuestions++;
-        return;
-      }
-      const correctOption = q.options.find((opt) => opt.isCorrect);
-      if (correctOption && correctOption.text === studentAnswer) {
-        score += q.marks || 1;
-        correctAnswers++;
-      } else {
-        score -= q.negativeMarks || 0;
-        incorrectAnswers++;
-      }
-    });
-
-    attempt.answers = Object.entries(submittedAnswers).map(([qId, option]) => {
-      const question = test.questions.find((q) => q._id.toString() === qId);
-      return {
-        questionId: qId,
-        answer: option,
-        section: question ? question.section : "General"
-      };
-    });
-
-    attempt.score = score;
-    attempt.correctAnswers = correctAnswers;
-    attempt.incorrectAnswers = incorrectAnswers;
-    attempt.unansweredQuestions = unansweredQuestions;
-    attempt.status = 'submitted';
-    attempt.submittedAt = new Date();
-
-    await attempt.save();
-
-    // ✅ Only send success
-    res.json({
-      success: true,
-      message: 'Test submitted successfully',
-      data: { attemptId: attempt._id }
-    });
-  } catch (error) {
-    console.error('Submit attempt error:', error);
-    res.status(500).json({ success: false, message: 'Failed to submit attempt' });
-  }
-});
-
-
-module.exports = router;

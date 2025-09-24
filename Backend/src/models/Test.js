@@ -142,10 +142,10 @@ passingMarks: {
       min: 1
     },
     duration: {
-  type: Number,
-  default: 0,
-  min: [0, 'Duration cannot be negative']
-},
+      type: Number,
+      required: true,
+      min: [1, 'Duration must be at least 1 minute']
+    },
 
     negativeMarking: {
       type: Number,

@@ -737,8 +737,8 @@ const ManageTests = () => {
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="font-medium text-gray-900 mb-2">CSV Format Example:</h4>
                 <pre className="text-sm text-gray-600">
-{`question,option1,option2,option3,option4,correctAnswer,explanation,section,difficulty,marks
-"What is 2+2?","3","4","5","6","B","Basic addition","Math","Easy","1"`}
+{`questionText,option1,option2,option3,option4,correctAnswer,explanation,section,difficulty,marks,negativeMarks
+"What is 2+2?","3","4","5","6","2","Basic addition","Aptitude","Easy","1","0.25"`}
                 </pre>
               </div>
 
