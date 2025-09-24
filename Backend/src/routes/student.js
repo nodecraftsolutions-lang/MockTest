@@ -6,6 +6,7 @@ const { auth } = require('../middlewares/auth');
 const Student = require('../models/Student');
 const Attempt = require('../models/Attempt');
 const Order = require('../models/Order');
+const Course = require('../models/Course');
 
 const router = express.Router();
 
@@ -527,9 +528,48 @@ router.delete('/account', auth, [
     const isPasswordValid = await student.comparePassword(password);
     if (!isPasswordValid) {
       return res.status(400).json({
-      }
-      )
+        success: false,
+        message: 'Incorrect password'
+      });
     }
+    
+    // Delete the student account
+    await Student.findByIdAndDelete(req.student.id);
+    
+    res.json({
+      success: true,
+      message: 'Account deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete account error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete account'
+    });
   }
-}
-)
+});
+// @route   GET /api/v1/students/courses
+// @desc    Get courses student is enrolled in
+// @access  Private
+router.get('/courses', auth, async (req, res) => {
+  try {
+    const studentId = req.student.id;
+
+    const courses = await Course.find({ enrolledStudents: studentId })
+      .select('title description price currency startDate durationWeeks level sessions')
+      .populate('sessions'); // include live sessions
+
+    res.json({ success: true, data: courses });
+  } catch (error) {
+    console.error('Get student courses error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to load enrolled courses',
+    });
+  }
+});
+
+
+
+
+module.exports = router;

@@ -17,7 +17,6 @@ import Auth from './pages/Auth';
 
 // Student Pages
 import StudentDashboard from './pages/Student/Dashboard';
-import ExamPattern from './pages/Student/ExamPattern';
 import FreeTests from './pages/Student/FreeTests';
 import PaidTests from './pages/Student/PaidTests';
 import ExamInterface from './pages/Student/ExamInterface';
@@ -31,6 +30,7 @@ import MyCourses from './pages/Student/MyCourses';
 import CourseDetails from './pages/Student/CourseDetail';
 import CompanyList from './pages/Student/CompanyList'; // ✅ import
 import CompanyDetails from './pages/Student/CompanyDetails'; // ✅ import
+import CourseLearn from './pages/Student/CourseLearn'; // ✅ import
 // Admin Pages
 import AdminDashboard from './pages/Admin/Dashboard';
 import ManageCompanies from './pages/Admin/Companies';
@@ -67,7 +67,6 @@ function App() {
               }
             >
               <Route index element={<StudentDashboard />} />
-              <Route path="exam-pattern" element={<ExamPattern />} />
               <Route path="free-tests" element={<FreeTests />} />
               <Route path="paid-tests" element={<PaidTests />} />
               {/* Exam Interface */}
@@ -81,6 +80,7 @@ function App() {
               <Route path="courses" element={<Courses />} />
               <Route path="courses/:id" element={<CourseDetails />} />
               <Route path="my-courses" element={<MyCourses />} />
+              <Route path="courses/:id/learn" element={<CourseLearn />} />
               {/* ✅ Results */}
               <Route path="results" element={<Results />} />
               <Route path="results/:attemptId" element={<ResultDetail />} />

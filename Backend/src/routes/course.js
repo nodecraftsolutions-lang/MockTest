@@ -2,156 +2,216 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { auth, adminAuth } = require('../middlewares/auth');
 const Course = require('../models/Course');
-const Order = require('../models/Order');
-
+const Discussion = require('../models/Discussion');
 const router = express.Router();
 
-//
-// 📌 STUDENT ROUTES
-//
+/**
+ * ============================
+ *   ADMIN ROUTES
+ * ============================
+ */
 
-// @route   GET /api/v1/courses
-// @desc    Get all active courses
-// @access  Public
-router.get('/', auth, async (req, res) => {
+// Create course
+router.post(
+  '/',
+  adminAuth,
+  [
+    body('title').notEmpty().withMessage('Title is required'),
+    body('price').isNumeric().withMessage('Price must be a number')
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ success: false, errors: errors.array() });
+      }
+
+      const course = new Course({
+        title: req.body.title,
+        description: req.body.description,
+        price: req.body.price,
+        currency: req.body.currency || 'INR',
+        outcomes: req.body.outcomes || [],
+        features: req.body.features || [],
+        startDate: req.body.startDate,
+        durationWeeks: req.body.durationWeeks,
+        level: req.body.level,
+        isPaid: req.body.price > 0,
+        
+      });
+
+      await course.save();
+      res.status(201).json({ success: true, data: course });
+    } catch (err) {
+      console.error('Create course error:', err);
+      res.status(500).json({ success: false, message: 'Failed to create course' });
+    }
+  }
+);
+
+// Update course
+router.put('/:id', adminAuth, async (req, res) => {
   try {
-    const courses = await Course.find({ isActive: true })
-      .select('title description category duration price currency');
+    const course = await Course.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!course) return res.status(404).json({ success: false, message: 'Course not found' });
+    res.json({ success: true, data: course });
+  } catch (err) {
+    console.error('Update course error:', err);
+    res.status(500).json({ success: false, message: 'Failed to update course' });
+  }
+});
 
-    // Mark if student already enrolled
-    const enrichedCourses = courses.map(course => ({
-      ...course.toObject(),
-      isEnrolled: course.enrolledStudents.includes(req.student.id)
-    }));
+// Delete course
+router.delete('/:id', adminAuth, async (req, res) => {
+  try {
+    const course = await Course.findByIdAndDelete(req.params.id);
+    if (!course) return res.status(404).json({ success: false, message: 'Course not found' });
+    res.json({ success: true, message: 'Course deleted' });
+  } catch (err) {
+    console.error('Delete course error:', err);
+    res.status(500).json({ success: false, message: 'Failed to delete course' });
+  }
+});
 
-    res.json({ success: true, data: { courses: enrichedCourses } });
-  } catch (error) {
-    console.error('Get courses error:', error);
+// Add session to a course
+router.post('/:id/sessions', adminAuth, async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) return res.status(404).json({ success: false, message: 'Course not found' });
+
+    const session = {
+      title: req.body.title,
+      startsAt: req.body.startsAt,
+      duration: req.body.duration,
+      streamLink: req.body.streamLink,
+      description: req.body.description
+    };
+
+    course.sessions.push(session);
+    await course.save();
+
+    res.json({ success: true, message: 'Session added', data: course.sessions });
+  } catch (err) {
+    console.error('Add session error:', err);
+    res.status(500).json({ success: false, message: 'Failed to add session' });
+  }
+});
+
+/**
+ * ============================
+ *   PUBLIC + STUDENT ROUTES
+ * ============================
+ */
+
+// Get all courses (public)
+router.get('/', async (req, res) => {
+  try {
+    const courses = await Course.find({ isActive: true }).select('title description price currency isPaid category');
+    res.json({ success: true, data: courses });
+  } catch (err) {
+    console.error('Get courses error:', err);
     res.status(500).json({ success: false, message: 'Failed to fetch courses' });
   }
 });
 
-// @route   GET /api/v1/courses/:id
-// @desc    Get course details
-// @access  Public
+// Get single course (public)
 router.get('/:id', auth, async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
-    if (!course || !course.isActive) {
+    if (!course) {
       return res.status(404).json({ success: false, message: 'Course not found' });
     }
 
-    const isEnrolled = course.enrolledStudents.includes(req.student.id);
+    const isEnrolled = course.enrolledStudents.some(
+      (id) => id.toString() === req.student.id.toString()
+    );
 
     res.json({
       success: true,
       data: {
-        course: {
-          ...course.toObject(),
-          isEnrolled
-        }
-      }
+        course,
+        isEnrolled,
+      },
     });
-  } catch (error) {
-    console.error('Get course details error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch course details' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to get course' });
   }
 });
 
-// @route   POST /api/v1/students/enroll-course
-// @desc    Enroll in a free course
-// @access  Private
-router.post('/enroll', auth, [
-  body('courseId').isMongoId().withMessage('Valid course ID required')
-], async (req, res) => {
+
+// Enroll student into course
+router.post('/:id/enroll', auth, async (req, res) => {
   try {
-    const { courseId } = req.body;
-    
-    const course = await Course.findById(courseId);
-    if (!course || !course.isActive) {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
       return res.status(404).json({ success: false, message: 'Course not found' });
     }
 
     if (course.enrolledStudents.includes(req.student.id)) {
-      return res.status(400).json({ success: false, message: 'Already enrolled in this course' });
-    }
-
-    if (course.price > 0) {
-      return res.status(400).json({ success: false, message: 'This is a paid course. Please use payment flow.' });
+      return res.status(400).json({ success: false, message: 'Already enrolled' });
     }
 
     course.enrolledStudents.push(req.student.id);
     await course.save();
 
-    res.json({
-      success: true,
-      message: 'Enrolled successfully',
-      data: { courseId: course._id }
-    });
-  } catch (error) {
-    console.error('Course enroll error:', error);
-    res.status(500).json({ success: false, message: 'Failed to enroll in course' });
+    res.json({ success: true, message: 'Enrolled successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to enroll' });
   }
 });
 
-// @route   GET /api/v1/students/courses
-// @desc    Get student's enrolled courses
-// @access  Private
-router.get('/my-courses', auth, async (req, res) => {
-  try {
-    const courses = await Course.find({
-      enrolledStudents: req.student.id,
-      isActive: true
-    });
 
-    res.json({
-      success: true,
-      data: { courses }
-    });
-  } catch (error) {
-    console.error('Get student courses error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch enrolled courses' });
+// Get sessions (student must be enrolled)
+router.get("/:id/sessions", auth, async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id).select("sessions");
+    if (!course) {
+      return res.status(404).json({ success: false, message: "Course not found" });
+    }
+    res.json({ success: true, data: course.sessions });
+  } catch (err) {
+    console.error("Get sessions error:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch sessions" });
   }
 });
-
-//
-// 📌 ADMIN ROUTES
-//
-
-// @route   POST /api/v1/courses
-// @desc    Create new course
-// @access  Private/Admin
-router.post('/', adminAuth, [
-  body('title').notEmpty().withMessage('Title is required'),
-  body('price').isNumeric().withMessage('Price must be a number')
-], async (req, res) => {
+/**
+ * 👉 Get course discussions
+ * GET /api/v1/courses/:id/discussions
+ */
+router.get("/:id/discussions", auth, async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ success: false, errors: errors.array() });
+    const messages = await Discussion.find({ courseId: req.params.id })
+      .populate("studentId", "name email")
+      .sort({ createdAt: 1 }); // oldest first
+    res.json({ success: true, data: messages });
+  } catch (err) {
+    console.error("Get discussions error:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch discussions" });
+  }
+});
+/**
+ * 👉 Post new message in discussion
+ * POST /api/v1/courses/:id/discussions
+ */
+router.post("/:id/discussions", auth, async (req, res) => {
+  try {
+    if (!req.body.message) {
+      return res.status(400).json({ success: false, message: "Message is required" });
     }
 
-    const { title, description, outcomes, duration, features, price, currency, category } = req.body;
-
-    const course = new Course({
-      title,
-      description,
-      outcomes,
-      duration,
-      features,
-      price,
-      currency,
-      category,
-      createdBy: req.student.id
+    const newMessage = new Discussion({
+      courseId: req.params.id,
+      studentId: req.student.id, // from auth middleware
+      message: req.body.message,
     });
 
-    await course.save();
+    await newMessage.save();
+    await newMessage.populate("studentId", "name email");
 
-    res.status(201).json({ success: true, message: 'Course created', data: { course } });
-  } catch (error) {
-    console.error('Create course error:', error);
-    res.status(500).json({ success: false, message: 'Failed to create course' });
+    res.status(201).json({ success: true, data: newMessage });
+  } catch (err) {
+    console.error("Post discussion error:", err);
+    res.status(500).json({ success: false, message: "Failed to post message" });
   }
 });
-
 module.exports = router;

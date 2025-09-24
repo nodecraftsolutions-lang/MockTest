@@ -5,7 +5,6 @@ import {
   FileText,
   BookOpen,
   GraduationCap,
-  BookOpenCheck,
   BarChart3,
   ShoppingBag,
   User,
@@ -23,18 +22,23 @@ import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 
 const Sidebar = ({ type = "student" }) => {
-  const [openDropdown, setOpenDropdown] = useState(null); // "courses" | "recordings"
+  const [openDropdown, setOpenDropdown] = useState(null);
   const [courses, setCourses] = useState([]);
   const [recordings, setRecordings] = useState([]);
   const location = useLocation();
   const { user, logout } = useAuth();
 
   useEffect(() => {
-    if (type === "student") {
-      api.get("/courses").then((res) => setCourses(res.data.data || []));
-      api.get("/students/recordings").then((res) => setRecordings(res.data.data || []));
-    }
-  }, [type]);
+  if (type === "student") {
+    api.get("/courses")
+      .then((res) => setCourses(res.data.data || []))
+      .catch(() => setCourses([]));
+
+    api.get("/students/recordings")
+      .then((res) => setRecordings(res.data.data || []))
+      .catch(() => setRecordings([]));
+  }
+}, [type]);
 
   const toggleDropdown = (menu) => {
     setOpenDropdown(openDropdown === menu ? null : menu);
@@ -68,47 +72,51 @@ const Sidebar = ({ type = "student" }) => {
         {type === "student" ? (
           <>
             <NavItem to="/student" icon={LayoutDashboard} label="Dashboard" />
-            <NavItem to="/student/exam-pattern" icon={FileText} label="Exam Pattern" />
 
-            {/* ✅ Single Mock Tests link */}
+            {/* ✅ Mock Tests */}
             <NavItem to="/student/mock-tests" icon={BookOpen} label="Mock Tests" />
 
             {/* Courses Dropdown */}
-            <button
-              onClick={() => toggleDropdown("courses")}
-              className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-50"
-            >
-              <span className="flex items-center">
-                <GraduationCap className="w-5 h-5 mr-3 text-primary-600" />
-                Courses
-              </span>
-              <ChevronDown
-                className={`w-4 h-4 transform transition-transform ${
-                  openDropdown === "courses" ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-            {openDropdown === "courses" && (
-              <div className="ml-8 space-y-1">
-                {courses.map((c) => (
-                  <Link
-                    key={c._id}
-                    to={`/student/courses/${c._id}`}
-                    className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg"
-                  >
-                    {c.title}
-                  </Link>
-                ))}
-                <Link
-                  to="/student/my-courses"
-                  className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg"
-                >
-                  My Courses
-                </Link>
-              </div>
-            )}
+<button
+  onClick={() => toggleDropdown("courses")}
+  className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-50"
+>
+  <span className="flex items-center">
+    <GraduationCap className="w-5 h-5 mr-3 text-primary-600" />
+    Courses
+  </span>
+  <ChevronDown
+    className={`w-4 h-4 transform transition-transform ${
+      openDropdown === "courses" ? "rotate-180" : ""
+    }`}
+  />
+</button>
 
-            {/* Recordings Dropdown */}
+{openDropdown === "courses" && (
+  <div className="ml-8 space-y-1">
+    {/* All available courses */}
+    {courses.map((c) => (
+      <Link
+        key={c._id}
+        to={`/student/courses/${c._id}`}
+        className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg"
+      >
+        {c.title}
+      </Link>
+    ))}
+
+    {/* My Courses link */}
+    <Link
+      to="/student/my-courses"
+      className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg font-medium"
+    >
+      My Courses
+    </Link>
+  </div>
+)}
+
+
+            {/* ✅ Recordings Dropdown */}
             <button
               onClick={() => toggleDropdown("recordings")}
               className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-50"
@@ -125,15 +133,19 @@ const Sidebar = ({ type = "student" }) => {
             </button>
             {openDropdown === "recordings" && (
               <div className="ml-8 space-y-1">
-                {recordings.map((r) => (
-                  <Link
-                    key={r._id}
-                    to={`/student/recordings/${r._id}`}
-                    className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg"
-                  >
-                    {r.courseName}
-                  </Link>
-                ))}
+                {recordings.length > 0 ? (
+                  recordings.map((r) => (
+                    <Link
+                      key={r._id}
+                      to={`/student/recordings/${r._id}`}
+                      className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg"
+                    >
+                      {r.courseName}
+                    </Link>
+                  ))
+                ) : (
+                  <p className="px-3 py-2 text-xs text-gray-400 italic">No recordings available</p>
+                )}
               </div>
             )}
 
