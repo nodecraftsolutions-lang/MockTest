@@ -9,6 +9,7 @@ const Order = require('../models/Order');
 
 const router = express.Router();
 
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
