@@ -10,6 +10,7 @@ const Course = require('../models/Course');
 
 const router = express.Router();
 
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -532,44 +533,21 @@ router.delete('/account', auth, [
         message: 'Incorrect password'
       });
     }
-    
-    // Delete the student account
-    await Student.findByIdAndDelete(req.student.id);
-    
-    res.json({
+    // Delete account
+    await student.deleteOne();
+
+    return res.status(200).json({
       success: true,
       message: 'Account deleted successfully'
     });
+
   } catch (error) {
-    console.error('Delete account error:', error);
-    res.status(500).json({
+    console.error(error);
+    return res.status(500).json({
       success: false,
-      message: 'Failed to delete account'
+      message: 'Server Error'
     });
   }
 });
-// @route   GET /api/v1/students/courses
-// @desc    Get courses student is enrolled in
-// @access  Private
-router.get('/courses', auth, async (req, res) => {
-  try {
-    const studentId = req.student.id;
-
-    const courses = await Course.find({ enrolledStudents: studentId })
-      .select('title description price currency startDate durationWeeks level sessions')
-      .populate('sessions'); // include live sessions
-
-    res.json({ success: true, data: courses });
-  } catch (error) {
-    console.error('Get student courses error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to load enrolled courses',
-    });
-  }
-});
-
-
-
 
 module.exports = router;
