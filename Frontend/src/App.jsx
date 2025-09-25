@@ -35,6 +35,7 @@ import CourseLearn from './pages/Student/CourseLearn'; // ✅ import
 import AdminDashboard from './pages/Admin/Dashboard';
 import ManageCompanies from './pages/Admin/Companies';
 import ManageTests from './pages/Admin/Tests';
+import QuestionBanks from './pages/Admin/QuestionBanks';
 import ManageStudents from './pages/Admin/Students';
 import AdminResults from './pages/Admin/Results';
 import ManagePayments from './pages/Admin/Payments';
@@ -102,6 +103,7 @@ function App() {
               <Route index element={<AdminDashboard />} />
               <Route path="companies" element={<ManageCompanies />} />
               <Route path="tests" element={<ManageTests />} />
+              <Route path="question-banks" element={<QuestionBanks />} />
               <Route path="students" element={<ManageStudents />} />
               <Route path="results" element={<AdminResults />} />
               <Route path="payments" element={<ManagePayments />} />

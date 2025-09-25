@@ -1,71 +1,38 @@
 const mongoose = require('mongoose');
 
-const questionSchema = new mongoose.Schema({
-  questionText: {
+// Test sections configuration
+const testSectionSchema = new mongoose.Schema({
+  sectionName: {
     type: String,
-    required: [true, 'Question text is required'],
+    required: [true, 'Section name is required'],
+    enum: ['Aptitude', 'Reasoning', 'Technical', 'English', 'General Knowledge', 'Programming'],
     trim: true
   },
-  questionType: {
-    type: String,
-    enum: ['single', 'multiple', 'numerical'],
-    default: 'single'
+  questionCount: {
+    type: Number,
+    required: [true, 'Question count is required'],
+    min: [1, 'At least 1 question is required']
   },
-  options: [{
-    text: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    isCorrect: {
-      type: Boolean,
-      default: false
-    }
-  }],
-  correctAnswer: {
-    type: mongoose.Schema.Types.Mixed, // Can be string, number, or array
-    required: true
+  duration: {
+    type: Number,
+    required: [true, 'Duration is required'],
+    min: [1, 'Duration must be at least 1 minute']
   },
-  explanation: {
-    type: String,
-    trim: true
-  },
-  section: {
-    type: String,
-    required: [true, 'Section is required'],
-    trim: true
-  },
-  difficulty: {
-    type: String,
-    enum: ['Easy', 'Medium', 'Hard'],
-    default: 'Medium'
-  },
-  marks: {
+  marksPerQuestion: {
     type: Number,
     default: 1,
-    min: [0.25, 'Marks must be at least 0.25']
+    min: [0.25, 'Marks per question must be at least 0.25']
   },
-  negativeMarks: {
+  negativeMarking: {
     type: Number,
     default: 0,
-    min: [0, 'Negative marks cannot be less than 0']
+    min: [0, 'Negative marking cannot be less than 0'],
+    max: [1, 'Negative marking cannot be more than 1']
   },
-  tags: [{
-    type: String,
-    trim: true
-  }],
-  mediaUrls: [{
-    type: String,
-    validate: {
-      validator: function(v) {
-        return /^https?:\/\/.+\.(jpg|jpeg|png|gif|svg|pdf)$/i.test(v);
-      },
-      message: 'Please provide a valid media URL'
-    }
-  }],
-  isActive: {
-    type: Boolean,
-    default: true
+  difficultyDistribution: {
+    easy: { type: Number, default: 30 }, // percentage
+    medium: { type: Number, default: 50 },
+    hard: { type: Number, default: 20 }
   }
 }, { _id: true });
 
@@ -130,31 +97,30 @@ passingMarks: {
     default: 1,
     min: [1, 'At least 1 attempt must be allowed']
   },
-  sections: [{
-    name: {
-      type: String,
-      required: true,
-      trim: true
+  sections: [testSectionSchema],
+  generatedQuestions: [{
+    questionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true
     },
-    questionCount: {
-      type: Number,
-      required: true,
-      min: 1
-    },
-    duration: {
-      type: Number,
-      required: true,
-      min: [1, 'Duration must be at least 1 minute']
-    },
-
-    negativeMarking: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 1
-    }
+    questionText: String,
+    questionType: String,
+    options: [{
+      text: String,
+      isCorrect: Boolean
+    }],
+    correctAnswer: mongoose.Schema.Types.Mixed,
+    explanation: String,
+    section: String,
+    difficulty: String,
+    marks: Number,
+    negativeMarks: Number,
+    tags: [String]
   }],
-  questions: [questionSchema],
+  isGenerated: {
+    type: Boolean,
+    default: false
+  },
   instructions: [{
     type: String,
     trim: true
@@ -238,14 +204,17 @@ testSchema.virtual('attemptCount', {
 
 // Calculate totals before saving
 testSchema.pre('save', function(next) {
-  if (this.questions && this.questions.length > 0) {
-    this.totalQuestions = this.questions.length;
-    this.totalMarks = this.questions.reduce((sum, q) => sum + (q.marks || 1), 0);
-    this.passingMarks = Math.ceil(this.totalMarks * 0.6); // 60% passing criteria
-  }
-  
   if (this.sections && this.sections.length > 0) {
+    this.totalQuestions = this.sections.reduce((sum, section) => sum + section.questionCount, 0);
+    this.totalMarks = this.sections.reduce((sum, section) => 
+      sum + (section.questionCount * section.marksPerQuestion), 0);
+    this.passingMarks = Math.ceil(this.totalMarks * 0.6);
     this.duration = this.sections.reduce((sum, section) => sum + section.duration, 0);
+  }
+
+  if (this.generatedQuestions && this.generatedQuestions.length > 0) {
+    this.totalQuestions = this.generatedQuestions.length;
+    this.totalMarks = this.generatedQuestions.reduce((sum, q) => sum + (q.marks || 1), 0);
   }
   
   next();
@@ -276,6 +245,7 @@ testSchema.methods.isAvailable = function() {
 // Instance method to get test statistics
 testSchema.methods.getStatistics = async function() {
   const Attempt = mongoose.model('Attempt');
+  const QuestionBank = mongoose.model('QuestionBank');
   
   const attempts = await Attempt.find({ testId: this._id, status: 'submitted' });
   const totalAttempts = attempts.length;
@@ -302,4 +272,74 @@ testSchema.methods.getStatistics = async function() {
   };
 };
 
+// Instance method to generate questions for test
+testSchema.methods.generateQuestions = async function() {
+  const QuestionBank = mongoose.model('QuestionBank');
+  const generatedQuestions = [];
+
+  for (const section of this.sections) {
+    const { sectionName, questionCount, difficultyDistribution } = section;
+    
+    // Get random questions for each difficulty
+    const easyQuestions = await QuestionBank.getRandomQuestions(
+      this.companyId, sectionName, easyCount, 'Easy'
+    );
+    const mediumQuestions = await QuestionBank.getRandomQuestions(
+      this.companyId, sectionName, mediumCount, 'Medium'
+    );
+    const hardQuestions = await QuestionBank.getRandomQuestions(
+      this.companyId, sectionName, hardCount, 'Hard'
+    );
+    // Calculate questions per difficulty
+    // Combine all questions for this section
+    const sectionQuestions = [...easyQuestions, ...mediumQuestions, ...hardQuestions];
+    
+    // Add section questions to generated questions
+    sectionQuestions.forEach(q => {
+      generatedQuestions.push({
+        questionId: q._id,
+        questionText: q.questionText,
+        questionType: q.questionType,
+        options: q.options,
+        correctAnswer: q.correctAnswer,
+        explanation: q.explanation,
+        section: q.section,
+        difficulty: q.difficulty,
+        marks: section.marksPerQuestion,
+        negativeMarks: section.negativeMarking,
+        tags: q.tags || []
+      });
+    });
+  }
+    const easyCount = Math.floor((questionCount * difficultyDistribution.easy) / 100);
+  // Shuffle questions within each section
+  this.generatedQuestions = this.shuffleQuestions(generatedQuestions);
+  this.isGenerated = true;
+  
+  return this.save();
+};
+    const mediumCount = Math.floor((questionCount * difficultyDistribution.medium) / 100);
+// Helper method to shuffle questions
+testSchema.methods.shuffleQuestions = function(questions) {
+  const sections = {};
+  
+  // Group by section
+  questions.forEach(q => {
+    if (!sections[q.section]) sections[q.section] = [];
+    sections[q.section].push(q);
+  });
+  
+  // Shuffle each section and combine
+  const shuffled = [];
+  Object.values(sections).forEach(sectionQuestions => {
+    for (let i = sectionQuestions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [sectionQuestions[i], sectionQuestions[j]] = [sectionQuestions[j], sectionQuestions[i]];
+    }
+    shuffled.push(...sectionQuestions);
+  });
+  
+  return shuffled;
+};
+    const hardCount = questionCount - easyCount - mediumCount;
 module.exports = mongoose.model('Test', testSchema);

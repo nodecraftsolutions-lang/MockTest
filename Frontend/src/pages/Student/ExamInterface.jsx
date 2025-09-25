@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Clock, CheckCircle, Flag, AlertTriangle } from "lucide-react";
+import { 
+  ChevronLeft, ChevronRight, Clock, CheckCircle, Flag, 
+  AlertTriangle, BookOpen, BarChart3 
+} from "lucide-react";
 import api from "../../api/axios";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { useToast } from "../../context/ToastContext";
@@ -10,7 +13,9 @@ const ExamInterface = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [questions, setQuestions] = useState([]);
+  const [sections, setSections] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentSection, setCurrentSection] = useState('');
   const [answers, setAnswers] = useState({});
   const [markedForReview, setMarkedForReview] = useState({});
   const [duration, setDuration] = useState(0);
@@ -19,6 +24,7 @@ const ExamInterface = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [autoSaving, setAutoSaving] = useState(false);
   const { showError, showSuccess } = useToast();
 
   useEffect(() => {
@@ -40,12 +46,12 @@ const ExamInterface = () => {
     }
   }, [timeLeft]);
 
-  // Auto-save answers every 30 seconds
+  // Auto-save answers every 20 seconds
   useEffect(() => {
     if (attemptId && Object.keys(answers).length > 0) {
       const autoSave = setInterval(() => {
         saveAnswersToServer();
-      }, 30000);
+      }, 20000);
       return () => clearInterval(autoSave);
     }
   }, [answers, attemptId]);
@@ -63,7 +69,9 @@ const ExamInterface = () => {
 
   const startTest = async () => {
     try {
-      const res = await api.post(`/tests/${testId}/launch`);
+      const res = await api.post(`/tests/${testId}/launch`, {
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      });
       if (res.data.success) {
         const { attemptId, duration, startTime, serverTime } = res.data.data;
         setAttemptId(attemptId);
@@ -89,14 +97,19 @@ const ExamInterface = () => {
     try {
       const res = await api.get(`/tests/${testId}/questions?attemptId=${id}`);
       if (res.data.success) {
-        setQuestions(res.data.data.questions);
+        const { questions, sections, savedAnswers } = res.data.data;
+        setQuestions(questions);
+        setSections(sections || []);
+        
+        if (questions.length > 0) {
+          setCurrentSection(questions[0].section);
+        }
         
         // Load saved answers
-        const savedAnswers = res.data.data.savedAnswers || [];
         const answersMap = {};
         const reviewMap = {};
         
-        savedAnswers.forEach(ans => {
+        savedAnswers?.forEach(ans => {
           if (ans.selectedOptions && ans.selectedOptions.length > 0) {
             answersMap[ans.questionId] = ans.selectedOptions[0];
           }
@@ -119,20 +132,22 @@ const ExamInterface = () => {
   const saveAnswersToServer = async () => {
     if (!attemptId || Object.keys(answers).length === 0) return;
     
+    setAutoSaving(true);
     try {
-      // Save each answer individually
-      for (const [questionId, answer] of Object.entries(answers)) {
-        const question = questions.find(q => q._id === questionId);
+      const currentQuestion = questions[currentIndex];
+      if (currentQuestion && answers[currentQuestion._id]) {
         await api.post(`/tests/${testId}/save-answer`, {
           attemptId,
-          questionId,
-          selectedOptions: [answer],
-          isMarkedForReview: markedForReview[questionId] || false,
-          section: question?.section || 'General'
+          questionId: currentQuestion._id,
+          selectedOptions: [answers[currentQuestion._id]],
+          isMarkedForReview: markedForReview[currentQuestion._id] || false,
+          section: currentQuestion.section
         });
       }
     } catch (error) {
       console.error('Auto-save error:', error);
+    } finally {
+      setAutoSaving(false);
     }
   };
 
@@ -141,6 +156,9 @@ const ExamInterface = () => {
       ...prev,
       [qId]: option.text
     }));
+    
+    // Auto-save immediately when answer changes
+    setTimeout(() => saveAnswersToServer(), 1000);
   };
 
   const toggleMarkForReview = (qId) => {
@@ -199,12 +217,38 @@ const ExamInterface = () => {
     return 'unanswered';
   };
 
+  const getSectionQuestions = (sectionName) => {
+    return questions.filter(q => q.section === sectionName);
+  };
+
+  const getSectionStats = (sectionName) => {
+    const sectionQuestions = getSectionQuestions(sectionName);
+    const answered = sectionQuestions.filter(q => answers[q._id]).length;
+    const reviewed = sectionQuestions.filter(q => markedForReview[q._id]).length;
+    
+    return {
+      total: sectionQuestions.length,
+      answered,
+      reviewed,
+      unanswered: sectionQuestions.length - answered
+    };
+  };
+
+  const jumpToSection = (sectionName) => {
+    const sectionIndex = questions.findIndex(q => q.section === sectionName);
+    if (sectionIndex !== -1) {
+      setCurrentIndex(sectionIndex);
+      setCurrentSection(sectionName);
+    }
+  };
+
   if (loading) return <LoadingSpinner size="large" />;
   if (!questions.length) return <div className="p-6 text-gray-600">No questions available.</div>;
 
   const currentQ = questions[currentIndex];
   const answeredCount = Object.keys(answers).length;
   const reviewCount = Object.keys(markedForReview).filter(k => markedForReview[k]).length;
+  const uniqueSections = [...new Set(questions.map(q => q.section))];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -213,10 +257,19 @@ const ExamInterface = () => {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-lg font-semibold text-gray-900">Mock Test</h1>
-            <p className="text-sm text-gray-600">Question {currentIndex + 1} of {questions.length}</p>
+            <p className="text-sm text-gray-600">
+              Question {currentIndex + 1} of {questions.length} • Section: {currentQ?.section}
+            </p>
           </div>
           
           <div className="flex items-center space-x-6">
+            {autoSaving && (
+              <div className="flex items-center text-blue-600 text-sm">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                Auto-saving...
+              </div>
+            )}
+            
             <div className="flex items-center space-x-2 text-red-600 font-semibold">
               <Clock className="w-5 h-5" />
               <span className="text-lg">{formatTime(timeLeft)}</span>
@@ -237,12 +290,58 @@ const ExamInterface = () => {
       <div className="flex">
         {/* Main Content */}
         <div className="flex-1 p-6">
+          {/* Section Navigation */}
+          <div className="card mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Sections</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              {uniqueSections.map((sectionName) => {
+                const stats = getSectionStats(sectionName);
+                const isCurrentSection = currentQ?.section === sectionName;
+                
+                return (
+                  <button
+                    key={sectionName}
+                    onClick={() => jumpToSection(sectionName)}
+                    className={`p-3 rounded-lg border text-center transition-colors ${
+                      isCurrentSection
+                        ? 'border-primary-500 bg-primary-50 text-primary-700'
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="font-medium text-sm">{sectionName}</div>
+                    <div className="text-xs text-gray-600 mt-1">
+                      {stats.answered}/{stats.total} answered
+                    </div>
+                    <div className="flex justify-center space-x-1 mt-1">
+                      <div className={`w-2 h-2 rounded-full ${stats.answered > 0 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                      <div className={`w-2 h-2 rounded-full ${stats.reviewed > 0 ? 'bg-yellow-500' : 'bg-gray-300'}`}></div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Question Card */}
           <div className="card mb-6">
             <div className="flex justify-between items-start mb-4">
-              <h2 className="text-lg font-medium text-gray-900">
-                Question {currentIndex + 1}
-              </h2>
+              <div>
+                <h2 className="text-lg font-medium text-gray-900">
+                  Question {currentIndex + 1}
+                </h2>
+                <div className="flex items-center space-x-4 mt-1">
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    {currentQ?.section}
+                  </span>
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    {currentQ?.difficulty}
+                  </span>
+                  <span className="text-sm text-gray-600">{currentQ?.marks} marks</span>
+                  {currentQ?.negativeMarks > 0 && (
+                    <span className="text-sm text-red-600">-{currentQ.negativeMarks} for wrong answer</span>
+                  )}
+                </div>
+              </div>
               <button
                 onClick={() => toggleMarkForReview(currentQ._id)}
                 className={`flex items-center px-3 py-1 rounded-full text-sm font-medium ${
@@ -256,7 +355,7 @@ const ExamInterface = () => {
               </button>
             </div>
             
-            <p className="text-gray-800 mb-6 leading-relaxed">
+            <p className="text-gray-800 mb-6 leading-relaxed text-lg">
               {currentQ.questionText}
             </p>
             
@@ -277,7 +376,10 @@ const ExamInterface = () => {
                     onChange={() => handleAnswer(currentQ._id, opt)}
                     className="mr-3 text-primary-600"
                   />
-                  <span className="text-gray-800">{opt.text}</span>
+                  <span className="text-gray-800 flex-1">
+                    <span className="font-medium mr-2">{String.fromCharCode(65 + i)}.</span>
+                    {opt.text}
+                  </span>
                 </label>
               ))}
             </div>
@@ -311,7 +413,13 @@ const ExamInterface = () => {
               </button>
               
               <button
-                onClick={() => setCurrentIndex((i) => Math.min(i + 1, questions.length - 1))}
+                onClick={() => {
+                  // Save current answer before moving
+                  if (answers[currentQ._id]) {
+                    saveAnswersToServer();
+                  }
+                  setCurrentIndex((i) => Math.min(i + 1, questions.length - 1));
+                }}
                 disabled={currentIndex === questions.length - 1}
                 className="btn-primary flex items-center"
               >
@@ -327,52 +435,71 @@ const ExamInterface = () => {
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Question Navigator</h3>
             
-            {/* Summary */}
-            <div className="grid grid-cols-3 gap-3 mb-4 text-sm">
-              <div className="text-center p-2 bg-green-50 rounded">
+            {/* Overall Summary */}
+            <div className="grid grid-cols-3 gap-3 mb-6 text-sm">
+              <div className="text-center p-3 bg-green-50 rounded-lg">
                 <div className="font-semibold text-green-800">{answeredCount}</div>
                 <div className="text-green-600">Answered</div>
               </div>
-              <div className="text-center p-2 bg-yellow-50 rounded">
+              <div className="text-center p-3 bg-yellow-50 rounded-lg">
                 <div className="font-semibold text-yellow-800">{reviewCount}</div>
                 <div className="text-yellow-600">Review</div>
               </div>
-              <div className="text-center p-2 bg-gray-50 rounded">
+              <div className="text-center p-3 bg-gray-50 rounded-lg">
                 <div className="font-semibold text-gray-800">{questions.length - answeredCount}</div>
                 <div className="text-gray-600">Unanswered</div>
               </div>
             </div>
-          </div>
 
-          {/* Question Grid */}
-          <div className="grid grid-cols-5 gap-2 mb-6">
-            {questions.map((q, idx) => {
-              const status = getQuestionStatus(q._id);
-              return (
-                <button
-                  key={q._id}
-                  onClick={() => setCurrentIndex(idx)}
-                  className={`relative w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
-                    currentIndex === idx
-                      ? "bg-primary-600 text-white"
-                      : status === 'answered'
-                      ? "bg-green-100 text-green-800 hover:bg-green-200"
-                      : status === 'review'
-                      ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  {idx + 1}
-                  {status === 'review' && (
-                    <Flag className="absolute -top-1 -right-1 w-3 h-3 text-yellow-600" />
-                  )}
-                </button>
-              );
-            })}
+            {/* Section-wise Progress */}
+            <div className="space-y-4 mb-6">
+              {uniqueSections.map((sectionName) => {
+                const stats = getSectionStats(sectionName);
+                const sectionQuestions = getSectionQuestions(sectionName);
+                const startIndex = questions.findIndex(q => q.section === sectionName);
+                
+                return (
+                  <div key={sectionName} className="border border-gray-200 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium text-gray-900 text-sm">{sectionName}</h4>
+                      <span className="text-xs text-gray-600">{stats.answered}/{stats.total}</span>
+                    </div>
+                    
+                    <div className="grid grid-cols-5 gap-1">
+                      {sectionQuestions.map((q, idx) => {
+                        const globalIndex = startIndex + idx;
+                        const status = getQuestionStatus(q._id);
+                        
+                        return (
+                          <button
+                            key={q._id}
+                            onClick={() => setCurrentIndex(globalIndex)}
+                            className={`relative w-8 h-8 rounded text-xs font-medium transition-colors ${
+                              currentIndex === globalIndex
+                                ? "bg-primary-600 text-white"
+                                : status === 'answered'
+                                ? "bg-green-100 text-green-800 hover:bg-green-200"
+                                : status === 'review'
+                                ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                            }`}
+                          >
+                            {idx + 1}
+                            {status === 'review' && (
+                              <Flag className="absolute -top-1 -right-1 w-2 h-2 text-yellow-600" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Legend */}
-          <div className="space-y-2 text-sm">
+          <div className="space-y-2 text-sm mb-6">
             <div className="flex items-center space-x-2">
               <div className="w-4 h-4 bg-green-100 rounded"></div>
               <span className="text-gray-600">Answered</span>
@@ -387,12 +514,16 @@ const ExamInterface = () => {
               <div className="w-4 h-4 bg-gray-100 rounded"></div>
               <span className="text-gray-600">Not Answered</span>
             </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 bg-primary-600 rounded"></div>
+              <span className="text-gray-600">Current Question</span>
+            </div>
           </div>
 
           {/* Submit Button */}
           <button
             onClick={() => setShowSubmitModal(true)}
-            className="w-full mt-6 btn-primary"
+            className="w-full btn-primary"
             disabled={submitting}
           >
             Submit Test
@@ -403,7 +534,7 @@ const ExamInterface = () => {
       {/* Submit Confirmation Modal */}
       {showSubmitModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
             <div className="flex items-center mb-4">
               <AlertTriangle className="w-6 h-6 text-yellow-500 mr-3" />
               <h3 className="text-lg font-semibold text-gray-900">Submit Test?</h3>
@@ -414,27 +545,51 @@ const ExamInterface = () => {
                 Are you sure you want to submit your test? You cannot change your answers after submission.
               </p>
               
-              <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>Total Questions:</span>
-                  <span className="font-medium">{questions.length}</span>
+              {/* Overall Summary */}
+              <div className="bg-gray-50 rounded-lg p-4 space-y-3 mb-4">
+                <h4 className="font-medium text-gray-900">Overall Summary</h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="flex justify-between">
+                    <span>Total Questions:</span>
+                    <span className="font-medium">{questions.length}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Answered:</span>
+                    <span className="font-medium text-green-600">{answeredCount}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Marked for Review:</span>
+                    <span className="font-medium text-yellow-600">{reviewCount}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Unanswered:</span>
+                    <span className="font-medium text-red-600">{questions.length - answeredCount}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span>Answered:</span>
-                  <span className="font-medium text-green-600">{answeredCount}</span>
+              </div>
+
+              {/* Section-wise Summary */}
+              <div className="bg-blue-50 rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 mb-3">Section-wise Summary</h4>
+                <div className="space-y-2">
+                  {uniqueSections.map((sectionName) => {
+                    const stats = getSectionStats(sectionName);
+                    return (
+                      <div key={sectionName} className="flex items-center justify-between text-sm">
+                        <span className="font-medium">{sectionName}</span>
+                        <span className="text-gray-600">
+                          {stats.answered}/{stats.total} answered
+                          {stats.reviewed > 0 && `, ${stats.reviewed} for review`}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="flex justify-between">
-                  <span>Marked for Review:</span>
-                  <span className="font-medium text-yellow-600">{reviewCount}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Unanswered:</span>
-                  <span className="font-medium text-red-600">{questions.length - answeredCount}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Time Remaining:</span>
-                  <span className="font-medium text-blue-600">{formatTime(timeLeft)}</span>
-                </div>
+              </div>
+
+              <div className="flex justify-between items-center text-sm text-gray-600 mt-4">
+                <span>Time Remaining:</span>
+                <span className="font-medium text-blue-600">{formatTime(timeLeft)}</span>
               </div>
             </div>
 

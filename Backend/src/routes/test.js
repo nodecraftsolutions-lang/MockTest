@@ -8,6 +8,7 @@ const Test = require('../models/Test');
 const Company = require('../models/Company');
 const Attempt = require('../models/Attempt');
 const Order = require('../models/Order');
+const QuestionBank = require('../models/QuestionBank');
 
 const router = express.Router();
 
@@ -379,7 +380,7 @@ router.get('/:id/questions', auth, async (req, res) => {
     }
 
     // Fetch test
-    const test = await Test.findById(req.params.id).select('questions sections instructions');
+    const test = await Test.findById(req.params.id).select('generatedQuestions sections instructions isGenerated');
     if (!test) {
       return res.status(404).json({
         success: false,
@@ -387,8 +388,14 @@ router.get('/:id/questions', auth, async (req, res) => {
       });
     }
 
+    // Generate questions if not already generated
+    if (!test.isGenerated || !test.generatedQuestions || test.generatedQuestions.length === 0) {
+      await test.generateQuestions();
+      await test.save();
+    }
+
     // Strip correct answers
-    const questionsForAttempt = test.questions.map(q => ({
+    const questionsForAttempt = test.generatedQuestions.map(q => ({
       _id: q._id,
       questionText: q.questionText,
       questionType: q.questionType,
@@ -396,7 +403,8 @@ router.get('/:id/questions', auth, async (req, res) => {
       section: q.section,
       difficulty: q.difficulty,
       marks: q.marks,
-      mediaUrls: q.mediaUrls
+      negativeMarks: q.negativeMarks,
+      tags: q.tags
     }));
 
     return res.json({
@@ -783,7 +791,7 @@ router.post('/attempts/:id/submit', auth, async (req, res) => {
     const processedAnswers = [];
     const sectionWiseScore = {};
 
-    test.questions.forEach((q) => {
+    test.generatedQuestions.forEach((q) => {
       const studentAnswer = submittedAnswers[q._id];
       const section = q.section || 'General';
       
@@ -879,6 +887,41 @@ router.post('/attempts/:id/submit', auth, async (req, res) => {
   } catch (error) {
     console.error('Submit attempt error:', error);
     res.status(500).json({ success: false, message: 'Failed to submit attempt' });
+  }
+});
+
+// @route   POST /api/v1/tests/:id/generate-questions
+// @desc    Generate questions for test from question banks
+// @access  Private/Admin
+router.post('/:id/generate-questions', adminAuth, async (req, res) => {
+  try {
+    const test = await Test.findById(req.params.id);
+    if (!test) {
+      return res.status(404).json({
+        success: false,
+        message: 'Test not found'
+      });
+    }
+
+    // Generate questions from question banks
+    await test.generateQuestions();
+
+    res.json({
+      success: true,
+      message: 'Questions generated successfully',
+      data: {
+        totalQuestions: test.totalQuestions,
+        sectionsGenerated: test.sections.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Generate questions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate questions',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Generation error'
+    });
   }
 });
 

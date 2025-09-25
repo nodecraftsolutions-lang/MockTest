@@ -16,6 +16,7 @@ const testRoutes = require('./routes/test');
 const adminRoutes = require('./routes/admin');
 const paymentRoutes = require('./routes/payment');
 const courseRoutes = require('./routes/course');
+const questionBankRoutes = require('./routes/questionBank');
 
 const socketConfig = require('./socket/socketConfig');
 
@@ -70,6 +71,7 @@ app.use('/api/v1/tests', testRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/courses', courseRoutes);
+app.use('/api/v1/question-banks', questionBankRoutes);
 
 // Error handler
 app.use((err, req, res, next) => {

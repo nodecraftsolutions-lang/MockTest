@@ -160,6 +160,7 @@ const Sidebar = ({ type = "student" }) => {
             <NavItem to="/admin" icon={LayoutDashboard} label="Dashboard" />
             <NavItem to="/admin/companies" icon={Building} label="Companies" />
             <NavItem to="/admin/tests" icon={BookOpen} label="Tests" />
+            <NavItem to="/admin/question-banks" icon={FileText} label="Question Banks" />
             <NavItem to="/admin/students" icon={Users} label="Students" />
             <NavItem to="/admin/results" icon={BarChart3} label="Results" />
             <NavItem to="/admin/payments" icon={DollarSign} label="Payments" />
