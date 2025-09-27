@@ -17,6 +17,7 @@ const adminRoutes = require('./routes/admin');
 const paymentRoutes = require('./routes/payment');
 const courseRoutes = require('./routes/course');
 const questionBankRoutes = require('./routes/questionBank');
+const recordingRoutes=require("./routes/recordings");
 
 const socketConfig = require('./socket/socketConfig');
 
@@ -72,7 +73,8 @@ app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/question-banks', questionBankRoutes);
-
+app.use('/api/v1/enrollments', require('./routes/enrollment'));
+app.use('/api/v1/recordings',recordingRoutes);
 // Error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);

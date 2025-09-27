@@ -6,7 +6,7 @@ const sectionSchema = new mongoose.Schema({
     required: [true, 'Section name is required'],
     trim: true
   },
-  questions: {
+  questionCount: {
     type: Number,
     required: [true, 'Number of questions is required'],
     min: [1, 'At least 1 question is required']
@@ -16,16 +16,21 @@ const sectionSchema = new mongoose.Schema({
     required: [true, 'Duration is required'],
     min: [1, 'Duration must be at least 1 minute']
   },
+  marksPerQuestion: {
+    type: Number,
+    default: 1,
+    min: [0.25, 'Marks per question must be at least 0.25']
+  },
   negativeMarking: {
     type: Number,
     default: 0,
     min: [0, 'Negative marking cannot be less than 0'],
     max: [1, 'Negative marking cannot be more than 1']
   },
-  marksPerQuestion: {
-    type: Number,
-    default: 1,
-    min: [0.25, 'Marks per question must be at least 0.25']
+  difficultyDistribution: {
+    easy: { type: Number, default: 30 },
+    medium: { type: Number, default: 50 },
+    hard: { type: Number, default: 20 }
   }
 }, { _id: true });
 
@@ -41,7 +46,7 @@ const companySchema = new mongoose.Schema({
     type: String,
     default: null,
     validate: {
-      validator: function(v) {
+      validator: function (v) {
         if (!v) return true;
         return /^https?:\/\/.+\.(jpg|jpeg|png|gif|svg)$/i.test(v);
       },
@@ -53,14 +58,8 @@ const companySchema = new mongoose.Schema({
     maxlength: [500, 'Description cannot exceed 500 characters']
   },
   defaultPattern: [sectionSchema],
-  totalQuestions: {
-    type: Number,
-    default: 0
-  },
-  totalDuration: {
-    type: Number,
-    default: 0
-  },
+  totalQuestions: { type: Number, default: 0 },
+  totalDuration: { type: Number, default: 0 },
   difficulty: {
     type: String,
     enum: ['Easy', 'Medium', 'Hard'],
@@ -71,34 +70,17 @@ const companySchema = new mongoose.Schema({
     enum: ['IT Services', 'Product', 'Consulting', 'Banking', 'Government', 'Other'],
     default: 'IT Services'
   },
-  isActive: {
-    type: Boolean,
-    default: true
-  },
+  isActive: { type: Boolean, default: true },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Student',
     required: true
   },
-  tags: [{
-    type: String,
-    trim: true
-  }],
+  tags: [{ type: String, trim: true }],
   metadata: {
-    cutoffPercentage: {
-      type: Number,
-      min: 0,
-      max: 100,
-      default: 60
-    },
-    passingCriteria: {
-      type: String,
-      default: 'Overall percentage'
-    },
-    instructions: [{
-      type: String,
-      trim: true
-    }]
+    cutoffPercentage: { type: Number, min: 0, max: 100, default: 60 },
+    passingCriteria: { type: String, default: 'Overall percentage' },
+    instructions: [{ type: String, trim: true }]
   }
 }, {
   timestamps: true,
@@ -106,13 +88,13 @@ const companySchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-// Indexes for performance
+// Indexes
 companySchema.index({ name: 1 });
 companySchema.index({ isActive: 1 });
 companySchema.index({ category: 1 });
 companySchema.index({ createdAt: -1 });
 
-// Virtual for test count
+// Virtual
 companySchema.virtual('testCount', {
   ref: 'Test',
   localField: '_id',
@@ -120,30 +102,30 @@ companySchema.virtual('testCount', {
   count: true
 });
 
-// Calculate totals before saving
-companySchema.pre('save', function(next) {
+// Pre-save totals
+companySchema.pre('save', function (next) {
   if (this.defaultPattern && this.defaultPattern.length > 0) {
-    this.totalQuestions = this.defaultPattern.reduce((sum, section) => sum + section.questions, 0);
-    this.totalDuration = this.defaultPattern.reduce((sum, section) => sum + section.duration, 0);
+    this.totalQuestions = this.defaultPattern.reduce((sum, s) => sum + (s.questionCount || 0), 0);
+    this.totalDuration = this.defaultPattern.reduce((sum, s) => sum + (s.duration || 0), 0);
   }
   next();
 });
 
-// Static method to get active companies
-companySchema.statics.getActiveCompanies = function() {
+// Statics
+companySchema.statics.getActiveCompanies = function () {
   return this.find({ isActive: true }).sort({ name: 1 });
 };
 
-// Instance method to get company stats
-companySchema.methods.getStats = async function() {
+// Methods
+companySchema.methods.getStats = async function () {
   const Test = mongoose.model('Test');
   const Attempt = mongoose.model('Attempt');
-  
+
   const testCount = await Test.countDocuments({ companyId: this._id });
-  const attemptCount = await Attempt.countDocuments({ 
+  const attemptCount = await Attempt.countDocuments({
     testId: { $in: await Test.find({ companyId: this._id }).distinct('_id') }
   });
-  
+
   return {
     testCount,
     attemptCount,

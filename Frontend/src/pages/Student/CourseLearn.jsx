@@ -14,14 +14,15 @@ const CourseLearn = () => {
   const { showError, showSuccess } = useToast();
 
   useEffect(() => {
-    fetchSessions();
-    fetchDiscussions();
+    Promise.all([fetchSessions(), fetchDiscussions()]).finally(() =>
+      setLoading(false)
+    );
   }, [id]);
 
   const fetchSessions = async () => {
     try {
       const res = await api.get(`/courses/${id}/sessions`);
-      if (res.data.success) setSessions(res.data.data);
+      if (res.data.success) setSessions(res.data.data || []);
     } catch {
       showError("Failed to load sessions");
     }
@@ -30,11 +31,9 @@ const CourseLearn = () => {
   const fetchDiscussions = async () => {
     try {
       const res = await api.get(`/courses/${id}/discussions`);
-      if (res.data.success) setDiscussions(res.data.data);
+      if (res.data.success) setDiscussions(res.data.data || []);
     } catch {
       showError("Failed to load discussions");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -83,14 +82,20 @@ const CourseLearn = () => {
                     </span>
                   </div>
                 </div>
-                <a
-                  href={s.streamLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-primary"
-                >
-                  Join
-                </a>
+                {s.streamLink ? (
+                  <a
+                    href={s.streamLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-primary"
+                  >
+                    Join
+                  </a>
+                ) : (
+                  <button className="btn-secondary" disabled>
+                    Link Unavailable
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -105,20 +110,21 @@ const CourseLearn = () => {
           <MessageSquare className="w-5 h-5 text-primary-600 mr-2" /> Discussions
         </h2>
         <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
-          {discussions.map((d) => (
-            <div key={d._id} className="p-3 border rounded-lg bg-gray-50">
-              <p className="text-sm text-gray-800">
-                <span className="font-semibold text-primary-700">
-                  {d.studentId?.name || "Student"}:
-                </span>{" "}
-                {d.message}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                {new Date(d.createdAt).toLocaleString()}
-              </p>
-            </div>
-          ))}
-          {discussions.length === 0 && (
+          {discussions.length > 0 ? (
+            discussions.map((d) => (
+              <div key={d._id} className="p-3 border rounded-lg bg-gray-50">
+                <p className="text-sm text-gray-800">
+                  <span className="font-semibold text-primary-700">
+                    {d.studentId?.name || "Student"}:
+                  </span>{" "}
+                  {d.message}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {new Date(d.createdAt).toLocaleString()}
+                </p>
+              </div>
+            ))
+          ) : (
             <p className="text-gray-600">No discussions yet. Be the first!</p>
           )}
         </div>
@@ -132,10 +138,7 @@ const CourseLearn = () => {
             placeholder="Write a message..."
             className="flex-1 input-field"
           />
-          <button
-            onClick={handleSend}
-            className="btn-primary flex items-center"
-          >
+          <button onClick={handleSend} className="btn-primary flex items-center">
             <Send className="w-4 h-4 mr-1" /> Send
           </button>
         </div>

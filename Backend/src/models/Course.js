@@ -14,7 +14,20 @@ const SectionSchema = new Schema({
   lessonsCount: { type: Number, default: 0 },
   description: String,
 });
-
+const RecordingSchema = new Schema({
+  title: { type: String, required: true }, // e.g. "Aptitude Basics"
+  description: { type: String },
+  videoUrl: {
+    type: String,
+    required: true,
+    validate: {
+      validator: (v) => /^https?:\/\/.+/i.test(v), // any video link
+      message: "Invalid URL format"
+    }
+  },
+  duration: { type: Number }, // optional, in minutes
+  uploadedAt: { type: Date, default: Date.now }
+});
 const CourseSchema = new Schema({
   title: { type: String, required: true },
   description: String,
@@ -23,17 +36,23 @@ const CourseSchema = new Schema({
   price: { type: Number, default: 0 },
   currency: { type: String, default: 'INR' },
   category: { type: String, default: 'General' },
-  startDate: Date,             // ✅ starting date
-  durationWeeks: Number,       // ✅ duration
+  startDate: Date,              // ✅ course start date
+  duration: Number,             // ✅ unified field
   level: { type: String, default: 'Beginner' },
   isPaid: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
   sessions: [SessionSchema],
   sections: [SectionSchema],
   enrolledStudents: [{ type: Schema.Types.ObjectId, ref: 'Student' }],
-  createdBy: { type: Schema.Types.ObjectId },
+  createdBy: { type: Schema.Types.ObjectId, ref: 'Student' },
   createdAt: { type: Date, default: Date.now },
-});
+   recordings: [RecordingSchema],   // ✅ recordings array
+  recordingsPrice: {
+    type: Number,
+    default: 0,
+    min: [0, "Price cannot be negative"]
+  }
 
+});
 
 module.exports = mongoose.model('Course', CourseSchema);

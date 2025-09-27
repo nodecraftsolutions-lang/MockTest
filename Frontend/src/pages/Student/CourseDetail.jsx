@@ -76,7 +76,9 @@ const CourseDetail = () => {
         <div className="space-y-2 text-gray-700">
           <div className="flex items-center">
             <DollarSign className="w-5 h-5 mr-2 text-green-600" />
-            <span className="font-semibold">{course.price > 0 ? `₹${course.price}` : "Free"}</span>
+            <span className="font-semibold">
+              {course.price > 0 ? `₹${course.price}` : "Free"}
+            </span>
           </div>
           {course.startDate && (
             <div className="flex items-center">
@@ -84,10 +86,10 @@ const CourseDetail = () => {
               Starts on {new Date(course.startDate).toLocaleDateString()}
             </div>
           )}
-          {course.durationWeeks && (
+          {course.duration && (
             <div className="flex items-center">
               <Clock className="w-5 h-5 mr-2 text-purple-600" />
-              {course.durationWeeks} weeks
+              {course.duration} weeks
             </div>
           )}
         </div>

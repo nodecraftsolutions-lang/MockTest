@@ -68,7 +68,16 @@ const studentSchema = new mongoose.Schema({
       enum: ['light', 'dark'],
       default: 'light'
     }
-  }
+  },
+
+  // ✅ Added enrollment tracking here
+  enrolledCompanies: [
+    {
+      companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company" },
+      enrolledAt: { type: Date, default: Date.now }
+    }
+  ]
+
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
@@ -81,14 +90,14 @@ studentSchema.index({ activeSessionId: 1 });
 studentSchema.index({ createdAt: -1 });
 
 // Virtual for full name display
-studentSchema.virtual('displayName').get(function() {
+studentSchema.virtual('displayName').get(function () {
   return this.name;
 });
 
 // Hash password before saving
-studentSchema.pre('save', async function(next) {
+studentSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
-  
+
   try {
     const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password, salt);
@@ -99,33 +108,33 @@ studentSchema.pre('save', async function(next) {
 });
 
 // Compare password method
-studentSchema.methods.comparePassword = async function(candidatePassword) {
+studentSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
 // Update last active timestamp
-studentSchema.methods.updateLastActive = function() {
+studentSchema.methods.updateLastActive = function () {
   this.lastActiveAt = new Date();
   return this.save({ validateBeforeSave: false });
 };
 
 // Generate reset password token
-studentSchema.methods.generateResetPasswordToken = function() {
+studentSchema.methods.generateResetPasswordToken = function () {
   const crypto = require('crypto');
   const resetToken = crypto.randomBytes(20).toString('hex');
-  
+
   this.resetPasswordToken = crypto
     .createHash('sha256')
     .update(resetToken)
     .digest('hex');
-  
+
   this.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
-  
+
   return resetToken;
 };
 
 // Remove sensitive data from JSON output
-studentSchema.methods.toJSON = function() {
+studentSchema.methods.toJSON = function () {
   const student = this.toObject();
   delete student.password;
   delete student.resetPasswordToken;

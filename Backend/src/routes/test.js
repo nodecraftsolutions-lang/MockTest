@@ -3,55 +3,139 @@ const { body, validationResult } = require('express-validator');
 const multer = require('multer');
 const csv = require('csv-parser');
 const fs = require('fs');
+const path = require('path');
 const { auth, adminAuth, optionalAuth } = require('../middlewares/auth');
 const Test = require('../models/Test');
 const Company = require('../models/Company');
 const Attempt = require('../models/Attempt');
 const Order = require('../models/Order');
 const QuestionBank = require('../models/QuestionBank');
+const Enrollment = require('../models/Enrollment'); // add at top with other models
+
 
 const router = express.Router();
 
-// Configure multer for file uploads
+// Multer config
+// ---------------------------------------------
 const upload = multer({
   dest: 'uploads/questions/',
-  limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
-  },
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (req, file, cb) => {
-    const allowedTypes = /csv|json|xlsx/;
-    const extname = allowedTypes.test(file.originalname.toLowerCase());
-    
-    if (extname) {
-      return cb(null, true);
-    } else {
-      cb(new Error('Only CSV, JSON, and Excel files are allowed'));
-    }
+    const allowed = /csv|json|xls|xlsx/;
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowed.test(ext)) return cb(null, true);
+    cb(new Error('Only CSV, JSON, or Excel files are allowed'));
   }
 });
 
-// @route   GET /api/v1/tests
-// @desc    Get tests with filters
-// @access  Public
+// ---------------------------------------------
+// Helper: parse file into questions[]
+// ---------------------------------------------
+async function parseQuestions(filePath, ext, section, sectionName) {
+  let questions = [];
+
+  if (ext === 'csv') {
+    const rows = [];
+    await new Promise((resolve, reject) => {
+      fs.createReadStream(filePath)
+        .pipe(csv())
+        .on('data', row => rows.push(row))
+        .on('end', resolve)
+        .on('error', reject);
+    });
+
+    questions = rows.map(row => {
+      const q = {
+        questionText: row.questionText || row.question,
+        questionType: row.questionType || 'single',
+        options: [
+          { text: row.option1, isCorrect: false },
+          { text: row.option2, isCorrect: false },
+          { text: row.option3, isCorrect: false },
+          { text: row.option4, isCorrect: false }
+        ].filter(o => o.text),
+        correctAnswer: row.correctAnswer,
+        explanation: row.explanation || '',
+        section: sectionName,
+        difficulty: row.difficulty || 'Medium',
+        marks: section.marksPerQuestion,
+        negativeMarks: section.negativeMarking,
+        tags: row.tags ? row.tags.split(',').map(t => t.trim()) : []
+      };
+      const correctIdx = parseInt(q.correctAnswer) - 1;
+      if (correctIdx >= 0 && correctIdx < q.options.length) q.options[correctIdx].isCorrect = true;
+      return q;
+    });
+  }
+
+  if (ext === 'json') {
+    const content = fs.readFileSync(filePath, 'utf8');
+    const data = JSON.parse(content);
+    questions = data.map(item => {
+      const q = {
+        questionText: item.questionText,
+        questionType: item.questionType || 'single',
+        options: item.options || [
+          { text: item.option1, isCorrect: false },
+          { text: item.option2, isCorrect: false },
+          { text: item.option3, isCorrect: false },
+          { text: item.option4, isCorrect: false }
+        ].filter(o => o.text),
+        correctAnswer: item.correctAnswer,
+        explanation: item.explanation || '',
+        section: sectionName,
+        difficulty: item.difficulty || 'Medium',
+        marks: section.marksPerQuestion,
+        negativeMarks: section.negativeMarking,
+        tags: item.tags ? (Array.isArray(item.tags) ? item.tags : item.tags.split(',').map(t => t.trim())) : []
+      };
+      if (typeof q.correctAnswer === 'number') {
+        const correctIdx = q.correctAnswer - 1;
+        if (correctIdx >= 0 && correctIdx < q.options.length) q.options[correctIdx].isCorrect = true;
+      }
+      return q;
+    });
+  }
+
+  if (ext === 'xls' || ext === 'xlsx') {
+    const workbook = xlsx.readFile(filePath);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = xlsx.utils.sheet_to_json(sheet);
+    questions = rows.map(row => ({
+      questionText: row.questionText || row.question,
+      questionType: row.questionType || 'single',
+      options: [
+        { text: row.option1, isCorrect: false },
+        { text: row.option2, isCorrect: false },
+        { text: row.option3, isCorrect: false },
+        { text: row.option4, isCorrect: false }
+      ].filter(o => o.text),
+      correctAnswer: row.correctAnswer,
+      explanation: row.explanation || '',
+      section: sectionName,
+      difficulty: row.difficulty || 'Medium',
+      marks: section.marksPerQuestion,
+      negativeMarks: section.negativeMarking,
+      tags: row.tags ? row.tags.split(',').map(t => t.trim()) : []
+    }));
+  }
+
+  return questions.filter(q => q.questionText && q.options.length >= 2 && q.correctAnswer);
+}
+
+
+// ---------------------------------------------
+// GET /api/v1/tests
+// ---------------------------------------------
 router.get('/', optionalAuth, async (req, res) => {
   try {
-    const { 
-      page = 1, 
-      limit = 20, 
-      type, 
-      companyId, 
-      difficulty, 
-      search,
-      featured 
-    } = req.query;
-    
+    const { page = 1, limit = 20, type, companyId, difficulty, search, featured } = req.query;
     const query = { isActive: true };
-    
+
     if (type) query.type = type;
     if (companyId) query.companyId = companyId;
     if (difficulty) query.difficulty = difficulty;
     if (featured === 'true') query.isFeatured = true;
-    
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: 'i' } },
@@ -79,67 +163,41 @@ router.get('/', optionalAuth, async (req, res) => {
         }
       }
     });
-
   } catch (error) {
     console.error('Get tests error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get tests'
-    });
+    res.status(500).json({ success: false, message: 'Failed to get tests' });
   }
 });
 
-// @route   GET /api/v1/tests/:id
-// @desc    Get test details
-// @access  Public
+// ---------------------------------------------
+// GET /api/v1/tests/:id
+// ---------------------------------------------
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
-    const test = await Test.findOne({ 
-      _id: req.params.id, 
-      isActive: true 
-    })
-    .populate('companyId', 'name logoUrl category defaultPattern')
-    .select('-questions'); // Don't send questions in basic details
+    const test = await Test.findOne({ _id: req.params.id, isActive: true })
+      .populate('companyId', 'name logoUrl category defaultPattern')
+      .select('-generatedQuestions');
 
-    if (!test) {
-      return res.status(404).json({
-        success: false,
-        message: 'Test not found'
-      });
-    }
+    if (!test) return res.status(404).json({ success: false, message: 'Test not found' });
+    if (!test.isAvailable()) return res.status(400).json({ success: false, message: 'Test not available' });
 
-    // Check if test is available
-    if (!test.isAvailable()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Test is not currently available'
-      });
-    }
-
-    // Get test statistics
     const statistics = await test.getStatistics();
-
-    // If user is logged in, check their attempts
     let userAttempts = [];
     let canAttempt = true;
-    
-    if (req.student) {
-      userAttempts = await Attempt.getStudentAttempts(req.student.id, test._id);
-      canAttempt = userAttempts.length < test.attemptsAllowed;
-      
-      // For paid tests, check if user has purchased
-      if (test.type === 'paid') {
-        const purchasedOrder = await Order.findOne({
-          studentId: req.student.id,
-          'items.testId': test._id,
-          paymentStatus: 'completed'
-        });
-        
-        if (!purchasedOrder) {
-          canAttempt = false;
-        }
-      }
-    }
+
+if (req.student) {
+  userAttempts = await Attempt.getStudentAttempts(req.student.id, test._id);
+  canAttempt = userAttempts.length < test.attemptsAllowed;
+
+  if (test.type === 'paid') {
+    const enrolled = await Enrollment.findOne({
+      studentId: req.student.id,
+      testId: test._id,
+      status: 'enrolled'
+    });
+    canAttempt = !!enrolled;
+  }
+}
 
     res.json({
       success: true,
@@ -152,43 +210,30 @@ router.get('/:id', optionalAuth, async (req, res) => {
         }
       }
     });
-
   } catch (error) {
     console.error('Get test error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get test details'
-    });
+    res.status(500).json({ success: false, message: 'Failed to get test details' });
   }
 });
 
-// @route   GET /api/v1/tests/:id/preview
-// @desc    Get test preview (sample questions)
-// @access  Public
+// ---------------------------------------------
+// GET /api/v1/tests/:id/preview
+// ---------------------------------------------
 router.get('/:id/preview', async (req, res) => {
   try {
-    const test = await Test.findOne({ 
-      _id: req.params.id, 
-      isActive: true 
-    })
-    .populate('companyId', 'name logoUrl')
-    .select('title description type price duration totalQuestions sections instructions questions');
+    const test = await Test.findOne({ _id: req.params.id, isActive: true })
+      .populate('companyId', 'name logoUrl')
+      .select('title description type price duration totalQuestions sections instructions generatedQuestions');
 
-    if (!test) {
-      return res.status(404).json({
-        success: false,
-        message: 'Test not found'
-      });
-    }
+    if (!test) return res.status(404).json({ success: false, message: 'Test not found' });
 
-    // Get sample questions (first 3 questions without correct answers)
-    const sampleQuestions = test.questions.slice(0, 3).map(question => ({
-      questionText: question.questionText,
-      questionType: question.questionType,
-      options: question.options.map(option => ({ text: option.text })),
-      section: question.section,
-      difficulty: question.difficulty,
-      marks: question.marks
+    const sampleQuestions = test.generatedQuestions.slice(0, 3).map(q => ({
+      questionText: q.questionText,
+      questionType: q.questionType,
+      options: q.options.map(o => ({ text: o.text })),
+      section: q.section,
+      difficulty: q.difficulty,
+      marks: q.marks
     }));
 
     res.json({
@@ -209,81 +254,64 @@ router.get('/:id/preview', async (req, res) => {
         sampleQuestions
       }
     });
-
   } catch (error) {
     console.error('Get test preview error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get test preview'
-    });
+    res.status(500).json({ success: false, message: 'Failed to get test preview' });
   }
 });
 
-// @route   POST /api/v1/tests/:id/launch
-// @desc    Launch test (create or resume attempt)
-// @access  Private
+// ---------------------------------------------
+// POST /api/v1/tests/:id/launch
+// ---------------------------------------------
 router.post('/:id/launch', auth, async (req, res) => {
   try {
     const test = await Test.findOne({ _id: req.params.id, isActive: true });
-    if (!test) {
-      return res.status(404).json({ success: false, message: 'Test not found' });
-    }
+    if (!test) return res.status(404).json({ success: false, message: 'Test not found' });
+    if (!test.isAvailable()) return res.status(400).json({ success: false, message: 'Test not available' });
 
-    // Check if test is available
-    if (!test.isAvailable()) {
-      return res.status(400).json({ success: false, message: 'Test is not currently available' });
-    }
-
-    // Check existing attempts
     const existingAttempts = await Attempt.getStudentAttempts(req.student.id, test._id);
 
-    // Handle in-progress attempt
-    const inProgressAttempt = existingAttempts.find(a => a.status === 'in-progress');
-    if (inProgressAttempt) {
-      if (inProgressAttempt.isExpired()) {
-        await inProgressAttempt.autoSubmitIfExpired();
+    const inProgress = existingAttempts.find(a => a.status === 'in-progress');
+    if (inProgress) {
+      if (inProgress.isExpired()) {
+        await inProgress.autoSubmitIfExpired();
       } else {
         return res.json({
           success: true,
           message: 'Resuming your in-progress attempt',
           data: {
-            attemptId: inProgressAttempt._id,
-            startTime: inProgressAttempt.startTime,
-            duration: inProgressAttempt.duration,
+            attemptId: inProgress._id,
+            startTime: inProgress.startTime,
+            duration: inProgress.duration,
             serverTime: new Date().toISOString()
           }
         });
       }
     }
 
-    // Check if student has already completed this test
-    const completedAttempts = existingAttempts.filter(a => 
-      a.status === 'submitted' || a.status === 'auto-submitted'
-    );
-    
-    if (completedAttempts.length >= test.attemptsAllowed) {
-      return res.status(400).json({
-        success: false,
-        message: 'You have already completed this test. Only one attempt is allowed.'
-      });
+    const completed = existingAttempts.filter(a => a.status === 'submitted' || a.status === 'auto-submitted');
+    if (completed.length >= test.attemptsAllowed) {
+      return res.status(400).json({ success: false, message: 'You have already completed this test' });
     }
 
-    // For paid tests, verify purchase
     if (test.type === 'paid') {
-      const purchasedOrder = await Order.findOne({
-        studentId: req.student.id,
-        'items.testId': test._id,
-        paymentStatus: 'completed'
-      });
-      if (!purchasedOrder) {
-        return res.status(403).json({
-          success: false,
-          message: 'Please purchase this test to attempt it'
-        });
-      }
-    }
+  const enrolled = await Enrollment.findOne({
+    studentId: req.student.id,
+    testId: test._id,
+    status: 'enrolled'
+  });
 
-    // Create new attempt
+  const purchasedOrder = await Order.findOne({
+    studentId: req.student.id,
+    'items.testId': test._id,
+    paymentStatus: 'completed'
+  });
+
+  if (!enrolled && !purchasedOrder) {
+    return res.status(403).json({ success: false, message: 'Please enroll or purchase this test' });
+  }
+}
+
     const attempt = new Attempt({
       studentId: req.student.id,
       testId: test._id,
@@ -317,85 +345,33 @@ router.post('/:id/launch', auth, async (req, res) => {
   }
 });
 
-// @route   GET /api/v1/tests/:id/questions
-// @desc    Get test questions for active attempt
-// @access  Private
+// ---------------------------------------------
+// GET /api/v1/tests/:id/questions
+// ---------------------------------------------
 router.get('/:id/questions', auth, async (req, res) => {
   try {
     const { attemptId } = req.query;
+    if (!attemptId) return res.status(400).json({ success: false, message: 'Attempt ID is required' });
 
-    console.log("🔍 Questions API called");
-    console.log("AttemptId from query:", attemptId);
-    console.log("Student from token:", req.student?.id);
-
-    if (!attemptId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Attempt ID is required'
-      });
-    }
-
-    // Find attempt
     const attempt = await Attempt.findById(attemptId);
-    console.log("Found attempt:", attempt);
+    if (!attempt) return res.status(404).json({ success: false, message: 'Attempt not found' });
+    if (attempt.studentId.toString() !== req.student.id.toString())
+      return res.status(403).json({ success: false, message: 'This attempt does not belong to you' });
+    if (attempt.testId.toString() !== req.params.id.toString())
+      return res.status(400).json({ success: false, message: 'Attempt does not match test' });
+    if (attempt.status !== 'in-progress')
+      return res.status(400).json({ success: false, message: 'Attempt is not active' });
 
-    if (!attempt) {
-      return res.status(404).json({
-        success: false,
-        message: 'Attempt not found'
-      });
-    }
-
-    // Validate student
-    if (attempt.studentId.toString() !== req.student.id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: 'This attempt does not belong to the logged in student'
-      });
-    }
-
-    // Validate test
-    if (attempt.testId.toString() !== req.params.id.toString()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Attempt does not match the requested test'
-      });
-    }
-
-    // Validate status
-    if (attempt.status !== 'in-progress') {
-      return res.status(400).json({
-        success: false,
-        message: `Attempt is not active (status: ${attempt.status})`
-      });
-    }
-
-    // Expiry check
-    if (attempt.isExpired && attempt.isExpired()) {
-      await attempt.autoSubmitIfExpired();
-      return res.status(410).json({
-        success: false,
-        message: 'Attempt has expired'
-      });
-    }
-
-    // Fetch test
     const test = await Test.findById(req.params.id).select('generatedQuestions sections instructions isGenerated');
-    if (!test) {
-      return res.status(404).json({
-        success: false,
-        message: 'Test not found'
-      });
-    }
+    if (!test) return res.status(404).json({ success: false, message: 'Test not found' });
 
-    // Generate questions if not already generated
-    if (!test.isGenerated || !test.generatedQuestions || test.generatedQuestions.length === 0) {
-      await test.generateQuestions();
-      await test.save();
-    }
+    if (!test.generatedQuestions || test.generatedQuestions.length === 0) {
+  await test.generateQuestions();
+  await test.reload();
+}
 
-    // Strip correct answers
-    const questionsForAttempt = test.generatedQuestions.map(q => ({
+
+    const questions = test.generatedQuestions.map(q => ({
       _id: q._id,
       questionText: q.questionText,
       questionType: q.questionType,
@@ -407,172 +383,83 @@ router.get('/:id/questions', auth, async (req, res) => {
       tags: q.tags
     }));
 
-    return res.json({
+    res.json({
       success: true,
       data: {
-        questions: questionsForAttempt,
+        questions,
         sections: test.sections,
         instructions: test.instructions,
         savedAnswers: attempt.answers || []
       }
     });
   } catch (error) {
-    console.error('❌ Get test questions error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get test questions',
-      error: error.message
-    });
+    console.error('Get test questions error:', error);
+    res.status(500).json({ success: false, message: 'Failed to get test questions' });
   }
 });
 
-// @route   POST /api/v1/tests/:id/save-answer
-// @desc    Save answer during exam
-// @access  Private
+// ---------------------------------------------
+// POST /api/v1/tests/:id/save-answer
+// ---------------------------------------------
 router.post('/:id/save-answer', auth, async (req, res) => {
   try {
     const { attemptId, questionId, selectedOptions, isMarkedForReview, section } = req.body;
-    
+
     const attempt = await Attempt.findOne({
       _id: attemptId,
       studentId: req.student.id,
       status: 'in-progress'
     });
+    if (!attempt) return res.status(404).json({ success: false, message: 'Active attempt not found' });
 
-    if (!attempt) {
-      return res.status(404).json({
-        success: false,
-        message: 'Active attempt not found'
-      });
-    }
-
-    // Find existing answer or create new one
-    let answerIndex = attempt.answers.findIndex(
-      answer => answer.questionId.toString() === questionId
-    );
-
+    let idx = attempt.answers.findIndex(a => a.questionId.toString() === questionId);
     const answerData = {
-      questionId: questionId,
+      questionId,
       selectedOptions: selectedOptions || [],
       isMarkedForReview: isMarkedForReview || false,
-      section: section,
+      section,
       timeSpent: 0
     };
 
-    if (answerIndex >= 0) {
-      attempt.answers[answerIndex] = { ...attempt.answers[answerIndex], ...answerData };
-    } else {
-      attempt.answers.push(answerData);
-    }
+    if (idx >= 0) attempt.answers[idx] = { ...attempt.answers[idx], ...answerData };
+    else attempt.answers.push(answerData);
 
     await attempt.save();
-
-    res.json({
-      success: true,
-      message: 'Answer saved successfully'
-    });
-
+    res.json({ success: true, message: 'Answer saved successfully' });
   } catch (error) {
     console.error('Save answer error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to save answer'
-    });
+    res.status(500).json({ success: false, message: 'Failed to save answer' });
   }
 });
 
-
-
-// Admin routes below this point
-// @route   POST /api/v1/tests
-// @desc    Create new test (Admin only)
-// @access  Private/Admin
+// ---------------------------------------------
+// POST /api/v1/tests (Admin) - create test
+// ---------------------------------------------
 router.post('/', adminAuth, [
-  body('title')
-    .trim()
-    .isLength({ min: 5, max: 200 })
-    .withMessage('Title must be between 5 and 200 characters'),
-  body('companyId')
-    .isMongoId()
-    .withMessage('Valid company ID is required'),
-  body('type')
-    .isIn(['free', 'paid'])
-    .withMessage('Type must be either free or paid'),
-  body('price')
-    .isNumeric({ min: 0 })
-    .withMessage('Price must be a positive number'),
-  body('duration')
-    .optional()
-    .isInt({ min: 0 })
-    .withMessage('Duration must be at least 0 '),
-  body('sections')
-    .isArray({ min: 1 })
-    .withMessage('At least one section is required')
+  body('title').trim().isLength({ min: 5, max: 200 }).withMessage('Title 5-200 chars'),
+  body('companyId').isMongoId().withMessage('Valid company ID required'),
+  body('type').isIn(['free', 'paid']).withMessage('Type must be free or paid'),
+  body('price').isNumeric({ min: 0 }).withMessage('Price must be >= 0'),
+  body('sections').isArray({ min: 1 }).withMessage('At least one section required')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: errors.array()
-      });
-    }
+    if (!errors.isEmpty())
+      return res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
 
-    const { 
-      title, 
-      description, 
-      companyId, 
-      type, 
-      price, 
-      duration, 
-      sections, 
-      instructions,
-      difficulty,
-      tags,
-      isFeatured,
-      validFrom,
-      validUntil
-    } = req.body;
+    const { title, description, companyId, type, price, duration, sections, instructions, difficulty, tags, isFeatured, validFrom, validUntil } = req.body;
 
-    // Verify company exists
     const company = await Company.findById(companyId);
-    if (!company) {
-      return res.status(404).json({
-        success: false,
-        message: 'Company not found'
-      });
-    }
+    if (!company) return res.status(404).json({ success: false, message: 'Company not found' });
 
-    // Validate price based on type
-    if (type === 'free' && price > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Free tests cannot have a price'
-      });
-    }
+    if (type === 'free' && price > 0)
+      return res.status(400).json({ success: false, message: 'Free tests cannot have a price' });
+    if (type === 'paid' && price <= 0)
+      return res.status(400).json({ success: false, message: 'Paid tests must have price > 0' });
 
-    if (type === 'paid' && price <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Paid tests must have a price greater than 0'
-      });
-    }
-
-    // Check if there's already a free test for this company
     if (type === 'free') {
-      const existingFreeTest = await Test.findOne({ 
-        companyId, 
-        type: 'free', 
-        isActive: true 
-      });
-      
-      if (existingFreeTest) {
-        return res.status(400).json({
-          success: false,
-          message: 'Only one free test is allowed per company'
-        });
-      }
+      const existing = await Test.findOne({ companyId, type: 'free', isActive: true });
+      if (existing) return res.status(400).json({ success: false, message: 'Only one free test per company allowed' });
     }
 
     const test = new Test({
@@ -590,274 +477,154 @@ router.post('/', adminAuth, [
       validFrom: validFrom ? new Date(validFrom) : undefined,
       validUntil: validUntil ? new Date(validUntil) : undefined,
       createdBy: req.student.id,
-      questions: [] // Questions will be added separately
+      generatedQuestions: []
     });
 
     await test.save();
-
-    res.status(201).json({
-      success: true,
-      message: 'Test created successfully',
-      data: {
-        test
-      }
-    });
-
+    res.status(201).json({ success: true, message: 'Test created successfully', data: { test } });
   } catch (error) {
     console.error('Create test error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create test'
-    });
+    res.status(500).json({ success: false, message: 'Failed to create test' });
   }
 });
 
-// @route   POST /api/v1/tests/:id/upload-questions
-// @desc    Upload questions to test (Admin only)
-// @access  Private/Admin
+// ---------------------------------------------
+// POST /api/v1/tests/:id/upload-questions (Admin)
+// Redirects uploads into QuestionBank
+// ---------------------------------------------
 router.post('/:id/upload-questions', adminAuth, upload.single('questionsFile'), async (req, res) => {
   try {
-    const test = await Test.findById(req.params.id);
-    if (!test) {
-      return res.status(404).json({
-        success: false,
-        message: 'Test not found'
-      });
+    const { sectionName } = req.body;
+    if (!sectionName) {
+      return res.status(400).json({ success: false, message: 'sectionName is required' });
+    }
+
+    const test = await Test.findById(req.params.id).populate('companyId');
+    if (!test) return res.status(404).json({ success: false, message: 'Test not found' });
+
+    const section = test.sections.find(s => s.sectionName === sectionName);
+    if (!section) {
+      return res.status(400).json({ success: false, message: `Section "${sectionName}" not found in this test` });
     }
 
     if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: 'Questions file is required'
-      });
+      return res.status(400).json({ success: false, message: 'Questions file is required' });
     }
 
-    const questions = [];
     const filePath = req.file.path;
-    const fileExtension = req.file.originalname.split('.').pop().toLowerCase();
+    const ext = req.file.originalname.split('.').pop().toLowerCase();
 
-    try {
-      if (fileExtension === 'csv') {
-        // Parse CSV file
-        await new Promise((resolve, reject) => {
-          fs.createReadStream(filePath)
-            .pipe(csv())
-            .on('data', (row) => {
-              try {
-                const question = {
-                  questionText: row.questionText || row.question,
-                  questionType: row.type || row.questionType || 'single',
-                  options: [
-                    { text: row.option1, isCorrect: false },
-                    { text: row.option2, isCorrect: false },
-                    { text: row.option3, isCorrect: false },
-                    { text: row.option4, isCorrect: false }
-                  ].filter(opt => opt.text), // Remove empty options
-                  correctAnswer: row.correctAnswer || row.correct,
-                  explanation: row.explanation || '',
-                  section: row.section || 'General',
-                  difficulty: row.difficulty || 'Medium',
-                  marks: parseFloat(row.marks) || 1,
-                  negativeMarks: parseFloat(row.negativeMarks) || 0,
-                  tags: row.tags ? row.tags.split(',').map(tag => tag.trim()) : []
-                };
+    // Reuse parseQuestions helper
+    const questions = await parseQuestions(filePath, ext, section, sectionName);
 
-                // Mark correct option
-                const correctIndex = parseInt(question.correctAnswer) - 1;
-                if (correctIndex >= 0 && correctIndex < question.options.length) {
-                  question.options[correctIndex].isCorrect = true;
-                }
-
-                questions.push(question);
-              } catch (error) {
-                console.error('Error parsing CSV row:', error);
-              }
-            })
-            .on('end', resolve)
-            .on('error', reject);
-        });
-      } else if (fileExtension === 'json') {
-        // Parse JSON file
-        const fileContent = fs.readFileSync(filePath, 'utf8');
-        const jsonData = JSON.parse(fileContent);
-        
-        jsonData.forEach(item => {
-          const question = {
-            questionText: item.questionText,
-            questionType: item.questionType || 'single',
-            options: [
-              { text: item.option1, isCorrect: false },
-              { text: item.option2, isCorrect: false },
-              { text: item.option3, isCorrect: false },
-              { text: item.option4, isCorrect: false }
-            ].filter(opt => opt.text),
-            correctAnswer: item.correctAnswer,
-            explanation: item.explanation || '',
-            section: item.section || 'General',
-            difficulty: item.difficulty || 'Medium',
-            marks: parseFloat(item.marks) || 1,
-            negativeMarks: parseFloat(item.negativeMarks) || 0,
-            tags: item.tags ? item.tags.split(',').map(tag => tag.trim()) : []
-          };
-
-          // Mark correct option
-          const correctIndex = parseInt(question.correctAnswer) - 1;
-          if (correctIndex >= 0 && correctIndex < question.options.length) {
-            question.options[correctIndex].isCorrect = true;
-          }
-
-          questions.push(question);
-        });
-      }
-
-      // Validate questions
-      const validQuestions = questions.filter(q => 
-        q.questionText && 
-        q.options && 
-        q.options.length >= 2 && 
-        q.correctAnswer
-      );
-
-      if (validQuestions.length === 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'No valid questions found in the file'
-        });
-      }
-
-      // Update test with questions
-      test.questions = validQuestions;
-      await test.save();
-
-      // Clean up uploaded file
+    if (!questions.length) {
       fs.unlinkSync(filePath);
-
-      res.json({
-        success: true,
-        message: `Successfully uploaded ${validQuestions.length} questions`,
-        data: {
-          questionsCount: validQuestions.length,
-          invalidQuestions: questions.length - validQuestions.length
-        }
-      });
-
-    } catch (parseError) {
-      // Clean up uploaded file
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-      
-      throw parseError;
+      return res.status(400).json({ success: false, message: 'No valid questions found in file' });
     }
 
+    // ✅ Save into QuestionBank, not Test
+    let bank = await QuestionBank.findOne({ companyId: test.companyId._id, section: sectionName });
+    if (!bank) {
+      bank = new QuestionBank({
+        companyId: test.companyId._id,
+        section: sectionName,
+        title: `${test.companyId.name} - ${sectionName} Bank`,
+        uploadedBy: req.student.id,
+        questions: []
+      });
+    }
+
+    bank.questions.push(...questions);
+    await bank.save();
+
+    fs.unlinkSync(filePath);
+
+    res.json({
+      success: true,
+      message: `Uploaded ${questions.length} questions to QuestionBank section "${sectionName}"`,
+      data: {
+        sectionName,
+        totalQuestionsInBank: bank.questions.length
+      }
+    });
   } catch (error) {
     console.error('Upload questions error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to upload questions',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'File processing error'
-    });
+    res.status(500).json({ success: false, message: 'Failed to upload questions' });
   }
 });
 
-// @route   POST /api/v1/tests/attempts/:id/submit
-// @desc    Submit test attempt with answers
-// @access  Private
+
+// ---------------------------------------------
+// POST /api/v1/tests/attempts/:id/submit
+// ---------------------------------------------
 router.post('/attempts/:id/submit', auth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { answers: submittedAnswers } = req.body;
+    const { answers } = req.body;
 
     const attempt = await Attempt.findById(id).populate('testId');
-    if (!attempt) {
-      return res.status(404).json({ success: false, message: 'Attempt not found' });
-    }
-
-    if (attempt.studentId.toString() !== req.student.id.toString()) {
+    if (!attempt) return res.status(404).json({ success: false, message: 'Attempt not found' });
+    if (attempt.studentId.toString() !== req.student.id.toString())
       return res.status(403).json({ success: false, message: 'Not authorized' });
-    }
-
-    if (attempt.status !== 'in-progress') {
+    if (attempt.status !== 'in-progress')
       return res.status(400).json({ success: false, message: 'Attempt already submitted or expired' });
-    }
 
     const test = attempt.testId;
-
-    // Calculate scores and validate answers
-    let score = 0;
-    let correctAnswers = 0;
-    let incorrectAnswers = 0;
-    let unansweredQuestions = 0;
-    const processedAnswers = [];
+    let score = 0, correct = 0, incorrect = 0, unanswered = 0;
+    const processed = [];
     const sectionWiseScore = {};
 
     test.generatedQuestions.forEach((q) => {
-      const studentAnswer = submittedAnswers[q._id];
+      const studentAnswer = answers[q._id];
       const section = q.section || 'General';
-      
-      // Initialize section if not exists
       if (!sectionWiseScore[section]) {
-        sectionWiseScore[section] = {
-          sectionName: section,
-          totalQuestions: 0,
-          attemptedQuestions: 0,
-          correctAnswers: 0,
-          score: 0,
-          timeSpent: 0
-        };
+        sectionWiseScore[section] = { sectionName: section, totalQuestions: 0, attemptedQuestions: 0, correctAnswers: 0, score: 0 };
       }
-      
       sectionWiseScore[section].totalQuestions++;
-      
-      let isCorrect = false;
-      let marksAwarded = 0;
-      
+
+      let isCorrect = false, marksAwarded = 0;
+
       if (!studentAnswer) {
-        unansweredQuestions++;
+        unanswered++;
       } else {
         sectionWiseScore[section].attemptedQuestions++;
-        
-        // Find correct option
-        const correctOption = q.options.find((opt) => opt.isCorrect);
-        if (correctOption && correctOption.text === studentAnswer) {
+        const correctOpt = q.options.find(o => o.isCorrect);
+        if (correctOpt && correctOpt.text === studentAnswer) {
           isCorrect = true;
           marksAwarded = q.marks || 1;
           score += marksAwarded;
-          correctAnswers++;
+          correct++;
           sectionWiseScore[section].correctAnswers++;
           sectionWiseScore[section].score += marksAwarded;
         } else {
-          const negativeMarks = q.negativeMarks || 0;
-          marksAwarded = -negativeMarks;
-          score -= negativeMarks;
-          incorrectAnswers++;
+          const neg = q.negativeMarks || 0;
+          marksAwarded = -neg;
+          score -= neg;
+          incorrect++;
         }
       }
-      
-      // Store processed answer
-      processedAnswers.push({
+
+      processed.push({
         questionId: q._id,
         selectedOptions: studentAnswer ? [studentAnswer] : [],
         isMarkedForReview: false,
         timeSpent: 0,
-        isCorrect: isCorrect,
-        marksAwarded: marksAwarded,
-        section: section
+        isCorrect,
+        marksAwarded,
+        section
       });
     });
 
-    // Calculate percentage and pass status
     const percentage = test.totalQuestions > 0 ? Math.round((score / test.totalMarks) * 100) : 0;
     const isPassed = percentage >= (test.passingMarks || 60);
-    
-    // Update attempt with all calculated data
-    attempt.answers = processedAnswers;
+
+    attempt.answers = processed;
     attempt.score = score;
     attempt.percentage = percentage;
-    attempt.correctAnswers = correctAnswers;
-    attempt.incorrectAnswers = incorrectAnswers;
-    attempt.unansweredQuestions = unansweredQuestions;
-    attempt.attemptedQuestions = correctAnswers + incorrectAnswers;
+    attempt.correctAnswers = correct;
+    attempt.incorrectAnswers = incorrect;
+    attempt.unansweredQuestions = unanswered;
+    attempt.attemptedQuestions = correct + incorrect;
     attempt.sectionWiseScore = Object.values(sectionWiseScore);
     attempt.isPassed = isPassed;
     attempt.status = 'submitted';
@@ -865,8 +632,6 @@ router.post('/attempts/:id/submit', auth, async (req, res) => {
     attempt.submittedAt = new Date();
 
     await attempt.save();
-    
-    // Calculate rank and percentile
     await attempt.calculateRankAndPercentile();
 
     res.json({
@@ -876,9 +641,9 @@ router.post('/attempts/:id/submit', auth, async (req, res) => {
         attemptId: attempt._id,
         score,
         percentage,
-        correctAnswers,
-        incorrectAnswers,
-        unansweredQuestions,
+        correctAnswers: correct,
+        incorrectAnswers: incorrect,
+        unansweredQuestions: unanswered,
         isPassed,
         rank: attempt.rank,
         percentile: attempt.percentile
@@ -890,39 +655,81 @@ router.post('/attempts/:id/submit', auth, async (req, res) => {
   }
 });
 
-// @route   POST /api/v1/tests/:id/generate-questions
-// @desc    Generate questions for test from question banks
-// @access  Private/Admin
+// ---------------------------------------------
+// POST /api/v1/tests/:id/generate-questions (Admin)
+// ---------------------------------------------
 router.post('/:id/generate-questions', adminAuth, async (req, res) => {
   try {
     const test = await Test.findById(req.params.id);
-    if (!test) {
-      return res.status(404).json({
-        success: false,
-        message: 'Test not found'
-      });
-    }
+    if (!test) return res.status(404).json({ success: false, message: 'Test not found' });
 
-    // Generate questions from question banks
     await test.generateQuestions();
+
+    // ✅ reload after save to get updated totals
+    const updatedTest = await Test.findById(test._id);
 
     res.json({
       success: true,
       message: 'Questions generated successfully',
       data: {
-        totalQuestions: test.totalQuestions,
-        sectionsGenerated: test.sections.length
+        totalQuestions: updatedTest.totalQuestions,
+        totalMarks: updatedTest.totalMarks,
+        sectionsGenerated: updatedTest.sections.length
       }
     });
-
   } catch (error) {
     console.error('Generate questions error:', error);
+    res.status(500).json({ success: false, message: 'Failed to generate questions' });
+  }
+});
+
+// POST /api/v1/enrollments/company/:companyId
+router.post('/company/:companyId', auth, async (req, res) => {
+  try {
+    const { companyId } = req.params;
+
+    // Get all paid tests for that company
+    const tests = await Test.find({ companyId, type: 'paid', isActive: true });
+
+    if (!tests.length) {
+      return res.status(404).json({
+        success: false,
+        message: 'No paid tests found for this company'
+      });
+    }
+
+    const enrollments = [];
+
+    for (const test of tests) {
+      // Check if already enrolled
+      const existing = await Enrollment.findOne({
+        studentId: req.student.id,
+        testId: test._id
+      });
+      if (!existing) {
+        const enrollment = new Enrollment({
+          studentId: req.student.id,
+          testId: test._id,
+          status: 'enrolled'
+        });
+        await enrollment.save();
+        enrollments.push(enrollment);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Enrolled to ${enrollments.length} paid test(s) for this company`,
+      data: enrollments
+    });
+  } catch (error) {
+    console.error('Company enroll error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to generate questions',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Generation error'
+      message: 'Failed to enroll to company tests'
     });
   }
 });
+
 
 module.exports = router;

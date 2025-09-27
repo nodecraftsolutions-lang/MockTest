@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const { auth, adminAuth, optionalAuth } = require('../middlewares/auth');
 const Company = require('../models/Company');
 const Test = require('../models/Test');
+const Student = require('../models/Student');
 
 const router = express.Router();
 
@@ -193,9 +194,10 @@ router.post('/', adminAuth, [
     .trim()
     .notEmpty()
     .withMessage('Section name is required'),
-  body('defaultPattern.*.questions')
-    .isInt({ min: 1 })
-    .withMessage('Number of questions must be at least 1'),
+  body('defaultPattern.*.questionCount')
+  .isInt({ min: 1 })
+  .withMessage('Number of questions must be at least 1'),
+
   body('defaultPattern.*.duration')
     .isInt({ min: 1 })
     .withMessage('Duration must be at least 1 minute'),
@@ -436,6 +438,89 @@ router.get('/:id/stats', adminAuth, async (req, res) => {
       success: false,
       message: 'Failed to get company statistics'
     });
+  }
+});
+
+// Get company details
+router.get("/:id", async (req, res) => {
+  try {
+    const company = await Company.findById(req.params.id);
+    if (!company) {
+      return res.status(404).json({ success: false, message: "Company not found" });
+    }
+    res.json({ success: true, data: { company } });
+  } catch (err) {
+    console.error("Get company error:", err);
+    res.status(500).json({ success: false, message: "Failed to get company" });
+  }
+});
+
+// Get company exam pattern
+router.get("/:id/pattern", async (req, res) => {
+  try {
+    const company = await Company.findById(req.params.id);
+    if (!company) {
+      return res.status(404).json({ success: false, message: "Company not found" });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        companyName: company.name,
+        totalQuestions: company.totalQuestions,
+        totalDuration: company.totalDuration,
+        cutoffPercentage: company.metadata.cutoffPercentage,
+        instructions: company.metadata.instructions,
+        pattern: company.defaultPattern || []
+      }
+    });
+  } catch (err) {
+    console.error("Get company pattern error:", err);
+    res.status(500).json({ success: false, message: "Failed to get company pattern" });
+  }
+});
+// @route   POST /api/v1/companies/:id/enroll
+// @desc    Enroll a student into a company's paid tests
+// @access  Private/Student
+router.post('/:id/enroll', auth, async (req, res) => {
+  try {
+    const company = await Company.findById(req.params.id);
+    if (!company) {
+      return res.status(404).json({ success: false, message: 'Company not found' });
+    }
+
+    const student = await Student.findById(req.student.id);
+
+    // Already enrolled?
+    if (student.enrolledCompanies.some(c => c.companyId.toString() === company._id.toString())) {
+      return res.status(400).json({ success: false, message: 'Already enrolled in this company' });
+    }
+
+    student.enrolledCompanies.push({ companyId: company._id });
+    await student.save();
+
+    res.json({ success: true, message: 'Enrolled successfully', data: student.enrolledCompanies });
+  } catch (error) {
+    console.error('Enroll error:', error);
+    res.status(500).json({ success: false, message: 'Failed to enroll' });
+  }
+});
+
+// @route   GET /api/v1/companies/:id/enrollment-status
+// @desc    Check if student is enrolled in a company
+// @access  Private/Student
+router.get('/:id/enrollment-status', auth, async (req, res) => {
+  try {
+    const student = await Student.findById(req.student.id);
+
+    const isEnrolled = student.enrolledCompanies.some(
+      c => c.companyId.toString() === req.params.id
+    );
+
+    res.json({ success: true, data: { isEnrolled } });
+  } catch (error) {
+    console.error('Enrollment status error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch enrollment status' });
   }
 });
 

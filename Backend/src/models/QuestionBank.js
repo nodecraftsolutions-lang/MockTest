@@ -30,11 +30,6 @@ const questionSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  difficulty: {
-    type: String,
-    enum: ['Easy', 'Medium', 'Hard'],
-    default: 'Medium'
-  },
   marks: {
     type: Number,
     default: 1,
@@ -52,7 +47,7 @@ const questionSchema = new mongoose.Schema({
   mediaUrls: [{
     type: String,
     validate: {
-      validator: function(v) {
+      validator: function (v) {
         return /^https?:\/\/.+\.(jpg|jpeg|png|gif|svg|pdf)$/i.test(v);
       },
       message: 'Please provide a valid media URL'
@@ -67,9 +62,9 @@ const questionSchema = new mongoose.Schema({
     ref: 'Student',
     required: true
   }
-}, { 
+}, {
   timestamps: true,
-  _id: true 
+  _id: true
 });
 
 const questionBankSchema = new mongoose.Schema({
@@ -81,8 +76,7 @@ const questionBankSchema = new mongoose.Schema({
   section: {
     type: String,
     required: [true, 'Section is required'],
-    enum: ['Aptitude', 'Reasoning', 'Technical', 'English', 'General Knowledge', 'Programming'],
-    trim: true
+    trim: true // ✅ removed hardcoded enum to allow custom sections
   },
   title: {
     type: String,
@@ -97,11 +91,6 @@ const questionBankSchema = new mongoose.Schema({
   totalQuestions: {
     type: Number,
     default: 0
-  },
-  difficulty: {
-    type: String,
-    enum: ['Easy', 'Medium', 'Hard'],
-    default: 'Medium'
   },
   isActive: {
     type: Boolean,
@@ -129,13 +118,16 @@ const questionBankSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-// Indexes for performance
+// ---------------------------------------------
+// Indexes
+// ---------------------------------------------
 questionBankSchema.index({ companyId: 1, section: 1 });
 questionBankSchema.index({ isActive: 1 });
-questionBankSchema.index({ 'questions.difficulty': 1 });
 questionBankSchema.index({ 'questions.tags': 1 });
 
+// ---------------------------------------------
 // Virtual for company details
+// ---------------------------------------------
 questionBankSchema.virtual('company', {
   ref: 'Company',
   localField: 'companyId',
@@ -143,12 +135,14 @@ questionBankSchema.virtual('company', {
   justOne: true
 });
 
-// Calculate total questions before saving
-questionBankSchema.pre('save', function(next) {
+// ---------------------------------------------
+// Pre-save hook to calculate totals
+// ---------------------------------------------
+questionBankSchema.pre('save', function (next) {
   if (this.questions && this.questions.length > 0) {
     this.totalQuestions = this.questions.filter(q => q.isActive).length;
     this.metadata.questionsCount = this.questions.length;
-    this.metadata.validQuestions = this.questions.filter(q => 
+    this.metadata.validQuestions = this.questions.filter(q =>
       q.questionText && q.options && q.options.length >= 2 && q.correctAnswer
     ).length;
     this.metadata.invalidQuestions = this.questions.length - this.metadata.validQuestions;
@@ -156,24 +150,25 @@ questionBankSchema.pre('save', function(next) {
   next();
 });
 
-// Static method to get random questions from a section
-questionBankSchema.statics.getRandomQuestions = async function(companyId, section, count, difficulty = null) {
+// ---------------------------------------------
+// Static: Get random questions for a section
+// ---------------------------------------------
+questionBankSchema.statics.getRandomQuestions = async function (companyId, section, count) {
   const pipeline = [
-    { 
-      $match: { 
-        companyId: mongoose.Types.ObjectId(companyId),
-        section: section,
+    {
+      $match: {
+        companyId: new mongoose.Types.ObjectId(companyId),
+        section,
         isActive: true
       }
     },
     { $unwind: '$questions' },
-    { 
-      $match: { 
-        'questions.isActive': true,
-        ...(difficulty && { 'questions.difficulty': difficulty })
+    {
+      $match: {
+        'questions.isActive': true
       }
     },
-    { $sample: { size: count } },
+    { $sample: { size: count } }, // ✅ just pick N random
     {
       $project: {
         _id: '$questions._id',
@@ -182,7 +177,6 @@ questionBankSchema.statics.getRandomQuestions = async function(companyId, sectio
         options: '$questions.options',
         correctAnswer: '$questions.correctAnswer',
         explanation: '$questions.explanation',
-        difficulty: '$questions.difficulty',
         marks: '$questions.marks',
         negativeMarks: '$questions.negativeMarks',
         tags: '$questions.tags',
@@ -192,35 +186,29 @@ questionBankSchema.statics.getRandomQuestions = async function(companyId, sectio
     }
   ];
 
-  return await this.aggregate(pipeline);
+  return this.aggregate(pipeline);
 };
 
-// Static method to get section statistics
-questionBankSchema.statics.getSectionStats = async function(companyId, section) {
+
+/// ---------------------------------------------
+// Static: Get section stats (just count questions)
+// ---------------------------------------------
+questionBankSchema.statics.getSectionStats = async function (companyId, section) {
   const result = await this.aggregate([
-    { 
-      $match: { 
-        companyId: mongoose.Types.ObjectId(companyId),
-        section: section,
+    {
+      $match: {
+        companyId: new mongoose.Types.ObjectId(companyId),
+        section,
         isActive: true
       }
     },
     { $unwind: '$questions' },
-    { 
-      $match: { 'questions.isActive': true }
-    },
-    {
-      $group: {
-        _id: '$questions.difficulty',
-        count: { $sum: 1 }
-      }
-    }
+    { $match: { 'questions.isActive': true } },
+    { $count: 'count' }
   ]);
 
-  return result.reduce((acc, item) => {
-    acc[item._id] = item.count;
-    return acc;
-  }, { Easy: 0, Medium: 0, Hard: 0 });
+  return result.length > 0 ? result[0].count : 0;
 };
+
 
 module.exports = mongoose.model('QuestionBank', questionBankSchema);

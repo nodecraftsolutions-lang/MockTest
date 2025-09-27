@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  BarChart3, Download, Eye, Calendar, Trophy,
+  BarChart3, Eye, Calendar, Trophy,
   TrendingUp, Clock, FileText, Award
 } from 'lucide-react';
 import api from '../../api/axios';
@@ -28,7 +28,6 @@ const Results = () => {
       if (response.data.success) {
         let sorted = response.data.data.attempts || [];
 
-        // Sort attempts
         if (sortBy === 'date') {
           sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         } else if (sortBy === 'score') {
@@ -145,94 +144,87 @@ const Results = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {attempts.map((attempt) => (
-                <tr key={attempt._id} className="hover:bg-gray-50">
-                  {/* Test Info */}
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{attempt.testId?.title}</div>
-                      <div className="text-sm text-gray-500">{attempt.testId?.companyId?.name || "N/A"}</div>
-                    </div>
-                  </td>
+              {attempts.map((attempt) => {
+                const actualTime =
+                  attempt.startTime && attempt.endTime
+                    ? Math.floor((new Date(attempt.endTime) - new Date(attempt.startTime)) / 60000)
+                    : null;
 
-                  {/* Score */}
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{attempt.score}</div>
-                    <div className="text-sm text-gray-500">
-                      {attempt.correctAnswers}/{attempt.totalQuestions} correct
-                    </div>
-                  </td>
-
-                  {/* Performance */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    <div className="flex flex-col space-y-1">
-                      {attempt.rank && (
-                        <span className="flex items-center">
-                          <Trophy className="w-4 h-4 mr-1 text-yellow-600" /> Rank {attempt.rank}
-                        </span>
-                      )}
-                      {attempt.percentile && (
-                        <span className="flex items-center">
-                          <BarChart3 className="w-4 h-4 mr-1 text-indigo-600" /> {attempt.percentile}%ile
-                        </span>
-                      )}
-                    </div>
-                  </td>
-
-                  {/* Date */}
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Calendar className="w-4 h-4 mr-1" />
-                      {new Date(attempt.createdAt).toLocaleString()}
-                    </div>
-                    {attempt.actualTimeTaken > 0 && (
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Clock className="w-4 h-4 mr-1" />
-                        {attempt.actualTimeTaken} min
+                return (
+                  <tr key={attempt._id} className="hover:bg-gray-50">
+                    {/* Test Info */}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{attempt.testId?.title}</div>
+                        <div className="text-sm text-gray-500">{attempt.testId?.companyId?.name || "N/A"}</div>
                       </div>
-                    )}
-                  </td>
+                    </td>
 
-                  {/* Status */}
-                  <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(attempt.status, attempt.isPassed)}</td>
+                    {/* Score */}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{attempt.score}</div>
+                      <div className="text-sm text-gray-500">
+                        {attempt.correctAnswers}/{attempt.totalQuestions} correct
+                      </div>
+                    </td>
 
-                  {/* Actions */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center space-x-2">
-                      {(attempt.status === 'submitted' || attempt.status === 'auto-submitted') && (
-                        <>
+                    {/* Performance */}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      <div className="flex flex-col space-y-1">
+                        {attempt.rank && (
+                          <span className="flex items-center">
+                            <Trophy className="w-4 h-4 mr-1 text-yellow-600" /> Rank {attempt.rank}
+                          </span>
+                        )}
+                        {attempt.percentile && (
+                          <span className="flex items-center">
+                            <BarChart3 className="w-4 h-4 mr-1 text-indigo-600" /> {attempt.percentile}%ile
+                          </span>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Date */}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Calendar className="w-4 h-4 mr-1" />
+                        {new Date(attempt.createdAt).toLocaleString()}
+                      </div>
+                      {actualTime !== null && (
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Clock className="w-4 h-4 mr-1" />
+                          {actualTime} min
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Status */}
+                    <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(attempt.status, attempt.isPassed)}</td>
+
+                    {/* Actions */}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center space-x-2">
+                        {(attempt.status === 'submitted' || attempt.status === 'auto-submitted') && (
                           <Link
                             to={`/student/results/${attempt._id}`}
                             className="text-primary-600 hover:text-primary-900 flex items-center"
                           >
                             <Eye className="w-4 h-4 mr-1" /> View
                           </Link>
-                          <button
-                            onClick={() =>
-                              window.open(
-                                `/api/v1/students/attempts/${attempt._id}/download`,
-                                '_blank'
-                              )
-                            }
-                            className="text-green-600 hover:text-green-900 flex items-center"
+                        )}
+                        {attempt.status === 'in-progress' && (
+                          <Link
+                            to={`/student/exam/${attempt.testId?._id}`}
+                            className="text-blue-600 hover:text-blue-900 flex items-center"
                           >
-                            <Download className="w-4 h-4 mr-1" /> Download
-                          </button>
-                        </>
-                      )}
-
-                      {attempt.status === 'in-progress' && (
-                        <Link
-                          to={`/student/exam/${attempt.testId?._id}`}
-                          className="text-blue-600 hover:text-blue-900 flex items-center"
-                        >
-                          Continue
-                        </Link>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                            Continue
+                          </Link>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -242,8 +234,8 @@ const Results = () => {
             <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Results Yet</h3>
             <p className="text-gray-600 mb-4">Take your first test to see results here</p>
-            <Link to="/student/free-tests" className="btn-primary">
-              Take Free Test
+            <Link to="/student/mock-tests" className="btn-primary">
+              Take Mock Test
             </Link>
           </div>
         )}

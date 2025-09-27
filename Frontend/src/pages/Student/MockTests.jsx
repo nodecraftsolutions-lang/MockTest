@@ -1,117 +1,53 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import { ToastProvider } from './context/ToastContext';
-import ProtectedRoute from './components/ProtectedRoute';
-import PublicLayout from './layouts/PublicLayout';
-import DashboardLayout from './layouts/DashboardLayout';
-import AdminLayout from './layouts/AdminLayout';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import api from '../../services/api'; // 👈 adjust path if your API service is elsewhere
 
-// Public Pages
-import Home from './pages/Home';
-import MockTests from './pages/MockTests'; // public page
-import About from './pages/About';
-import Contact from './pages/Contact';
-import Auth from './pages/Auth';
+export default function StudentMockTests() {
+  const [companies, setCompanies] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-// Student Pages
-import StudentDashboard from './pages/Student/Dashboard';
-import ExamPattern from './pages/Student/ExamPattern';
-import FreeTests from './pages/Student/FreeTests';
-import PaidTests from './pages/Student/PaidTests';
-import ExamInterface from './pages/Student/ExamInterface';
-import Results from './pages/Student/Results';
-import ResultDetail from './pages/Student/ResultDetail';
-import Orders from './pages/Student/Orders';
-import Profile from './pages/Student/Profile';
-import Leaderboard from './pages/Student/Leaderboard';
-import Courses from './pages/Student/Courses';
-import MyCourses from './pages/Student/MyCourses';
-import CourseDetails from './pages/Student/CourseDetail';
-import StudentMockTests from './pages/Student/MockTests'; // ✅ student company list
-import CompanyDetails from './pages/Student/CompanyDetails';
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        const res = await api.get('/companies'); // ✅ backend route
+        setCompanies(res.data.data || []);
+      } catch (err) {
+        console.error('Error fetching companies', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCompanies();
+  }, []);
 
-// Admin Pages
-import AdminDashboard from './pages/Admin/Dashboard';
-import ManageCompanies from './pages/Admin/Companies';
-import ManageTests from './pages/Admin/Tests';
-import ManageStudents from './pages/Admin/Students';
-import AdminResults from './pages/Admin/Results';
-import ManagePayments from './pages/Admin/Payments';
-import AdminSettings from './pages/Admin/Settings';
+  if (loading) return <div className="p-8 text-center">Loading...</div>;
 
-import './index.css';
-
-function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <Router>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<PublicLayout />}>
-              <Route index element={<Home />} />
-              <Route path="mock-tests" element={<MockTests />} />
-              <Route path="about" element={<About />} />
-              <Route path="contact" element={<Contact />} />
-              <Route path="auth" element={<Auth />} />
-            </Route>
-
-            {/* Student Dashboard Routes */}
-            <Route
-              path="/student"
-              element={
-                <ProtectedRoute requiredRole="student">
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
+    <div className="p-8">
+      <h1 className="text-2xl font-bold mb-6">Select a Company</h1>
+      {companies.length === 0 ? (
+        <p className="text-gray-600">No companies available</p>
+      ) : (
+        <div className="grid md:grid-cols-3 gap-6">
+          {companies.map((company) => (
+            <Link
+              key={company._id}
+              to={`/student/mock-tests/${company._id}`}
+              className="p-6 border rounded-xl bg-white shadow-sm hover:shadow-md transition"
             >
-              <Route index element={<StudentDashboard />} />
-              <Route path="exam-pattern" element={<ExamPattern />} />
-              <Route path="free-tests" element={<FreeTests />} />
-              <Route path="paid-tests" element={<PaidTests />} />
-              <Route path="exam/:testId" element={<ExamInterface />} />
-              
-              {/* Mock Tests */}
-              <Route path="mock-tests" element={<StudentMockTests />} />
-              <Route path="mock-tests/:companyId" element={<CompanyDetails />} />
-
-              {/* Courses */}
-              <Route path="courses" element={<Courses />} />
-              <Route path="courses/:id" element={<CourseDetails />} />
-              <Route path="my-courses" element={<MyCourses />} />
-
-              {/* Results */}
-              <Route path="results" element={<Results />} />
-              <Route path="results/:attemptId" element={<ResultDetail />} />
-
-              {/* Other Pages */}
-              <Route path="orders" element={<Orders />} />
-              <Route path="profile" element={<Profile />} />
-              <Route path="leaderboard" element={<Leaderboard />} />
-            </Route>
-
-            {/* Admin Dashboard Routes */}
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <AdminLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<AdminDashboard />} />
-              <Route path="companies" element={<ManageCompanies />} />
-              <Route path="tests" element={<ManageTests />} />
-              <Route path="students" element={<ManageStudents />} />
-              <Route path="results" element={<AdminResults />} />
-              <Route path="payments" element={<ManagePayments />} />
-              <Route path="settings" element={<AdminSettings />} />
-            </Route>
-          </Routes>
-        </Router>
-      </ToastProvider>
-    </AuthProvider>
+              {company.logoUrl && (
+                <img
+                  src={company.logoUrl}
+                  alt={company.name}
+                  className="h-16 mx-auto mb-4"
+                />
+              )}
+              <h2 className="text-lg font-semibold text-center">{company.name}</h2>
+              <p className="text-sm text-gray-500 text-center">{company.category}</p>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
-
-export default App;

@@ -18,7 +18,7 @@ const Courses = () => {
     try {
       const response = await api.get("/courses");
       if (response.data.success) {
-        setCourses(response.data.data.courses);
+        setCourses(response.data.data || []); // ✅ fixed
       }
     } catch (error) {
       showError("Failed to load courses");
@@ -69,7 +69,7 @@ const Courses = () => {
                   {course.duration && (
                     <span className="flex items-center">
                       <Clock className="w-4 h-4 mr-1 text-primary-500" />
-                      {course.duration}
+                      {course.duration} weeks
                     </span>
                   )}
                   <span className="flex items-center">

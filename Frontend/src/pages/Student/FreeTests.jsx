@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Play, Clock, FileText, Users, ChevronRight } from 'lucide-react';
-import Cookies from 'js-cookie';
 import api from '../../api/axios';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useToast } from '../../context/ToastContext';
@@ -21,9 +20,9 @@ const FreeTests = () => {
 
   const fetchCompanies = async () => {
     try {
-      const response = await api.get('/companies');
-      if (response.data.success) {
-        setCompanies(response.data.data.companies);
+      const res = await api.get('/companies');
+      if (res.data.success) {
+        setCompanies(res.data.data.companies || []);
       }
     } catch (error) {
       showError('Failed to load companies');
@@ -32,9 +31,9 @@ const FreeTests = () => {
 
   const fetchFreeTests = async () => {
     try {
-      const response = await api.get('/tests?type=free');
-      if (response.data.success) {
-        setTests(response.data.data.tests);
+      const res = await api.get('/tests?type=free');
+      if (res.data.success) {
+        setTests(res.data.data.tests || []);
       }
     } catch (error) {
       showError('Failed to load free tests');
@@ -45,39 +44,30 @@ const FreeTests = () => {
 
   const handleLaunchTest = async (testId) => {
     try {
-      // 1. Launch the test (creates attempt)
-      const response = await api.post(`/tests/${testId}/launch`, {
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      const res = await api.post(`/tests/${testId}/launch`, {
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
-
-      if (response.data.success) {
-        const { attemptId } = response.data.data;
+      if (res.data.success) {
+        const { attemptId } = res.data.data;
         showSuccess('Test launched successfully!');
-        // 2. Redirect student to exam page
         navigate(`/student/exam/${testId}?attemptId=${attemptId}`);
       }
     } catch (error) {
-      console.error("Start test error:", error);
-      showError(error.response?.data?.message || "Failed to start test");
+      showError(error.response?.data?.message || 'Failed to start test');
     }
   };
 
-  const getTestsByCompany = (companyId) => {
-    return tests.filter(test => test.companyId._id === companyId);
-  };
+  const getTestsByCompany = (companyId) =>
+    tests.filter((test) => test.companyId._id === companyId);
 
-  if (loading) {
-    return <LoadingSpinner size="large" />;
-  }
+  if (loading) return <LoadingSpinner size="large" />;
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Free Mock Tests</h1>
-          <p className="text-gray-600">Practice with free tests from top companies</p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Free Mock Tests</h1>
+        <p className="text-gray-600">Practice with free tests from top companies</p>
       </div>
 
       {/* Company Filter */}
@@ -87,28 +77,37 @@ const FreeTests = () => {
           <button
             onClick={() => setSelectedCompany(null)}
             className={`p-4 border rounded-lg text-center transition-colors ${
-              selectedCompany === null 
-                ? 'border-primary-500 bg-primary-50 text-primary-700' 
+              selectedCompany === null
+                ? 'border-primary-500 bg-primary-50 text-primary-700'
                 : 'border-gray-200 hover:border-gray-300'
             }`}
           >
             <div className="font-medium">All Companies</div>
             <div className="text-sm text-gray-600">{tests.length} tests</div>
           </button>
-          
+
           {companies.map((company) => {
             const companyTests = getTestsByCompany(company._id);
+            if (companyTests.length === 0) return null;
             return (
               <button
                 key={company._id}
                 onClick={() => setSelectedCompany(company._id)}
                 className={`p-4 border rounded-lg text-center transition-colors ${
-                  selectedCompany === company._id 
-                    ? 'border-primary-500 bg-primary-50 text-primary-700' 
+                  selectedCompany === company._id
+                    ? 'border-primary-500 bg-primary-50 text-primary-700'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <div className="w-12 h-12 bg-gray-200 rounded-lg mx-auto mb-2"></div>
+                {company.logoUrl ? (
+                  <img
+                    src={company.logoUrl}
+                    alt={company.name}
+                    className="w-12 h-12 object-contain mx-auto mb-2"
+                  />
+                ) : (
+                  <div className="w-12 h-12 bg-gray-200 rounded-lg mx-auto mb-2" />
+                )}
                 <div className="font-medium">{company.name}</div>
                 <div className="text-sm text-gray-600">{companyTests.length} tests</div>
               </button>
@@ -117,27 +116,29 @@ const FreeTests = () => {
         </div>
       </div>
 
-      {/* Tests List */}
+      {/* Tests by Company */}
       <div className="space-y-4">
         {companies
-          .filter(company => selectedCompany === null || company._id === selectedCompany)
+          .filter((c) => selectedCompany === null || c._id === selectedCompany)
           .map((company) => {
             const companyTests = getTestsByCompany(company._id);
-            
             if (companyTests.length === 0) return null;
-
             return (
               <div key={company._id} className="card">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
                     <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{company.name}</h3>
-                      <p className="text-sm text-gray-600">{companyTests.length} free test(s) available</p>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {company.name}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        {companyTests.length} free test(s) available
+                      </p>
                     </div>
                   </div>
-                  <Link 
-                    to={`/student/exam-pattern?company=${company._id}`}
+                  <Link
+                    to={`/student/mock-tests/${company._id}`}
                     className="text-primary-600 hover:text-primary-700 text-sm flex items-center"
                   >
                     View Pattern <ChevronRight className="w-4 h-4 ml-1" />
@@ -146,10 +147,15 @@ const FreeTests = () => {
 
                 <div className="space-y-3">
                   {companyTests.map((test) => (
-                    <div key={test._id} className="border border-gray-200 rounded-lg p-4">
+                    <div
+                      key={test._id}
+                      className="border border-gray-200 rounded-lg p-4"
+                    >
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 mb-2">{test.title}</h4>
+                          <h4 className="font-medium text-gray-900 mb-2">
+                            {test.title}
+                          </h4>
                           <div className="flex items-center space-x-6 text-sm text-gray-600">
                             <div className="flex items-center">
                               <FileText className="w-4 h-4 mr-1" />
@@ -164,26 +170,14 @@ const FreeTests = () => {
                               {test.difficulty}
                             </div>
                           </div>
-                          {test.description && (
-                            <p className="text-sm text-gray-600 mt-2">{test.description}</p>
-                          )}
                         </div>
-                        
                         <div className="flex items-center space-x-3">
-                          <Link
-                            to={`/tests/${test._id}/preview`}
-                            className="btn-secondary"
-                          >
-                            Preview
-                          </Link>
                           <button
                             onClick={() => handleLaunchTest(test._id)}
-                            className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+                            className="btn-primary"
                           >
                             Start Test
                           </button>
-
-
                         </div>
                       </div>
                     </div>
@@ -193,18 +187,6 @@ const FreeTests = () => {
             );
           })}
       </div>
-
-      {/* Empty State */}
-      {tests.length === 0 && (
-        <div className="text-center py-12">
-          <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Free Tests Available</h3>
-          <p className="text-gray-600 mb-4">Check back later for new free tests</p>
-          <Link to="/student/paid-tests" className="btn-primary">
-            Browse Paid Tests
-          </Link>
-        </div>
-      )}
     </div>
   );
 };

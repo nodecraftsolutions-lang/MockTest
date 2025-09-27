@@ -10,8 +10,10 @@ const CompanyDetails = () => {
   const [company, setCompany] = useState(null);
   const [pattern, setPattern] = useState(null);
   const [tests, setTests] = useState([]);
+  const [isEnrolled, setIsEnrolled] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { showError } = useToast();
+  const [enrolling, setEnrolling] = useState(false);
+  const { showError, showSuccess } = useToast();
 
   useEffect(() => {
     fetchData();
@@ -20,21 +22,44 @@ const CompanyDetails = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const companyRes = await api.get(`/companies/${companyId}`);
-      const testsRes = await api.get(`/tests?companyId=${companyId}`);
-      const patternRes = await api.get(`/companies/${companyId}/pattern`);
+      const [companyRes, testsRes, patternRes, enrollRes] = await Promise.all([
+        api.get(`/companies/${companyId}`),
+        api.get(`/tests?companyId=${companyId}`),
+        api.get(`/companies/${companyId}/pattern`),
+        api.get(`/enrollments/company/${companyId}/status`),
+      ]);
 
       setCompany(companyRes.data.data.company);
-      setTests(testsRes.data.data.tests);
+      setTests(testsRes.data.data.tests || []);
       setPattern(patternRes.data.data);
+      setIsEnrolled(enrollRes.data.data.isEnrolled);
     } catch (error) {
+      console.error(error);
       showError("Failed to load company details");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleEnroll = async () => {
+    try {
+      setEnrolling(true);
+      const res = await api.post(`/enrollments/company/${companyId}`);
+      if (res.data.success) {
+        showSuccess("Enrolled successfully! Paid tests unlocked.");
+        setIsEnrolled(true);
+      }
+    } catch (error) {
+      showError(error.response?.data?.message || "Failed to enroll");
+    } finally {
+      setEnrolling(false);
+    }
+  };
+
   if (loading) return <LoadingSpinner size="large" />;
+
+  const freeTests = tests.filter((t) => t.type === "free");
+  const paidTests = tests.filter((t) => t.type === "paid");
 
   return (
     <div className="space-y-8">
@@ -125,76 +150,91 @@ const CompanyDetails = () => {
               </table>
             </div>
           </div>
-
-          {/* What to Expect */}
-          <div>
-            <h4 className="text-lg font-semibold text-gray-900 mb-4">
-              What to Expect
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                <div className="text-lg font-semibold text-gray-900">
-                  Single Choice
-                </div>
-                <div className="text-sm text-gray-600">One correct option</div>
-              </div>
-              <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                <div className="text-lg font-semibold text-gray-900">
-                  Multiple Choice
-                </div>
-                <div className="text-sm text-gray-600">
-                  More than one correct answer
-                </div>
-              </div>
-              <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                <div className="text-lg font-semibold text-gray-900">
-                  Numerical
-                </div>
-                <div className="text-sm text-gray-600">
-                  Enter numeric value as answer
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       )}
 
       {/* Available Tests */}
-      <div className="card">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Available Tests
-        </h2>
-        <div className="space-y-4">
-          {tests.map((test, index) => (
-            <div
-              key={test._id}
-              className="flex items-center justify-between p-4 border rounded-lg hover:shadow"
-            >
-              <div>
-                <p className="font-medium text-gray-900">{test.title}</p>
-                <p className="text-sm text-gray-600">
-                  {test.type === "free" || index === 0
-                    ? "Free Test"
-                    : "Paid Test"}
-                </p>
-              </div>
-              {test.type === "free" || index === 0 || test.isUnlocked ? (
-                <Link
-                  to={`/student/exam/${test._id}`}
-                  className="btn-primary flex items-center"
+      <div className="card space-y-6">
+        <h2 className="text-lg font-semibold text-gray-900">Available Tests</h2>
+
+        {/* Free Tests */}
+        {freeTests.length > 0 && (
+          <div>
+            <h3 className="text-md font-semibold text-gray-800 mb-3">
+              Free Tests
+            </h3>
+            <div className="space-y-4">
+              {freeTests.map((test) => (
+                <div
+                  key={test._id}
+                  className="flex items-center justify-between p-4 border rounded-lg hover:shadow"
                 >
-                  <Play className="w-4 h-4 mr-2" />
-                  Take Test
-                </Link>
-              ) : (
-                <button className="btn-secondary flex items-center">
-                  <Lock className="w-4 h-4 mr-2" />
-                  Unlock Tests
+                  <div>
+                    <p className="font-medium text-gray-900">{test.title}</p>
+                    <p className="text-sm text-gray-600">Free Test</p>
+                  </div>
+                  <Link
+                    to={`/student/exam/${test._id}`}
+                    className="btn-primary flex items-center"
+                  >
+                    <Play className="w-4 h-4 mr-2" />
+                    Take Test
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Paid Tests */}
+        {paidTests.length > 0 && (
+          <div>
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-md font-semibold text-gray-800">Paid Tests</h3>
+              {!isEnrolled && (
+                <button
+                  onClick={handleEnroll}
+                  disabled={enrolling}
+                  className="btn-primary"
+                >
+                  {enrolling ? "Enrolling..." : `Enroll Now • ₹${paidTests.reduce((sum, t) => sum + t.price, 0)}`}
                 </button>
               )}
             </div>
-          ))}
-        </div>
+
+
+            <div className="space-y-4">
+              {paidTests.map((test) => (
+                <div
+                  key={test._id}
+                  className="flex items-center justify-between p-4 border rounded-lg hover:shadow"
+                >
+                  <div>
+                    <p className="font-medium text-gray-900">{test.title}</p>
+                    <p className="text-sm text-gray-600">Paid Test • ₹{test.price}</p>
+                  </div>
+                  {isEnrolled ? (
+                    <Link
+                      to={`/student/exam/${test._id}`}
+                      className="btn-primary flex items-center"
+                    >
+                      <Play className="w-4 h-4 mr-2" />
+                      Take Test
+                    </Link>
+                  ) : (
+                    <button
+                      className="btn-secondary flex items-center"
+                      disabled
+                    >
+                      <Lock className="w-4 h-4 mr-2" />
+                      Locked
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

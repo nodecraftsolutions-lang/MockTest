@@ -34,9 +34,10 @@ const Sidebar = ({ type = "student" }) => {
       .then((res) => setCourses(res.data.data || []))
       .catch(() => setCourses([]));
 
-    api.get("/students/recordings")
-      .then((res) => setRecordings(res.data.data || []))
-      .catch(() => setRecordings([]));
+    // ✅ fetch only courses that have recordings
+    api.get("/courses")
+     .then((res) => setRecordings(res.data.data || []))
+     .catch(() => setRecordings([]));
   }
 }, [type]);
 
@@ -77,43 +78,43 @@ const Sidebar = ({ type = "student" }) => {
             <NavItem to="/student/mock-tests" icon={BookOpen} label="Mock Tests" />
 
             {/* Courses Dropdown */}
-<button
-  onClick={() => toggleDropdown("courses")}
-  className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-50"
->
-  <span className="flex items-center">
-    <GraduationCap className="w-5 h-5 mr-3 text-primary-600" />
-    Courses
-  </span>
-  <ChevronDown
-    className={`w-4 h-4 transform transition-transform ${
-      openDropdown === "courses" ? "rotate-180" : ""
-    }`}
-  />
-</button>
+            <button
+              onClick={() => toggleDropdown("courses")}
+              className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-50"
+            >
+              <span className="flex items-center">
+                <GraduationCap className="w-5 h-5 mr-3 text-primary-600" />
+                Courses
+              </span>
+              <ChevronDown
+                className={`w-4 h-4 transform transition-transform ${
+                  openDropdown === "courses" ? "rotate-180" : ""
+                }`}
+              />
+            </button>
 
-{openDropdown === "courses" && (
-  <div className="ml-8 space-y-1">
-    {/* All available courses */}
-    {courses.map((c) => (
-      <Link
-        key={c._id}
-        to={`/student/courses/${c._id}`}
-        className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg"
-      >
-        {c.title}
-      </Link>
-    ))}
+            {openDropdown === "courses" && (
+              <div className="ml-8 space-y-1">
+                {/* All available courses */}
+                {courses.map((c) => (
+                  <Link
+                    key={c._id}
+                    to={`/student/courses/${c._id}`}
+                    className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg"
+                  >
+                    {c.title}
+                  </Link>
+                ))}
 
-    {/* My Courses link */}
-    <Link
-      to="/student/my-courses"
-      className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg font-medium"
-    >
-      My Courses
-    </Link>
-  </div>
-)}
+                {/* My Courses link */}
+                <Link
+                  to="/student/my-courses"
+                  className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg font-medium"
+                >
+                  My Courses
+                </Link>
+              </div>
+            )}
 
 
             {/* ✅ Recordings Dropdown */}
@@ -134,18 +135,18 @@ const Sidebar = ({ type = "student" }) => {
             {openDropdown === "recordings" && (
               <div className="ml-8 space-y-1">
                 {recordings.length > 0 ? (
-                  recordings.map((r) => (
-                    <Link
-                      key={r._id}
-                      to={`/student/recordings/${r._id}`}
-                      className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg"
-                    >
-                      {r.courseName}
-                    </Link>
-                  ))
-                ) : (
-                  <p className="px-3 py-2 text-xs text-gray-400 italic">No recordings available</p>
-                )}
+                  recordings.map((c) => (
+                      <Link
+                      key={c._id}
+                      to={`/student/recordings/${c._id}`}
+                        className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg"
+                      >
+                        {c.title}
+                      </Link>
+                    ))
+                  ) : (
+                    <p className="px-3 py-2 text-xs text-gray-400 italic">No courses available</p>
+                  )}
               </div>
             )}
 

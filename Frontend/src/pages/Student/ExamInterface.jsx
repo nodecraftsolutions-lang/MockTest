@@ -169,41 +169,41 @@ const ExamInterface = () => {
   };
 
   const handleSubmit = async () => {
-    if (!attemptId) return showError("No attempt found");
-    
-    setSubmitting(true);
-    try {
-      const res = await api.post(`/tests/attempts/${attemptId}/submit`, {
-        answers: answers
-      });
-      
-      if (res.data.success) {
-        showSuccess("Test submitted successfully!");
-        navigate(`/student/results/${attemptId}`);
-      }
-    } catch (error) {
-      console.error("Submit error:", error);
-      showError(error.response?.data?.message || "Failed to submit test");
-    } finally {
-      setSubmitting(false);
-      setShowSubmitModal(false);
-    }
-  };
+  if (!attemptId) return showError("No attempt found");
 
-  const handleAutoSubmit = async () => {
-    if (!attemptId) return;
-    
-    try {
-      await api.post(`/tests/attempts/${attemptId}/submit`, {
-        answers: answers
-      });
-      showError("Time expired! Test auto-submitted.");
+  setSubmitting(true);
+  try {
+    const res = await api.post(`/tests/attempts/${attemptId}/submit`, {
+      answers
+    });
+    if (res.data.success) {
+      showSuccess("Test submitted successfully!");
       navigate(`/student/results/${attemptId}`);
-    } catch (error) {
-      console.error("Auto-submit error:", error);
-      navigate("/student/results");
     }
-  };
+  } catch (error) {
+    console.error("Submit error:", error);
+    showError(error.response?.data?.message || "Failed to submit test");
+  } finally {
+    setSubmitting(false);
+    setShowSubmitModal(false);
+  }
+};
+
+const handleAutoSubmit = async () => {
+  if (!attemptId) return;
+
+  try {
+    await api.post(`/tests/attempts/${attemptId}/submit`, {
+      answers
+    });
+    showError("Time expired! Test auto-submitted.");
+    navigate(`/student/results/${attemptId}`);
+  } catch (error) {
+    console.error("Auto-submit error:", error);
+    navigate("/student/results");
+  }
+};
+
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
