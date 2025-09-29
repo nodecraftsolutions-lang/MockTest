@@ -1,13 +1,17 @@
 const express = require('express');
 const Enrollment = require('../models/Enrollment');
 const { auth } = require('../middlewares/auth');
-const Test = require('../models/Test');  // <-- add this
+const Test = require('../models/Test');
 const Company = require('../models/Company');
-
+const Course = require('../models/Course'); // ✅ add Course
 
 const router = express.Router();
 
-// POST /api/v1/enrollments/company/:companyId
+/**
+ * ----------------------------
+ * Enroll student to ALL paid tests of a company
+ * ----------------------------
+ */
 router.post('/company/:companyId', auth, async (req, res) => {
   try {
     const { companyId } = req.params;
@@ -18,7 +22,7 @@ router.post('/company/:companyId', auth, async (req, res) => {
     if (!tests.length) {
       return res.status(404).json({
         success: false,
-        message: 'No paid tests found for this company'
+        message: 'No paid tests found for this company',
       });
     }
 
@@ -28,13 +32,16 @@ router.post('/company/:companyId', auth, async (req, res) => {
       // Check if already enrolled
       const existing = await Enrollment.findOne({
         studentId: req.student.id,
-        testId: test._id
+        testId: test._id,
+        type: "test", // ✅ ensure we check by type
       });
+
       if (!existing) {
         const enrollment = new Enrollment({
           studentId: req.student.id,
           testId: test._id,
-          status: 'enrolled'
+          type: "test",          // ✅ set type explicitly
+          status: 'enrolled',
         });
         await enrollment.save();
         enrollments.push(enrollment);
@@ -44,42 +51,50 @@ router.post('/company/:companyId', auth, async (req, res) => {
     res.json({
       success: true,
       message: `Enrolled to ${enrollments.length} paid test(s) for this company`,
-      data: enrollments
+      data: enrollments,
     });
   } catch (error) {
     console.error('Company enroll error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to enroll to company tests'
+      message: 'Failed to enroll to company tests',
     });
   }
 });
 
-
-// GET /api/v1/enrollments/company/:companyId/status
+/**
+ * ----------------------------
+ * Check enrollment status for paid tests of a company
+ * ----------------------------
+ */
 router.get('/company/:companyId/status', auth, async (req, res) => {
   try {
     const { companyId } = req.params;
 
-    // check if student has at least 1 enrollment in this company
     const testIds = await Test.find({ companyId, type: 'paid' }).distinct('_id');
 
     const existing = await Enrollment.findOne({
       studentId: req.student.id,
       testId: { $in: testIds },
-      status: 'enrolled'
+      type: "test",   // ✅ ensure type match
+      status: 'enrolled',
     });
 
     res.json({
       success: true,
-      data: { isEnrolled: !!existing }
+      data: { isEnrolled: !!existing },
     });
   } catch (error) {
     console.error('Enrollment status error:', error);
     res.status(500).json({ success: false, message: 'Failed to check enrollment status' });
   }
 });
-// Unlock recordings for a course
+
+/**
+ * ----------------------------
+ * Unlock recordings for a course
+ * ----------------------------
+ */
 router.post("/recordings/:courseId/unlock", auth, async (req, res) => {
   try {
     const { courseId } = req.params;
@@ -95,19 +110,18 @@ router.post("/recordings/:courseId/unlock", auth, async (req, res) => {
     const existing = await Enrollment.findOne({
       studentId: req.student.id,
       courseId,
-      type: "recording"
+      type: "recording",
     });
 
     if (existing) {
       return res.json({ success: true, message: "Already unlocked", data: existing });
     }
 
-    // TODO: Integrate payment later
     const enrollment = new Enrollment({
       studentId: req.student.id,
       courseId,
       type: "recording",
-      status: "unlocked"
+      status: "unlocked",
     });
 
     await enrollment.save();
@@ -119,7 +133,11 @@ router.post("/recordings/:courseId/unlock", auth, async (req, res) => {
   }
 });
 
-// Check enrollment status for recordings
+/**
+ * ----------------------------
+ * Check recordings unlock status for a course
+ * ----------------------------
+ */
 router.get("/recordings/:courseId/status", auth, async (req, res) => {
   try {
     const { courseId } = req.params;
@@ -127,73 +145,16 @@ router.get("/recordings/:courseId/status", auth, async (req, res) => {
     const enrollment = await Enrollment.findOne({
       studentId: req.student.id,
       courseId,
-      type: "recording"
+      type: "recording",
     });
 
     res.json({
       success: true,
-      data: { isUnlocked: !!enrollment }
+      data: { isUnlocked: !!enrollment },
     });
   } catch (err) {
     console.error("Recordings status error:", err);
     res.status(500).json({ success: false, message: "Failed to check recordings status" });
-  }
-});
-
-// POST /api/v1/enrollments/recordings/:courseId
-router.post("/recordings/:courseId", auth, async (req, res) => {
-  try {
-    const course = await Course.findById(req.params.courseId);
-    if (!course) {
-      return res.status(404).json({ success: false, message: "Course not found" });
-    }
-
-    const existing = await Enrollment.findOne({
-      studentId: req.student.id,
-      courseId: course._id,
-      type: "recording"
-    });
-
-    if (existing) {
-      return res.json({ success: true, message: "Already unlocked", data: existing });
-    }
-
-    const enrollment = new Enrollment({
-      studentId: req.student.id,
-      courseId: course._id,
-      type: "recording",
-      status: "unlocked"
-    });
-
-    await enrollment.save();
-
-    res.status(201).json({
-      success: true,
-      message: "Recordings unlocked successfully",
-      data: enrollment
-    });
-  } catch (err) {
-    console.error("Unlock recordings error:", err);
-    res.status(500).json({ success: false, message: "Failed to unlock recordings" });
-  }
-});
-
-// GET /api/v1/enrollments/recordings/:courseId/status
-router.get("/recordings/:courseId/status", auth, async (req, res) => {
-  try {
-    const enrollment = await Enrollment.findOne({
-      studentId: req.student.id,
-      courseId: req.params.courseId,
-      type: "recording"
-    });
-
-    res.json({
-      success: true,
-      data: { isUnlocked: !!enrollment }
-    });
-  } catch (err) {
-    console.error("Recording enrollment status error:", err);
-    res.status(500).json({ success: false, message: "Failed to fetch status" });
   }
 });
 

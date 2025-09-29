@@ -275,14 +275,7 @@ const handleAutoSubmit = async () => {
               <span className="text-lg">{formatTime(timeLeft)}</span>
             </div>
             
-            <button
-              onClick={() => setShowSubmitModal(true)}
-              className="btn-primary flex items-center"
-              disabled={submitting}
-            >
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Submit Test
-            </button>
+            
           </div>
         </div>
       </div>
