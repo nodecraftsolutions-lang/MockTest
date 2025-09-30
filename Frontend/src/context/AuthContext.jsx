@@ -1,13 +1,13 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import api from '../api/axios';
-import Cookies from 'js-cookie';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import Cookies from "js-cookie";
+import api from "../api/axios";
 
 const AuthContext = createContext();
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -17,23 +17,25 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = Cookies.get('token');
+    const token = Cookies.get("token");
     if (token) {
       validateToken(token);
     } else {
       setLoading(false);
     }
+    // eslint-disable-next-line
   }, []);
 
   const validateToken = async (token) => {
     try {
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      const response = await api.get('/auth/me');
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      const response = await api.get("/auth/me");
       if (response.data.success) {
         setUser(response.data.data.student);
+      } else {
+        logout();
       }
     } catch (error) {
-      console.error('Token validation failed:', error);
       logout();
     } finally {
       setLoading(false);
@@ -42,30 +44,53 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      const response = await api.post('/auth/login', credentials);
+      const response = await api.post("/auth/login", credentials);
       const { token, refreshToken, student } = response.data.data;
-      
-      Cookies.set('token', token, { expires: 7 }); // 7 days
+
+      Cookies.set("token", token, { expires: 7 });
       if (refreshToken) {
-        Cookies.set('refreshToken', refreshToken, { expires: 30 }); // 30 days
+        Cookies.set("refreshToken", refreshToken, { expires: 30 });
       }
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
       setUser(student);
-      
+
       return { success: true };
     } catch (error) {
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Login failed' 
+      console.error("Login error:", error);
+      return {
+        success: false,
+        message: error.response?.data?.message || "Login failed",
       };
     }
   };
 
-const register = async (userData) => {
+  const register = async (userData) => {
   try {
+    // Do NOT remove confirmPassword!
+    // Ensure mobile is properly formatted (10 digits)
+    if (userData.mobile && !/^\d{10}$/.test(userData.mobile)) {
+      return {
+        success: false,
+        message: "Mobile number must be 10 digits",
+      };
+    }
+
+    console.log("Sending registration data:", userData);
     const response = await api.post("/auth/register", userData);
+
+    // If backend returns token on registration, auto-login:
+    if (response.data.data?.token) {
+      const { token, refreshToken, student } = response.data.data;
+      Cookies.set("token", token, { expires: 7 });
+      if (refreshToken) {
+        Cookies.set("refreshToken", refreshToken, { expires: 30 });
+      }
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      setUser(student);
+    }
     return { success: response.data.success, message: response.data.message };
   } catch (error) {
+    console.error("Registration error:", error);
     return {
       success: false,
       message: error.response?.data?.message || "Registration failed",
@@ -73,25 +98,22 @@ const register = async (userData) => {
   }
 };
 
-
   const logout = () => {
-    // Call logout API
-    api.post('/auth/logout').catch(console.error);
-    
-    Cookies.remove('token');
-    Cookies.remove('refreshToken');
-    delete api.defaults.headers.common['Authorization'];
+    api.post("/auth/logout").catch(() => {});
+    Cookies.remove("token");
+    Cookies.remove("refreshToken");
+    delete api.defaults.headers.common["Authorization"];
     setUser(null);
   };
 
   const forgotPassword = async (email) => {
     try {
-      await api.post('/auth/forgot-password', { email });
-      return { success: true, message: 'Reset link sent to your email' };
+      await api.post("/auth/forgot-password", { email });
+      return { success: true, message: "Reset link sent to your email" };
     } catch (error) {
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Failed to send reset link' 
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to send reset link",
       };
     }
   };
@@ -104,8 +126,8 @@ const register = async (userData) => {
     logout,
     forgotPassword,
     isAuthenticated: !!user,
-    isStudent: user?.role === 'student',
-    isAdmin: user?.role === 'admin'
+    isStudent: user?.role === "student",
+    isAdmin: user?.role === "admin",
   };
 
   return (

@@ -9,11 +9,23 @@ const SessionSchema = new Schema({
   description: String,
 }, { timestamps: true });
 
-const SectionSchema = new Schema({
-  title: String,
-  lessonsCount: { type: Number, default: 0 },
-  description: String,
+// Instructor schema
+const InstructorSchema = new Schema({
+  name: { type: String, required: true },
+  bio: { type: String },
+  experience: { type: String },
+  expertise: { type: String },
+  photoUrl: { type: String }
 });
+
+// Section schema with instructor(s)
+const SectionSchema = new Schema({
+  title: { type: String, required: true },
+  description: { type: String },
+  lessonsCount: { type: Number, default: 0 },
+  instructors: [InstructorSchema]   // ✅ instructor array inside section
+});
+
 const RecordingSchema = new Schema({
   title: { type: String, required: true }, // e.g. "Aptitude Basics"
   description: { type: String },

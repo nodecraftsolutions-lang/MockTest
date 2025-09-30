@@ -1,24 +1,10 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
-const rateLimit = require('express-rate-limit');
 const Student = require('../models/Student');
-const { auth, adminAuth, optionalAuth, sensitiveOperationLimit } = require('../middlewares/auth');
+const { auth, adminAuth, optionalAuth } = require('../middlewares/auth');
 
 const router = express.Router();
-
-// Rate limiting for auth routes
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs
-  message: { message: 'Too many authentication attempts, please try again later.' }
-});
-
-const forgotPasswordLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 3, // limit each IP to 3 forgot password requests per hour
-  message: { message: 'Too many password reset attempts, please try again later.' }
-});
 
 // Generate JWT token
 const generateToken = (studentId, sessionId) => {
@@ -54,6 +40,7 @@ const registerValidation = [
     .normalizeEmail()
     .withMessage('Please provide a valid email'),
   body('mobile')
+    .optional()
     .matches(/^[0-9]{10}$/)
     .withMessage('Please provide a valid 10-digit mobile number'),
   body('password')
@@ -67,7 +54,11 @@ const registerValidation = [
         throw new Error('Passwords do not match');
       }
       return true;
-    })
+    }),
+  body('role')
+    .optional()
+    .isIn(['student', 'admin'])
+    .withMessage('Role must be either student or admin')
 ];
 
 // Login validation
@@ -84,7 +75,7 @@ const loginValidation = [
 // @route   POST /api/v1/auth/register
 // @desc    Register a new student
 // @access  Public
-router.post('/register', authLimiter, registerValidation, async (req, res) => {
+router.post('/register', registerValidation, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -95,11 +86,14 @@ router.post('/register', authLimiter, registerValidation, async (req, res) => {
       });
     }
 
-    const { name, email, mobile, password,role } = req.body;
+    const { name, email, mobile, password, role } = req.body;
 
     // Check if student already exists
     const existingStudent = await Student.findOne({
-      $or: [{ email }, { mobile }]
+      $or: [
+        { email },
+        ...(mobile ? [{ mobile }] : [])
+      ]
     });
 
     if (existingStudent) {
@@ -111,12 +105,13 @@ router.post('/register', authLimiter, registerValidation, async (req, res) => {
       });
     }
 
-    // Create new student
+    // Create new student with role if provided
     const student = new Student({
       name,
       email,
-      mobile,
-      password
+      mobile: mobile || "0000000000",
+      password,
+      role: role || 'student'
     });
 
     await student.save();
@@ -158,7 +153,7 @@ router.post('/register', authLimiter, registerValidation, async (req, res) => {
 // @route   POST /api/v1/auth/login
 // @desc    Login student
 // @access  Public
-router.post('/login', authLimiter, loginValidation, async (req, res) => {
+router.post('/login', loginValidation, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -200,8 +195,9 @@ router.post('/login', authLimiter, loginValidation, async (req, res) => {
     // Generate new session (this will invalidate previous session)
     const sessionId = generateSessionId();
     student.activeSessionId = sessionId;
-    student.deviceFingerprint = deviceFingerprint;
-    await student.updateLastActive();
+    student.deviceFingerprint = deviceFingerprint || null;
+    student.lastActiveAt = new Date();
+    await student.save();
 
     const token = generateToken(student._id, sessionId);
     const refreshToken = generateRefreshToken(student._id, sessionId);
@@ -319,7 +315,7 @@ router.post('/refresh-token', async (req, res) => {
 // @route   POST /api/v1/auth/forgot-password
 // @desc    Send password reset email
 // @access  Public
-router.post('/forgot-password', forgotPasswordLimiter, [
+router.post('/forgot-password', [
   body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email')
 ], async (req, res) => {
   try {
