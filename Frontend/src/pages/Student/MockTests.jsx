@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../../services/api'; // 👈 adjust path if your API service is elsewhere
-
+import api from '../../api/axios';
 export default function StudentMockTests() {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);

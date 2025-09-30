@@ -27,7 +27,7 @@ const auth = async (req, res, next) => {
         message: 'Invalid token. Student not found.'
       });
     }
-
+  
     if (!student.isActive) {
       return res.status(401).json({
         success: false,
@@ -43,8 +43,15 @@ const auth = async (req, res, next) => {
       });
     }
 
-    // Update last active timestamp
-    student.updateLastActive();
+    // Update last active timestamp - FIX: await the async method
+    try {
+      // Set lastActiveAt directly instead of using the method to avoid potential issues
+      student.lastActiveAt = new Date();
+      await student.save({ validateBeforeSave: false });
+    } catch (updateError) {
+      console.error('Error updating last active timestamp:', updateError);
+      // Continue even if updating timestamp fails
+    }
 
     // Add student info to request
     req.student = {
@@ -130,7 +137,15 @@ const optionalAuth = async (req, res, next) => {
         role: student.role,
         sessionId: decoded.sessionId
       };
-      student.updateLastActive();
+      
+      // FIX: Update last active timestamp properly
+      try {
+        student.lastActiveAt = new Date();
+        await student.save({ validateBeforeSave: false });
+      } catch (updateError) {
+        console.error('Error updating last active timestamp:', updateError);
+        // Continue even if updating timestamp fails
+      }
     }
 
     next();

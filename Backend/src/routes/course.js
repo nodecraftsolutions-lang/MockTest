@@ -5,12 +5,7 @@ const Course = require('../models/Course');
 const Discussion = require('../models/Discussion');
 const router = express.Router();
 
-/**
- * ============================
- *   ADMIN ROUTES
- * ============================
- */
-
+//ADMIN ROUTES
 // Create course
 // 📌 Create a new course (Admin only)
 router.post("/", adminAuth, async (req, res) => {
@@ -27,7 +22,8 @@ router.post("/", adminAuth, async (req, res) => {
       duration,
       level,
       isPaid,
-      recordingsPrice,   // ✅ NEW field
+      recordingsPrice,
+      sections   // ✅ NEW field
     } = req.body;
 
     const course = new Course({
@@ -43,6 +39,7 @@ router.post("/", adminAuth, async (req, res) => {
       level,
       isPaid,
       recordingsPrice: recordingsPrice || 0, // ✅ default 0 if not provided
+      sections,
       createdBy: req.student.id,
     });
 
@@ -160,7 +157,8 @@ router.post('/:id/sessions', adminAuth, async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const courses = await Course.find({ isActive: true })
-      .select('title description price currency isPaid category startDate duration');
+      .select("title description price features outcomes currency isPaid category startDate duration sections");
+
     res.json({ success: true, data: courses });
   } catch (err) {
     console.error('Get courses error:', err);
@@ -168,30 +166,35 @@ router.get('/', async (req, res) => {
   }
 });
 
+
+
 // Get single course
-router.get('/:id', auth, async (req, res) => {
+router.get("/:id", auth, async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id);
+    const course = await Course.findById(req.params.id)
+      .populate("createdBy", "name email")
+      .lean();
+
     if (!course) {
-      return res.status(404).json({ success: false, message: 'Course not found' });
+      return res.status(404).json({ success: false, message: "Course not found" });
     }
 
-    const isEnrolled = course.enrolledStudents.some(
-      (id) => id.toString() === req.student.id.toString()
-    );
+    const isEnrolled = Array.isArray(course.enrolledStudents)
+      ? course.enrolledStudents.some(
+          (s) => s.toString() === req.student?.id.toString()
+        )
+      : false;
 
     res.json({
       success: true,
-      data: {
-        course,
-        isEnrolled,
-      },
+      data: { course, isEnrolled },
     });
   } catch (err) {
     console.error("Get course error:", err);
-    res.status(500).json({ success: false, message: 'Failed to get course' });
+    res.status(500).json({ success: false, message: "Failed to fetch course" });
   }
 });
+
 
 // Enroll student into course
 router.post('/:id/enroll', auth, async (req, res) => {

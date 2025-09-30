@@ -4,37 +4,41 @@ const enrollmentSchema = new mongoose.Schema({
   studentId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Student',
-    required: true
+    required: true,
   },
   testId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Test',
-    required: true
   },
-   courseId: { type: mongoose.Schema.Types.ObjectId, 
-    ref: "Course",
-    required:true
-   },
-   type: {
+  courseId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Course',
+  },
+  type: {
     type: String,
-    enum: ["course", "test", "recording"],  // 👈 new field
-    default: "course"
+    enum: ['course', 'test', 'recording'],
+    required: true,
   },
-
   status: {
     type: String,
-    enum: ['enrolled', 'completed', 'cancelled'],
-    default: 'enrolled'
+    enum: ['enrolled', 'completed', 'cancelled', 'unlocked'],
+    default: 'enrolled',
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
+}, { timestamps: true });
 
-}, {
-  timestamps: true
+// 🔎 Validation: ensure correct ID is present
+enrollmentSchema.pre('validate', function (next) {
+  if (this.type === 'test' && !this.testId) {
+    return next(new Error('testId is required for test enrollment'));
+  }
+  if ((this.type === 'course' || this.type === 'recording') && !this.courseId) {
+    return next(new Error('courseId is required for course/recording enrollment'));
+  }
+  next();
 });
 
-enrollmentSchema.index({ studentId: 1, testId: 1 }, { unique: true });
+// ⚡ Unique index per student per test OR course
+enrollmentSchema.index({ studentId: 1, testId: 1 }, { unique: true, sparse: true });
+enrollmentSchema.index({ studentId: 1, courseId: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('Enrollment', enrollmentSchema);
