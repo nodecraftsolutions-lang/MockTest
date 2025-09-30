@@ -195,13 +195,6 @@ router.post('/upload', adminAuth, upload.single('questionFile'), [
         });
       }
 
-      if (questions.length === 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'No valid questions found in the file'
-        });
-      }
-
       // Create or update question bank
       let questionBank = await QuestionBank.findOne({ companyId, section });
       

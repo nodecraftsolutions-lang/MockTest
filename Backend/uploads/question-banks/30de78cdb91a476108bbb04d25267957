@@ -1,0 +1,30 @@
+[
+  {
+    "question": "What is the capital of France?",
+    "options": [
+      "London",
+      "Berlin",
+      "Paris",
+      "Madrid"
+    ],
+    "correctAnswer": 2,
+    "explanation": "Paris is the capital city of France.",
+    "difficulty": "easy",
+    "tags": "geography,capitals",
+    "marks": 1
+  },
+  {
+    "question": "Which of the following is not a programming language?",
+    "options": [
+      "Python",
+      "Java",
+      "HTML",
+      "C++"
+    ],
+    "correctAnswer": 2,
+    "explanation": "HTML is a markup language, not a programming language.",
+    "difficulty": "medium",
+    "tags": "programming ,web",
+    "marks": 1
+  }
+]

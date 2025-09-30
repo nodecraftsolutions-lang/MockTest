@@ -45,13 +45,6 @@ const companySchema = new mongoose.Schema({
   logoUrl: {
     type: String,
     default: null,
-    validate: {
-      validator: function (v) {
-        if (!v) return true;
-        return /^https?:\/\/.+\.(jpg|jpeg|png|gif|svg)$/i.test(v);
-      },
-      message: 'Please provide a valid image URL'
-    }
   },
   description: {
     type: String,

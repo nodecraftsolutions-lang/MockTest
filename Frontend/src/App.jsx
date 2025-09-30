@@ -6,9 +6,15 @@ import PublicLayout from './layouts/PublicLayout';
 import DashboardLayout from './layouts/DashboardLayout';
 import AdminLayout from './layouts/AdminLayout';
 
+//mock test bages
+import CreateCompany from './pages/Admin/MockTest/CreateCompany'
+import TestCreation from './pages/Admin/MockTest/TestCreation'
+import QuestionBankUpload from './pages/Admin/MockTest/QuestionBankUpload'
+
+
+
+
 // Public Pages
-
-
 import Home from './pages/Home';
 import MockTests from './pages/MockTests';
 import About from './pages/About';
@@ -45,6 +51,7 @@ import AdminSettings from './pages/Admin/Settings';
 
 import './index.css';
 
+
 function App() {
   return (
     <AuthProvider>
@@ -69,6 +76,7 @@ function App() {
                 </ProtectedRoute>
               }
             >
+
               <Route index element={<StudentDashboard />} />
               <Route path="free-tests" element={<FreeTests />} />
               <Route path="paid-tests" element={<PaidTests />} />
@@ -96,7 +104,7 @@ function App() {
               <Route path="profile" element={<Profile />} />
               <Route path="leaderboard" element={<Leaderboard />} />
             </Route>
-
+            
             {/* Admin Dashboard Routes */}
             <Route
               path="/admin"
@@ -105,7 +113,11 @@ function App() {
                   <AdminLayout />
                 </ProtectedRoute>
               }
+              
             >
+              <Route path="/admin/mocktest/create-company"element={<CreateCompany/>}/>
+              <Route path="/admin/mocktest/test-creation"element={<TestCreation/>}/>
+              <Route path="/admin/mocktest/question-bank-upload" element={<QuestionBankUpload/>}/>
               <Route index element={<AdminDashboard />} />
               <Route path="companies" element={<ManageCompanies />} />
               <Route path="tests" element={<ManageTests />} />
