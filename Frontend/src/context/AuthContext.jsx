@@ -23,7 +23,6 @@ export const AuthProvider = ({ children }) => {
     } else {
       setLoading(false);
     }
-    // eslint-disable-next-line
   }, []);
 
   const validateToken = async (token) => {
