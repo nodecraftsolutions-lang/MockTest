@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import {
   ChevronLeft, ChevronRight, Clock, CheckCircle, Flag,
-  AlertTriangle, BookOpen
+  AlertTriangle, BookOpen, Lock, ExternalLink
 } from "lucide-react";
 import api from "../../api/axios";
 import LoadingSpinner from "../../components/LoadingSpinner";
@@ -12,6 +12,7 @@ const ExamInterface = () => {
   const { testId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [questions, setQuestions] = useState([]);
   const [sections, setSections] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -25,13 +26,38 @@ const ExamInterface = () => {
   const [submitting, setSubmitting] = useState(false);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [autoSaving, setAutoSaving] = useState(false);
+  const [previousAttempt, setPreviousAttempt] = useState(null);
+  const [testAlreadyAttempted, setTestAlreadyAttempted] = useState(false);
   const { showError, showSuccess } = useToast();
+  
+  // Determine if this is a mock test based on the URL path
+  // Improved detection to check for both /mock-test/ and /mock-tests/ in the URL
+  const isMockTest = location.pathname.includes('/mock-test/') || location.pathname.includes('/mock-tests/');
+  
+  // Get the appropriate return path based on test type
+  const getReturnPath = () => {
+    return isMockTest ? '/student/mock-tests' : '/student/tests';
+  };
 
+  // Check for completed attempt in session storage to handle post-submission navigation
   useEffect(() => {
-    if (attemptId) {
-      fetchQuestions(attemptId);
+    // Use different storage keys for mock tests vs regular tests
+    const storageKeyPrefix = isMockTest ? 'mock_test_' : 'test_';
+    const completedTestKey = `${storageKeyPrefix}${testId}_completed`;
+    const hasCompletedTest = sessionStorage.getItem(completedTestKey);
+    
+    if (hasCompletedTest) {
+      try {
+        const attemptData = JSON.parse(hasCompletedTest);
+        setTestAlreadyAttempted(true);
+        setPreviousAttempt(attemptData);
+        setLoading(false);
+      } catch (e) {
+        // If parsing fails, proceed with normal flow
+        checkPreviousAttempt();
+      }
     } else {
-      startTest();
+      checkPreviousAttempt();
     }
     // eslint-disable-next-line
   }, [testId]);
@@ -58,16 +84,101 @@ const ExamInterface = () => {
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
-      e.preventDefault();
-      e.returnValue = 'Are you sure you want to leave? Your progress will be lost.';
+      if (!testAlreadyAttempted) {
+        e.preventDefault();
+        e.returnValue = 'Are you sure you want to leave? Your progress will be lost.';
+      }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, []);
+  }, [testAlreadyAttempted]);
+
+  // Function to check if the test has already been attempted
+  const checkPreviousAttempt = async () => {
+    try {
+      // Use different API endpoints based on test type
+      const apiEndpoint = isMockTest 
+        ? `/mock-tests/${testId}/previous-attempts` 
+        : `/tests/${testId}/previous-attempts`;
+        
+      const res = await api.get(apiEndpoint);
+      if (res.data.success) {
+        const { hasCompletedAttempt, lastAttempt } = res.data.data;
+        
+        if (hasCompletedAttempt) {
+          setTestAlreadyAttempted(true);
+          setPreviousAttempt(lastAttempt);
+          
+          // Store completed test info in session storage
+          const storageKeyPrefix = isMockTest ? 'mock_test_' : 'test_';
+          const completedTestKey = `${storageKeyPrefix}${testId}_completed`;
+          sessionStorage.setItem(completedTestKey, JSON.stringify(lastAttempt));
+          
+          setLoading(false);
+        } else if (attemptId) {
+          // Check if this attempt is already submitted
+          checkAttemptStatus(attemptId);
+        } else {
+          // Start new test
+          startTest();
+        }
+      }
+    } catch (error) {
+      if (error.response?.status === 403 && error.response?.data?.message?.includes('already attempted')) {
+        setTestAlreadyAttempted(true);
+        setLoading(false);
+      } else {
+        // If the endpoint doesn't exist yet, fall back to original behavior
+        if (attemptId) {
+          checkAttemptStatus(attemptId);
+        } else {
+          startTest();
+        }
+      }
+    }
+  };
+
+  // New function to check if an attempt is already submitted
+  const checkAttemptStatus = async (id) => {
+    try {
+      // Use different API endpoints based on test type
+      const apiEndpoint = isMockTest 
+        ? `/mock-tests/attempts/${id}/status` 
+        : `/tests/attempts/${id}/status`;
+        
+      const res = await api.get(apiEndpoint);
+      if (res.data.success) {
+        const { status, attemptData } = res.data.data;
+        
+        if (status === 'submitted' || status === 'completed') {
+          setTestAlreadyAttempted(true);
+          setPreviousAttempt(attemptData);
+          
+          // Store completed test info in session storage
+          const storageKeyPrefix = isMockTest ? 'mock_test_' : 'test_';
+          const completedTestKey = `${storageKeyPrefix}${testId}_completed`;
+          sessionStorage.setItem(completedTestKey, JSON.stringify(attemptData));
+          
+          setLoading(false);
+        } else {
+          // Continue with the attempt
+          fetchQuestions(id);
+        }
+      }
+    } catch (error) {
+      // If endpoint doesn't exist or other error, just try to fetch questions
+      fetchQuestions(id);
+    }
+  };
 
   const startTest = async () => {
     try {
-      const res = await api.post(`/tests/${testId}/launch`, {
+      // Use different API endpoints based on test type
+      const apiEndpoint = isMockTest 
+        ? `/mock-tests/${testId}/launch` 
+        : `/tests/${testId}/launch`;
+        
+      const res = await api.post(apiEndpoint, {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
       });
       if (res.data.success) {
@@ -82,16 +193,40 @@ const ExamInterface = () => {
         fetchQuestions(attemptId);
       }
     } catch (error) {
-      showError(error.response?.data?.message || "Failed to start test");
+      if (error.response?.status === 403 && error.response?.data?.message?.includes('already attempted')) {
+        setTestAlreadyAttempted(true);
+      } else {
+        showError(error.response?.data?.message || "Failed to start test");
+      }
       setLoading(false);
     }
   };
 
   const fetchQuestions = async (id) => {
     try {
-      const res = await api.get(`/tests/${testId}/questions?attemptId=${id}`);
+      // Use different API endpoints based on test type
+      const apiEndpoint = isMockTest 
+        ? `/mock-tests/${testId}/questions?attemptId=${id}` 
+        : `/tests/${testId}/questions?attemptId=${id}`;
+        
+      const res = await api.get(apiEndpoint);
       if (res.data.success) {
-        const { questions, sections, savedAnswers } = res.data.data;
+        const { questions, sections, savedAnswers, attempt } = res.data.data;
+        
+        // Check if the attempt is already submitted
+        if (attempt && (attempt.status === 'submitted' || attempt.status === 'completed')) {
+          setTestAlreadyAttempted(true);
+          setPreviousAttempt(attempt);
+          
+          // Store completed test info in session storage
+          const storageKeyPrefix = isMockTest ? 'mock_test_' : 'test_';
+          const completedTestKey = `${storageKeyPrefix}${testId}_completed`;
+          sessionStorage.setItem(completedTestKey, JSON.stringify(attempt));
+          
+          setLoading(false);
+          return;
+        }
+        
         setQuestions(questions);
         setSections(sections || []);
         if (questions.length > 0) setCurrentSection(questions[0].section);
@@ -121,7 +256,12 @@ const ExamInterface = () => {
     try {
       const currentQuestion = questions[currentIndex];
       if (currentQuestion && answers[currentQuestion._id]) {
-        await api.post(`/tests/${testId}/save-answer`, {
+        // Use different API endpoints based on test type
+        const apiEndpoint = isMockTest 
+          ? `/mock-tests/${testId}/save-answer` 
+          : `/tests/${testId}/save-answer`;
+          
+        await api.post(apiEndpoint, {
           attemptId,
           questionId: currentQuestion._id,
           selectedOptions: [answers[currentQuestion._id]],
@@ -154,10 +294,35 @@ const ExamInterface = () => {
     if (!attemptId) return showError("No attempt found");
     setSubmitting(true);
     try {
-      const res = await api.post(`/tests/attempts/${attemptId}/submit`, { answers });
+      // Use different API endpoints based on test type
+      const apiEndpoint = isMockTest 
+        ? `/mock-tests/attempts/${attemptId}/submit` 
+        : `/tests/attempts/${attemptId}/submit`;
+        
+      const res = await api.post(apiEndpoint, { answers });
       if (res.data.success) {
         showSuccess("Test submitted successfully!");
-        navigate(`/student/results/${attemptId}`);
+        
+        // Mark this test as completed in session storage
+        const storageKeyPrefix = isMockTest ? 'mock_test_' : 'test_';
+        const completedTestKey = `${storageKeyPrefix}${testId}_completed`;
+        const attemptData = {
+          _id: attemptId,
+          submittedAt: new Date().toISOString(),
+          startTime: new Date().toISOString(),
+          ...res.data.data
+        };
+        sessionStorage.setItem(completedTestKey, JSON.stringify(attemptData));
+        
+        // Set state to show the completed view if they navigate back
+        setTestAlreadyAttempted(true);
+        setPreviousAttempt(attemptData);
+        
+        // Navigate to the appropriate results page
+        const resultsPath = isMockTest 
+          ? `/student/mock-results/${attemptId}` 
+          : `/student/results/${attemptId}`;
+        navigate(resultsPath);
       }
     } catch (error) {
       showError(error.response?.data?.message || "Failed to submit test");
@@ -170,11 +335,35 @@ const ExamInterface = () => {
   const handleAutoSubmit = async () => {
     if (!attemptId) return;
     try {
-      await api.post(`/tests/attempts/${attemptId}/submit`, { answers });
+      // Use different API endpoints based on test type
+      const apiEndpoint = isMockTest 
+        ? `/mock-tests/attempts/${attemptId}/submit` 
+        : `/tests/attempts/${attemptId}/submit`;
+        
+      const res = await api.post(apiEndpoint, { answers });
+      
+      // Mark this test as completed in session storage
+      if (res.data.success) {
+        const storageKeyPrefix = isMockTest ? 'mock_test_' : 'test_';
+        const completedTestKey = `${storageKeyPrefix}${testId}_completed`;
+        const attemptData = {
+          _id: attemptId,
+          submittedAt: new Date().toISOString(),
+          startTime: new Date().toISOString(),
+          ...res.data.data
+        };
+        sessionStorage.setItem(completedTestKey, JSON.stringify(attemptData));
+      }
+      
       showError("Time expired! Test auto-submitted.");
-      navigate(`/student/results/${attemptId}`);
+    
+      // Navigate to the appropriate results page
+      const resultsPath = isMockTest 
+        ? `/student/mock-results/${attemptId}` 
+        : `/student/results/${attemptId}`;
+      navigate(resultsPath);
     } catch {
-      navigate("/student/results");
+      navigate(getReturnPath());
     }
   };
 
@@ -214,6 +403,71 @@ const ExamInterface = () => {
     }
   };
 
+  // Get the appropriate results path based on test type
+  const getResultsPath = () => {
+    if (!previousAttempt || (!previousAttempt._id && !attemptId)) return null;
+    
+    const id = previousAttempt._id || attemptId;
+    return isMockTest 
+      ? `/student/mock-results/${id}` 
+      : `/student/results/${id}`;
+  };
+
+  // Show already attempted message
+  if (testAlreadyAttempted) {
+    const resultsPath = getResultsPath();
+    const returnPath = getReturnPath();
+    
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-2xl w-full text-center">
+          <div className="w-20 h-20 mx-auto bg-red-100 rounded-full flex items-center justify-center mb-6">
+            <Lock className="w-10 h-10 text-red-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Test Already Attempted</h1>
+          <p className="text-gray-600 mb-6">
+            You've already attempted this {isMockTest ? 'mock test' : 'test'}. Only one attempt is allowed per test.
+          </p>
+          
+          {previousAttempt && (
+            <div className="bg-blue-50 rounded-lg p-5 mb-6 text-left">
+              <h3 className="font-semibold text-blue-800 mb-3">Your Previous Attempt</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Date:</span>
+                  <span className="font-medium">{new Date(previousAttempt.submittedAt || previousAttempt.startTime).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Score:</span>
+                  <span className="font-medium">
+                    {previousAttempt.score !== undefined ? `${previousAttempt.score}/${previousAttempt.totalMarks || '?'}` : 'Not available'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Status:</span>
+                  <span className="font-medium text-green-600">
+                    Completed
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            {resultsPath && (
+              <button 
+                onClick={() => navigate(resultsPath)}
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center"
+              >
+                View Results <ExternalLink className="w-4 h-4 ml-2" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) return <LoadingSpinner size="large" />;
   if (!questions.length) return <div className="p-6 text-gray-600">No questions available.</div>;
 
@@ -230,7 +484,7 @@ const ExamInterface = () => {
           <div>
             <h1 className="text-2xl font-extrabold text-primary-700 flex items-center gap-2">
               <BookOpen className="w-6 h-6 text-primary-600" />
-              Mock Test
+              {isMockTest ? 'Mock Test' : 'Test'}
             </h1>
             <p className="text-sm text-gray-600">
               Question {currentIndex + 1} of {questions.length} • Section: <span className="font-semibold">{currentQ?.section}</span>
@@ -482,8 +736,17 @@ const ExamInterface = () => {
             </div>
             <div className="mb-6">
               <p className="text-gray-600 mb-4">
-                Are you sure you want to submit your test? You cannot change your answers after submission.
+                Are you sure you want to submit your {isMockTest ? 'mock test' : 'test'}? You cannot change your answers after submission.
               </p>
+              {/* Warning about one attempt */}
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <div className="flex items-start">
+                  <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 mr-2 flex-shrink-0" />
+                  <p className="text-red-700 text-sm">
+                    <strong>Important:</strong> This {isMockTest ? 'mock test' : 'test'} allows only one attempt. Once submitted, you won't be able to retake it.
+                  </p>
+                </div>
+              </div>
               {/* Overall Summary */}
               <div className="bg-gray-50 rounded-lg p-4 space-y-3 mb-4">
                 <h4 className="font-medium text-gray-900">Overall Summary</h4>
