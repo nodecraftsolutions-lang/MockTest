@@ -54,7 +54,7 @@ import ManageStudents from './pages/Admin/Students';
 import AdminResults from './pages/Admin/Results';
 import ManagePayments from './pages/Admin/Payments';
 import AdminSettings from './pages/Admin/Settings';
-
+import NotFound3D from './pages/NotFound3D'
 import './index.css';
 import DynamicGenerateQuestions from './pages/Admin/MockTest/GenerateQuestions';
 
@@ -66,6 +66,7 @@ function App() {
         <Router>
           <Routes>
             {/* Public Routes */}
+            <Route path="*" element={<NotFound3D/>}/>
             <Route path="/" element={<PublicLayout />}>
               <Route index element={<Home />} />
               <Route path="mock-tests" element={<MockTests />} />
