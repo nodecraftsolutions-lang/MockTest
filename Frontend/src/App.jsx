@@ -50,6 +50,7 @@ import ManagePayments from './pages/Admin/Payments';
 import AdminSettings from './pages/Admin/Settings';
 
 import './index.css';
+import DynamicGenerateQuestions from './pages/Admin/MockTest/GenerateQuestions';
 
 
 function App() {
@@ -118,6 +119,7 @@ function App() {
               <Route path="/admin/mocktest/create-company"element={<CreateCompany/>}/>
               <Route path="/admin/mocktest/test-creation"element={<TestCreation/>}/>
               <Route path="/admin/mocktest/question-bank-upload" element={<QuestionBankUpload/>}/>
+              <Route path="/admin/mocktest/question-generate" element={<DynamicGenerateQuestions/>}/>
               <Route index element={<AdminDashboard />} />
               <Route path="companies" element={<ManageCompanies />} />
               <Route path="tests" element={<ManageTests />} />
