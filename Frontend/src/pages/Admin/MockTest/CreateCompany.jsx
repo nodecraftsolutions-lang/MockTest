@@ -33,7 +33,6 @@ const CreateCompany = () => {
         duration: 25,
         marksPerQuestion: 1,
         negativeMarking: 0.25,
-        difficultyDistribution: { easy: 30, medium: 50, hard: 20 },
       },
     ],
     tags: ["Hiring", "Fresher"],
@@ -63,13 +62,6 @@ const CreateCompany = () => {
     setFormData({ ...formData, defaultPattern: updated });
   };
 
-  // Handle difficulty distribution change
-  const handleDifficultyDistributionChange = (index, level, value) => {
-    const updated = [...formData.defaultPattern];
-    updated[index].difficultyDistribution[level] = Number(value);
-    setFormData({ ...formData, defaultPattern: updated });
-  };
-
   // Add section
   const addSection = () => {
     setFormData({
@@ -82,7 +74,6 @@ const CreateCompany = () => {
           duration: 20,
           marksPerQuestion: 1,
           negativeMarking: 0,
-          difficultyDistribution: { easy: 30, medium: 50, hard: 20 },
         },
       ],
     });
@@ -125,7 +116,6 @@ const CreateCompany = () => {
               duration: 25,
               marksPerQuestion: 1,
               negativeMarking: 0.25,
-              difficultyDistribution: { easy: 30, medium: 50, hard: 20 },
             },
           ],
           tags: ["Hiring", "Fresher"],
@@ -320,7 +310,7 @@ const CreateCompany = () => {
                   </div>
                   <div className="p-6">
                     <div className="flex justify-between items-center mb-6">
-                      <p className="text-gray-600">Configure sections and difficulty distribution</p>
+                      <p className="text-gray-600">Configure sections and question patterns</p>
                       <button
                         type="button"
                         onClick={addSection}
@@ -350,7 +340,7 @@ const CreateCompany = () => {
                             )}
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div>
                               <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Section Name
@@ -401,7 +391,7 @@ const CreateCompany = () => {
                               />
                             </div>
 
-                            <div>
+                            <div className="md:col-span-2">
                               <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Negative Marking
                               </label>
@@ -411,30 +401,18 @@ const CreateCompany = () => {
                                 value={section.negativeMarking}
                                 onChange={(e) => handleSectionChange(index, 'negativeMarking', e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="0 for no negative marking"
                               />
                             </div>
                           </div>
 
-                          {/* Difficulty Distribution */}
-                          <div className="border-t pt-4">
-                            <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                              <BarChart3 className="w-4 h-4 mr-2" />
-                              Difficulty Distribution (%)
-                            </h4>
-                            <div className="grid grid-cols-3 gap-4">
-                              {['easy', 'medium', 'hard'].map((level) => (
-                                <div key={level}>
-                                  <label className="block text-xs font-medium text-gray-600 mb-1 capitalize">
-                                    {level}
-                                  </label>
-                                  <input
-                                    type="number"
-                                    value={section.difficultyDistribution[level]}
-                                    onChange={(e) => handleDifficultyDistributionChange(index, level, e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                  />
-                                </div>
-                              ))}
+                          {/* Info Note */}
+                          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="flex items-start">
+                              <Info className="w-4 h-4 text-blue-600 mr-2 mt-0.5 flex-shrink-0" />
+                              <p className="text-sm text-blue-700">
+                                Questions will be randomly selected from the question bank based on the section name and difficulty level.
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -496,6 +474,23 @@ const CreateCompany = () => {
                           })}
                           className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         />
+                      </div>
+                    </div>
+
+                    {/* Tags Section */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Tags
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {formData.tags.map((tag, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
+                          >
+                            {tag}
+                          </span>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -616,10 +611,17 @@ const CreateCompany = () => {
                     {formData.defaultPattern.map((section, index) => (
                       <div key={index} className="flex justify-between text-xs bg-gray-50 p-2 rounded">
                         <span className="font-medium">{section.sectionName}</span>
-                        <span>{section.questionCount} Q</span>
+                        <span>{section.questionCount} Q • {section.duration} min</span>
                       </div>
                     ))}
                   </div>
+                </div>
+
+                {/* Info Box */}
+                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-xs text-green-700">
+                    <strong>Note:</strong> Questions will be randomly selected from the question bank matching the section and difficulty.
+                  </p>
                 </div>
               </div>
             </div>
