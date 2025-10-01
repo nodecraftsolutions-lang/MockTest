@@ -124,6 +124,7 @@ router.delete('/:id', adminAuth, async (req, res) => {
 });
 
 // Add session to a course
+// POST - Create new session
 router.post('/:id/sessions', adminAuth, async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
@@ -140,10 +141,123 @@ router.post('/:id/sessions', adminAuth, async (req, res) => {
     course.sessions.push(session);
     await course.save();
 
-    res.json({ success: true, message: 'Session added', data: course.sessions });
+    res.json({ 
+      success: true, 
+      message: 'Session added successfully', 
+      data: course.sessions 
+    });
   } catch (err) {
     console.error('Add session error:', err);
     res.status(500).json({ success: false, message: 'Failed to add session' });
+  }
+});
+
+// PUT - Update existing session
+router.put('/:courseId/sessions/:sessionId', adminAuth, async (req, res) => {
+  try {
+    const { courseId, sessionId } = req.params;
+    
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    const session = course.sessions.id(sessionId);
+    if (!session) {
+      return res.status(404).json({ success: false, message: 'Session not found' });
+    }
+
+    // Update session fields
+    session.title = req.body.title || session.title;
+    session.startsAt = req.body.startsAt || session.startsAt;
+    session.duration = req.body.duration || session.duration;
+    session.streamLink = req.body.streamLink || session.streamLink;
+    session.description = req.body.description || session.description;
+    session.updatedAt = new Date();
+
+    await course.save();
+
+    res.json({ 
+      success: true, 
+      message: 'Session updated successfully', 
+      data: session 
+    });
+  } catch (err) {
+    console.error('Update session error:', err);
+    res.status(500).json({ success: false, message: 'Failed to update session' });
+  }
+});
+
+// DELETE - Remove session
+router.delete('/:courseId/sessions/:sessionId', adminAuth, async (req, res) => {
+  try {
+    const { courseId, sessionId } = req.params;
+    
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    const session = course.sessions.id(sessionId);
+    if (!session) {
+      return res.status(404).json({ success: false, message: 'Session not found' });
+    }
+
+    // Remove the session
+    course.sessions.pull(sessionId);
+    await course.save();
+
+    res.json({ 
+      success: true, 
+      message: 'Session deleted successfully',
+      data: { deletedSessionId: sessionId }
+    });
+  } catch (err) {
+    console.error('Delete session error:', err);
+    res.status(500).json({ success: false, message: 'Failed to delete session' });
+  }
+});
+
+// GET - Get all sessions for a course
+router.get('/:courseId/sessions', adminAuth, async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    res.json({ 
+      success: true, 
+      data: { sessions: course.sessions } 
+    });
+  } catch (err) {
+    console.error('Get sessions error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch sessions' });
+  }
+});
+
+// GET - Get single session
+router.get('/:courseId/sessions/:sessionId', adminAuth, async (req, res) => {
+  try {
+    const { courseId, sessionId } = req.params;
+    
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    const session = course.sessions.id(sessionId);
+    if (!session) {
+      return res.status(404).json({ success: false, message: 'Session not found' });
+    }
+
+    res.json({ 
+      success: true, 
+      data: { session } 
+    });
+  } catch (err) {
+    console.error('Get session error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch session' });
   }
 });
 
@@ -339,6 +453,7 @@ router.get("/:courseId/recordings", auth, async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to fetch recordings" });
   }
 });
+
 // 📌 GET /api/v1/courses?withRecordings=true
 // Fetch only courses that have recordings uploaded OR have recordingsPrice > 0
 router.get("/", auth, async (req, res) => {

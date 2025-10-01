@@ -11,8 +11,14 @@ import CreateCompany from './pages/Admin/MockTest/CreateCompany'
 import TestCreation from './pages/Admin/MockTest/TestCreation'
 import QuestionBankUpload from './pages/Admin/MockTest/QuestionBankUpload'
 
+//course
 
+import CourseCreation from './pages/Admin/Course/CourseCreation'
+import CourseSessions from './pages/Admin/Course/CourseSessions'
+import CoursesList from './pages/Admin/Course/CourseList'
 
+//recordings
+import RecordingsManagement from './pages/Admin/Recordings/RecordingsManagement';
 
 // Public Pages
 import Home from './pages/Home';
@@ -120,6 +126,19 @@ function App() {
               <Route path="/admin/mocktest/test-creation"element={<TestCreation/>}/>
               <Route path="/admin/mocktest/question-bank-upload" element={<QuestionBankUpload/>}/>
               <Route path="/admin/mocktest/question-generate" element={<DynamicGenerateQuestions/>}/>
+
+
+              <Route path="/admin/course/create" element={<CourseCreation/>}/>
+              <Route path="/admin/course/sessions" element={<CourseSessions/>}/>
+              <Route path="/admin/course/list" element={<CoursesList/>}/>
+
+
+              <Route path="/admin/recordings/upload" element={<RecordingsManagement/>}/>
+
+
+
+
+
               <Route index element={<AdminDashboard />} />
               <Route path="companies" element={<ManageCompanies />} />
               <Route path="tests" element={<ManageTests />} />

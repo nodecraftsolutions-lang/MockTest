@@ -61,6 +61,288 @@ router.post("/", adminAuth, async (req, res) => {
   }
 });
 
+//update the recordings
+router.put("/:id", adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, videoUrl, thumbnailUrl, duration } = req.body;
+
+    // Check if recording exists
+    const recording = await Recording.findById(id);
+    if (!recording) {
+      return res.status(404).json({ success: false, message: "Recording not found" });
+    }
+
+    // Update recording
+    const updatedRecording = await Recording.findByIdAndUpdate(
+      id,
+      {
+        title,
+        description,
+        videoUrl,
+        thumbnailUrl,
+        duration,
+        updatedAt: Date.now()
+      },
+      { new: true, runValidators: true } // Return updated document and run validators
+    );
+
+    res.json({ 
+      success: true, 
+      message: "Recording updated successfully", 
+      data: updatedRecording 
+    });
+  } catch (error) {
+    console.error("Update recording error:", error);
+    res.status(500).json({ success: false, message: "Failed to update recording" });
+  }
+});
+
+
+
+// delete
+router.delete("/:id", adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if recording exists
+    const recording = await Recording.findById(id);
+    if (!recording) {
+      return res.status(404).json({ success: false, message: "Recording not found" });
+    }
+
+    // Delete recording
+    await Recording.findByIdAndDelete(id);
+
+    res.json({ 
+      success: true, 
+      message: "Recording deleted successfully" 
+    });
+  } catch (error) {
+    console.error("Delete recording error:", error);
+    res.status(500).json({ success: false, message: "Failed to delete recording" });
+  }
+});
+
+// GET /recordings - Get all recordings with optional filtering
+router.get("/", async (req, res) => {
+  try {
+    const { courseId, page = 1, limit = 10, search, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+    
+    const query = {};
+    
+    // Filter by courseId if provided
+    if (courseId) {
+      query.courseId = courseId;
+    }
+    
+    // Search in title and description
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const recordings = await Recording.find(query)
+      .populate('courseId', 'title category')
+      .sort(sortOptions)
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await Recording.countDocuments(query);
+
+    res.json({
+      success: true,
+      data: {
+        recordings,
+        pagination: {
+          current: parseInt(page),
+          pages: Math.ceil(total / limit),
+          total
+        }
+      }
+    });
+  } catch (error) {
+    console.error("Get recordings error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch recordings" });
+  }
+});
+
+// GET /recordings/:id - Get single recording by ID
+router.get("/:id", async (req, res) => {
+  try {
+    const recording = await Recording.findById(req.params.id).populate('courseId', 'title category description');
+    
+    if (!recording) {
+      return res.status(404).json({ success: false, message: "Recording not found" });
+    }
+
+    // Increment views count
+    recording.views = (recording.views || 0) + 1;
+    await recording.save();
+
+    res.json({
+      success: true,
+      data: { recording }
+    });
+  } catch (error) {
+    console.error("Get recording error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch recording" });
+  }
+});
+
+// GET /recordings/course/:courseId - Get all recordings for a specific course
+router.get("/course/:courseId", async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: "Course not found" });
+    }
+
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const recordings = await Recording.find({ courseId })
+      .populate('courseId', 'title category')
+      .sort(sortOptions)
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await Recording.countDocuments({ courseId });
+
+    res.json({
+      success: true,
+      data: {
+        recordings,
+        course: {
+          _id: course._id,
+          title: course.title,
+          category: course.category
+        },
+        pagination: {
+          current: parseInt(page),
+          pages: Math.ceil(total / limit),
+          total
+        }
+      }
+    });
+  } catch (error) {
+    console.error("Get course recordings error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch course recordings" });
+  }
+});
+
+// GET /recordings/stats - Get recording statistics
+router.get("/stats/overview", async (req, res) => {
+  try {
+    const totalRecordings = await Recording.countDocuments();
+    const totalDuration = await Recording.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalDuration: { $sum: "$duration" },
+          averageDuration: { $avg: "$duration" }
+        }
+      }
+    ]);
+
+    const recordingsByCourse = await Recording.aggregate([
+      {
+        $group: {
+          _id: "$courseId",
+          count: { $sum: 1 },
+          totalDuration: { $sum: "$duration" }
+        }
+      },
+      {
+        $lookup: {
+          from: "courses",
+          localField: "_id",
+          foreignField: "_id",
+          as: "course"
+        }
+      },
+      {
+        $unwind: "$course"
+      },
+      {
+        $project: {
+          courseId: "$_id",
+          courseTitle: "$course.title",
+          count: 1,
+          totalDuration: 1
+        }
+      }
+    ]);
+
+    const recentRecordings = await Recording.find()
+      .populate('courseId', 'title')
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    res.json({
+      success: true,
+      data: {
+        totalRecordings,
+        totalDuration: totalDuration[0]?.totalDuration || 0,
+        averageDuration: Math.round(totalDuration[0]?.averageDuration || 0),
+        recordingsByCourse,
+        recentRecordings
+      }
+    });
+  } catch (error) {
+    console.error("Get recording stats error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch recording statistics" });
+  }
+});
+
+// GET /recordings/search/:query - Search recordings
+router.get("/search/:query", async (req, res) => {
+  try {
+    const { query } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+
+    const searchQuery = {
+      $or: [
+        { title: { $regex: query, $options: 'i' } },
+        { description: { $regex: query, $options: 'i' } }
+      ]
+    };
+
+    const recordings = await Recording.find(searchQuery)
+      .populate('courseId', 'title category')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await Recording.countDocuments(searchQuery);
+
+    res.json({
+      success: true,
+      data: {
+        recordings,
+        searchQuery: query,
+        pagination: {
+          current: parseInt(page),
+          pages: Math.ceil(total / limit),
+          total
+        }
+      }
+    });
+  } catch (error) {
+    console.error("Search recordings error:", error);
+    res.status(500).json({ success: false, message: "Failed to search recordings" });
+  }
+});
+
+
 // 📜 Get course recordings with unlock status
 // 📜 Get course recordings with unlock status
 router.get("/:courseId", auth, async (req, res) => {

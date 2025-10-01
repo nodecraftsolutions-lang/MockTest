@@ -23,7 +23,9 @@ import {
   Plus,
   Upload,
   Database,
-  ListStartIcon
+  ListStartIcon,
+  Calendar,
+  Play
 } from "lucide-react";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
@@ -85,6 +87,8 @@ const Sidebar = ({ type = "student" }) => {
       onClick={() => toggleDropdown(menu)}
       className={`flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors ${
         isCollapsed ? "justify-center" : ""
+      } ${
+        openDropdown === menu ? "bg-primary-50 text-primary-700" : "text-gray-600"
       }`}
       title={isCollapsed ? label : ""}
     >
@@ -115,6 +119,20 @@ const Sidebar = ({ type = "student" }) => {
     ) : null;
 
   const MockTestSubItem = ({ to, icon: Icon, label }) => (
+    <Link
+      to={to}
+      className={`flex items-center px-3 py-2.5 text-sm rounded-lg transition-colors group ${
+        location.pathname === to
+          ? "bg-primary-50 text-primary-700 border-l-2 border-primary-500 -ml-0.5"
+          : "text-gray-600 hover:bg-gray-50"
+      }`}
+    >
+      <Icon className="w-4 h-4 mr-3 text-primary-500" />
+      {label}
+    </Link>
+  );
+
+  const AdminSubItem = ({ to, icon: Icon, label }) => (
     <Link
       to={to}
       className={`flex items-center px-3 py-2.5 text-sm rounded-lg transition-colors group ${
@@ -322,18 +340,54 @@ const Sidebar = ({ type = "student" }) => {
                 </DropdownContent>
               </div>
 
-              <NavItem 
-                to="/admin/tests" 
-                icon={BookOpen} 
-                label="Tests" 
-                showLabel={!isCollapsed}
-              />
-              <NavItem 
-                to="/admin/question-banks" 
-                icon={FileText} 
-                label="Question Banks" 
-                showLabel={!isCollapsed}
-              />
+              {/* Course Management Dropdown */}
+              <div className="relative group">
+                <DropdownButton 
+                  icon={BookOpen} 
+                  label="Course Management" 
+                  menu="course" 
+                  hasChildren={true}
+                />
+                
+                <DropdownContent menu="course">
+                  <AdminSubItem 
+                    to="/admin/course/create" 
+                    icon={Plus} 
+                    label="Course Creation" 
+                  />
+                  <AdminSubItem 
+                    to="/admin/course/sessions" 
+                    icon={Calendar} 
+                    label="Upload Sessions for Courses" 
+                  />
+                  <AdminSubItem 
+                    to="/admin/course/list" 
+                    icon={Database} 
+                    label="All Courses" 
+                  />
+                </DropdownContent>
+              </div>
+
+              {/* Recordings Management Dropdown */}
+              <div className="relative group">
+                <DropdownButton 
+                  icon={Video} 
+                  label="Recordings Management" 
+                  menu="recordings" 
+                  hasChildren={true}
+                />
+                
+                <DropdownContent menu="recordings">
+                  <AdminSubItem 
+                    to="/admin/recordings/upload" 
+                    icon={Settings} 
+                    label="Manage Recordings" 
+                  />
+                
+                </DropdownContent>
+              </div>
+
+              {/* Regular Admin Nav Items */}
               <NavItem 
                 to="/admin/students" 
                 icon={Users} 
