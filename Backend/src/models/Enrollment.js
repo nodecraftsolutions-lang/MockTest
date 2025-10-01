@@ -38,7 +38,13 @@ enrollmentSchema.pre('validate', function (next) {
 });
 
 // ⚡ Unique index per student per test OR course
-enrollmentSchema.index({ studentId: 1, testId: 1 }, { unique: true, sparse: true });
-enrollmentSchema.index({ studentId: 1, courseId: 1 }, { unique: true, sparse: true });
+enrollmentSchema.index(
+  { studentId: 1, testId: 1 },
+  { unique: true, partialFilterExpression: { testId: { $exists: true, $ne: null } } }
+);
+enrollmentSchema.index(
+  { studentId: 1, courseId: 1 },
+  { unique: true, partialFilterExpression: { courseId: { $exists: true, $ne: null } } }
+);
 
 module.exports = mongoose.model('Enrollment', enrollmentSchema);
