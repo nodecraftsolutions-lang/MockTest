@@ -23,6 +23,7 @@ import {
   Plus,
   Upload,
   Database,
+  ListStartIcon
 } from "lucide-react";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
@@ -312,6 +313,11 @@ const Sidebar = ({ type = "student" }) => {
                     to="/admin/mocktest/question-bank-upload" 
                     icon={Upload} 
                     label="Question Bank Upload" 
+                  />
+                  <MockTestSubItem 
+                    to="/admin/mocktest/question-generate" 
+                    icon={ListStartIcon} 
+                    label="Generate Test Questions" 
                   />
                 </DropdownContent>
               </div>
