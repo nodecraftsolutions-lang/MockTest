@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Calendar, Video, Clock, Send, MessageSquare } from "lucide-react";
+import { Calendar, Video, Clock, Send, MessageSquare, FileText, ExternalLink, BookOpen } from "lucide-react";
 import api from "../../api/axios";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { useToast } from "../../context/ToastContext";
@@ -9,12 +9,14 @@ const CourseLearn = () => {
   const { id } = useParams();
   const [sessions, setSessions] = useState([]);
   const [discussions, setDiscussions] = useState([]);
+  const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [resourcesLoading, setResourcesLoading] = useState(true);
   const [message, setMessage] = useState("");
   const { showError, showSuccess } = useToast();
 
   useEffect(() => {
-    Promise.all([fetchSessions(), fetchDiscussions()]).finally(() =>
+    Promise.all([fetchSessions(), fetchDiscussions(), fetchResources()]).finally(() =>
       setLoading(false)
     );
     // eslint-disable-next-line
@@ -35,6 +37,19 @@ const CourseLearn = () => {
       if (res.data.success) setDiscussions(res.data.data || []);
     } catch {
       showError("Failed to load discussions");
+    }
+  };
+
+  const fetchResources = async () => {
+    setResourcesLoading(true);
+    try {
+      const res = await api.get(`/courses/${id}/resources`);
+      setResources(res.data || []);
+    } catch (error) {
+      console.error("Failed to load resources:", error);
+      showError("Failed to load course resources");
+    } finally {
+      setResourcesLoading(false);
     }
   };
 
@@ -108,6 +123,53 @@ const CourseLearn = () => {
           <div className="text-gray-500 text-center py-8">
             <Video className="w-8 h-8 mx-auto mb-2 opacity-30" />
             <p>No sessions scheduled yet.</p>
+          </div>
+        )}
+      </section>
+
+      {/* Course Resources */}
+      <section className="bg-white rounded-2xl shadow-xl p-8 transition hover:shadow-2xl">
+        <div className="flex items-center gap-3 mb-6">
+          <BookOpen className="w-7 h-7 text-green-600" />
+          <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+            Course Resources
+          </h2>
+        </div>
+        
+        {resourcesLoading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+          </div>
+        ) : resources.length > 0 ? (
+          <div className="grid md:grid-cols-2 gap-6">
+            {resources.map((resource, idx) => (
+              <div
+                key={resource._id}
+                className="bg-gradient-to-br from-green-50 to-white border border-green-100 rounded-xl p-5 flex flex-col gap-2 shadow transition hover:scale-[1.02] hover:shadow-lg duration-200"
+                style={{ animationDelay: `${idx * 60}ms` }}
+              >
+                <div className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-green-600 flex-shrink-0" />
+                  <h3 className="text-lg font-semibold text-gray-900 flex-1">
+                    {resource.title}
+                  </h3>
+                </div>
+                <a
+                  href={resource.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center text-sm text-blue-600 hover:text-blue-800 transition mt-2"
+                >
+                  <ExternalLink className="w-4 h-4 mr-1" />
+                  Open Resource
+                </a>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-gray-500 text-center py-8">
+            <FileText className="w-8 h-8 mx-auto mb-2 opacity-30" />
+            <p>No resources available for this course yet.</p>
           </div>
         )}
       </section>
