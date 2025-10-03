@@ -25,7 +25,9 @@ import {
   Database,
   ListStartIcon,
   Calendar,
-  Play
+  Play,
+  List,
+  FileCheck
 } from "lucide-react";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
@@ -307,6 +309,7 @@ const Sidebar = ({ type = "student" }) => {
                 showLabel={!isCollapsed}
               />
               
+              
               {/* MockTest Dropdown with nested items */}
               <div className="relative group">
                 <DropdownButton 
@@ -337,9 +340,19 @@ const Sidebar = ({ type = "student" }) => {
                     icon={ListStartIcon} 
                     label="Generate Test Questions" 
                   />
+                  {/* Added: Manage/View Companies and Tests */}
+                  <MockTestSubItem 
+                    to="/admin/companies" 
+                    icon={Building} 
+                    label="Manage Companies" 
+                  />
+                  <MockTestSubItem 
+                    to="/admin/tests" 
+                    icon={FileCheck} 
+                    label="Manage Tests" 
+                  />
                 </DropdownContent>
               </div>
-
               {/* Course Management Dropdown */}
               <div className="relative group">
                 <DropdownButton 
