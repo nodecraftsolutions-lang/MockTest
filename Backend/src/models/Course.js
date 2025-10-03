@@ -40,6 +40,40 @@ const RecordingSchema = new Schema({
   duration: { type: Number }, // optional, in minutes
   uploadedAt: { type: Date, default: Date.now }
 });
+
+const resourceCourseSchema = new Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    link: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+  },
+  { timestamps: true }
+);
+
+const resourceRecordingSchema = new Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    link: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+  },
+  { timestamps: true }
+);
+
+
 const CourseSchema = new Schema({
   title: { type: String, required: true },
   description: String,
@@ -58,13 +92,14 @@ const CourseSchema = new Schema({
   enrolledStudents: [{ type: Schema.Types.ObjectId, ref: 'Student' }],
   createdBy: { type: Schema.Types.ObjectId, ref: 'Student' },
   createdAt: { type: Date, default: Date.now },
-   recordings: [RecordingSchema],   // ✅ recordings array
+  recordings: [RecordingSchema],
+  resourceCourse: [resourceCourseSchema],
+  resourceRecordings: [resourceRecordingSchema],
   recordingsPrice: {
     type: Number,
     default: 0,
     min: [0, "Price cannot be negative"]
   }
-
 });
 
 module.exports = mongoose.model('Course', CourseSchema);

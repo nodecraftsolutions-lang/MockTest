@@ -385,4 +385,174 @@ router.post("/:id/recordings", adminAuth, async (req, res) => {
   }
 });
 
+
+// ✅ CREATE resource inside a course POST /api/v1/courses/:courseId/resources
+router.post("/:courseId/resources", async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { title, link } = req.body;
+
+    const course = await Course.findById(courseId);
+    if (!course) return res.status(404).json({ message: "Course not found" });
+
+    course.resourceCourse.push({ title, link });
+    await course.save();
+
+    res.status(201).json({
+      message: "Resource added successfully",
+      resources: course.resourceCourse,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Error adding resource", error: err.message });
+  }
+});
+
+
+// ✅ READ all resources of a course
+router.get("/:courseId/resources", async (req, res) => {
+  try {
+    const { courseId } = req.params;
+
+    const course = await Course.findById(courseId).select("resourceCourse");
+    if (!course) return res.status(404).json({ message: "Course not found" });
+
+    res.json(course.resourceCourse);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching resources", error: err.message });
+  }
+});
+
+
+// ✅ UPDATE a specific resource in a course
+router.put("/:courseId/resources/:resourceId", async (req, res) => {
+  try {
+    const { courseId, resourceId } = req.params;
+    const { title, link } = req.body;
+
+    const course = await Course.findById(courseId);
+    if (!course) return res.status(404).json({ message: "Course not found" });
+
+    const resource = course.resourceCourse.id(resourceId);
+    if (!resource) return res.status(404).json({ message: "Resource not found" });
+
+    if (title) resource.title = title;
+    if (link) resource.link = link;
+
+    await course.save();
+
+    res.json({ message: "Resource updated successfully", resource });
+  } catch (err) {
+    res.status(500).json({ message: "Error updating resource", error: err.message });
+  }
+});
+
+// ✅ DELETE a specific resource from a course
+router.delete("/:courseId/resources/:resourceId", async (req, res) => {
+  try {
+    const { courseId, resourceId } = req.params;
+
+    const course = await Course.findById(courseId);
+    if (!course) return res.status(404).json({ message: "Course not found" });
+
+    const resource = course.resourceCourse.id(resourceId);
+    if (!resource) return res.status(404).json({ message: "Resource not found" });
+
+    resource.deleteOne();
+
+    await course.save();
+
+    res.json({ message: "Resource deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Error deleting resource", error: err.message });
+  }
+});
+
+
+
+
+// ✅ CREATE resource inside a course POST /api/v1/courses/:courseId/resourcesrecord
+router.post("/:courseId/resourcesrecord", async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { title, link } = req.body;
+
+    const course = await Course.findById(courseId);
+    if (!course) return res.status(404).json({ message: "Course not found" });
+
+    course.resourceRecordings.push({ title, link });
+    await course.save();
+
+    res.status(201).json({
+      message: "Resource added successfully",
+      resources: course.resourceRecordings,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Error adding resource", error: err.message });
+  }
+});
+
+
+// ✅ READ all resources of a course
+router.get("/:courseId/resourcesrecord", async (req, res) => {
+  try {
+    const { courseId } = req.params;
+
+    const course = await Course.findById(courseId).select("resourceRecordings");
+    if (!course) return res.status(404).json({ message: "Course not found" });
+
+    res.json(course.resourceRecordings);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching resources", error: err.message });
+  }
+});
+
+
+// ✅ UPDATE a specific resource in a course
+router.put("/:courseId/resourcesrecord/:resourceId", async (req, res) => {
+  try {
+    const { courseId, resourceId } = req.params;
+    const { title, link } = req.body;
+
+    const course = await Course.findById(courseId);
+    if (!course) return res.status(404).json({ message: "Course not found" });
+
+    const resource = course.resourceRecordings.id(resourceId);
+    if (!resource) return res.status(404).json({ message: "Resource not found" });
+
+    if (title) resource.title = title;
+    if (link) resource.link = link;
+
+    await course.save();
+
+    res.json({ message: "Resource updated successfully", resource });
+  } catch (err) {
+    res.status(500).json({ message: "Error updating resource", error: err.message });
+  }
+});
+
+// ✅ DELETE a specific resource from a course
+router.delete("/:courseId/resourcesrecord/:resourceId", async (req, res) => {
+  try {
+    const { courseId, resourceId } = req.params;
+
+    const course = await Course.findById(courseId);
+    if (!course) return res.status(404).json({ message: "Course not found" });
+
+    // ✅ Find the resource subdocument
+    const resource = course.resourceRecordings.id(resourceId);
+    if (!resource) return res.status(404).json({ message: "Resource not found" });
+
+    // ✅ Correct way to remove in Mongoose 6+
+    resource.deleteOne(); // or use course.resourceRecordings.pull(resourceId)
+
+    await course.save();
+
+    res.json({ message: "Resource deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Error deleting resource", error: err.message });
+  }
+});
+
+
+
 module.exports = router;
