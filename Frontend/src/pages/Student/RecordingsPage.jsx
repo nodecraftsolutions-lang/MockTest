@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   CheckCircle, Calendar, Clock, DollarSign,
   Video, BookOpen, Award, Users, Lock, Unlock, Play,
-  X, ChevronLeft
+  X, ChevronLeft, FileText, ExternalLink, Download
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../api/axios";
@@ -15,7 +15,9 @@ const RecordingsPage = () => {
   const navigate = useNavigate();
   const [course, setCourse] = useState(null);
   const [recordings, setRecordings] = useState([]);
+  const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [resourcesLoading, setResourcesLoading] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [selectedRecording, setSelectedRecording] = useState(null);
   const [showRecordingsModal, setShowRecordingsModal] = useState(false);
@@ -25,6 +27,12 @@ const RecordingsPage = () => {
     fetchRecordings();
     window.scrollTo(0, 0);
   }, [courseId]);
+
+  useEffect(() => {
+    if (isUnlocked) {
+      fetchRecordingResources();
+    }
+  }, [isUnlocked, courseId]);
 
   const fetchRecordings = async () => {
     try {
@@ -49,6 +57,19 @@ const RecordingsPage = () => {
       showError("Failed to load recordings");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRecordingResources = async () => {
+    setResourcesLoading(true);
+    try {
+      const res = await api.get(`/courses/${courseId}/resourcesrecord`);
+      setResources(res.data || []);
+    } catch (error) {
+      console.error("Failed to load recording resources:", error);
+      showError("Failed to load recording resources");
+    } finally {
+      setResourcesLoading(false);
     }
   };
 
@@ -209,7 +230,7 @@ const RecordingsPage = () => {
               onClick={() => setShowRecordingsModal(true)}
               className="btn-secondary px-10 py-4 text-lg font-bold rounded-full shadow-lg flex items-center"
             >
-              <Video className="w-5 h-5 mr-2" /> View Recordings
+              <Video className="w-5 h-5 mr-2" /> View
               <span className="ml-2 bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-sm">
                 {recordings.length}
               </span>
@@ -380,9 +401,8 @@ const RecordingsPage = () => {
             </div>
           </motion.div>
         )}
-
-        
       </motion.div>
+
       {/* Recordings Modal */}
       <AnimatePresence>
         {showRecordingsModal && (
@@ -461,6 +481,45 @@ const RecordingsPage = () => {
                 {/* Recordings List */}
                 {!selectedRecording && (
                   <div className="p-6">
+                    {/* Recording Resources Section */}
+                    {resources.length > 0 && (
+                      <div className="mb-8 border-b pb-8">
+                        <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                          <FileText className="w-5 h-5 mr-2 text-green-600" />
+                          Resources
+                        </h3>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {resources.map((resource, idx) => (
+                            <div 
+                              key={resource._id}
+                              className="bg-green-50 border border-green-100 rounded-xl p-4 hover:shadow-md transition-all duration-200"
+                            >
+                              <div className="flex items-center mb-2">
+                                <FileText className="w-5 h-5 text-green-600 mr-2" />
+                                <h4 className="font-semibold text-gray-900">{resource.title}</h4>
+                              </div>
+                              <a
+                                href={resource.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center mt-2 text-blue-600 hover:text-blue-800 transition-colors"
+                              >
+                                <ExternalLink className="w-4 h-4 mr-1" />
+                                Access Resource
+                              </a>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Recordings Section */}
+                    <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                      <Video className="w-5 h-5 mr-2 text-indigo-600" />
+                      Available Recordings
+                    </h3>
+
                     {recordings.length === 0 ? (
                       <div className="text-center py-12">
                         <Video className="w-16 h-16 mx-auto text-gray-300 mb-4" />
