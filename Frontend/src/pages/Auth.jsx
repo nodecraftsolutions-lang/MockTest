@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -18,6 +19,8 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [animateForm, setAnimateForm] = useState(false);
+  const [characterState, setCharacterState] = useState('idle');
+  const [focusedField, setFocusedField] = useState(null);
   const { login, register } = useAuth();
   const { showSuccess, showError } = useToast();
   const navigate = useNavigate();
@@ -25,6 +28,21 @@ const Auth = () => {
   useEffect(() => {
     setAnimateForm(true);
   }, [isLogin]);
+
+  useEffect(() => {
+    // Set character state based on form state
+    if (loading) {
+      setCharacterState('loading');
+    } else if (Object.keys(errors).length > 0) {
+      setCharacterState('error');
+    } else if (focusedField === 'password') {
+      setCharacterState('password');
+    } else if (focusedField) {
+      setCharacterState('typing');
+    } else {
+      setCharacterState(isLogin ? 'welcomeBack' : 'newUser');
+    }
+  }, [loading, errors, focusedField, isLogin]);
 
   const validatePassword = (password) => {
     const errors = [];
@@ -114,9 +132,11 @@ const Auth = () => {
         });
         
         if (result.success) {
+          setCharacterState('success');
           showSuccess('Login successful!');
-          navigate('/student');
+          setTimeout(() => navigate('/student'), 1000);
         } else {
+          setCharacterState('error');
           showError(result.message || 'Login failed');
         }
       } else {
@@ -129,25 +149,30 @@ const Auth = () => {
         });
 
         if (result.success) {
+          setCharacterState('success');
           showSuccess('Registration successful!');
           if (result.autoLogin) {
-            navigate('/student');
+            setTimeout(() => navigate('/student'), 1000);
           } else {
-            setIsLogin(true);
-            setFormData({
-              name: '',
-              email: '',
-              mobile: '',
-              password: '',
-              confirmPassword: ''
-            });
+            setTimeout(() => {
+              setIsLogin(true);
+              setFormData({
+                name: '',
+                email: '',
+                mobile: '',
+                password: '',
+                confirmPassword: ''
+              });
+            }, 1000);
           }
         } else {
+          setCharacterState('error');
           showError(result.message || 'Registration failed');
         }
       }
     } catch (error) {
       console.error('Auth error:', error);
+      setCharacterState('error');
       showError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
@@ -170,13 +195,118 @@ const Auth = () => {
     }, 200);
   };
 
+  const handleFieldFocus = (fieldName) => {
+    setFocusedField(fieldName);
+  };
+
+  const handleFieldBlur = () => {
+    setFocusedField(null);
+  };
+
+  // Animation variants for the character
+  const characterVariants = {
+    idle: { 
+      scale: 1,
+      rotate: [0, 0, 0],
+      transition: { duration: 2, repeat: Infinity, repeatType: "reverse" }
+    },
+    welcomeBack: { 
+      scale: [1, 1.05, 1],
+      rotate: [0, 5, 0],
+      transition: { duration: 2, repeat: Infinity, repeatType: "reverse" }
+    },
+    newUser: { 
+      scale: [1, 1.05, 1],
+      rotate: [0, -5, 0],
+      transition: { duration: 2, repeat: Infinity, repeatType: "reverse" }
+    },
+    typing: { 
+      y: [0, -10, 0],
+      transition: { duration: 0.5, repeat: Infinity, repeatType: "reverse" }
+    },
+    password: { 
+      scale: [1, 1.1, 1],
+      rotate: [0, -5, 5, -5, 0],
+      transition: { duration: 0.5 }
+    },
+    loading: { 
+      rotate: [0, 360],
+      transition: { duration: 1, repeat: Infinity, ease: "linear" }
+    },
+    error: { 
+      x: [0, 10, -10, 10, -10, 0],
+      transition: { duration: 0.5 }
+    },
+    success: { 
+      scale: [1, 1.2, 1],
+      rotate: [0, 360, 720],
+      transition: { duration: 1 }
+    }
+  };
+
+  // Character expressions based on state
+  const renderCharacterFace = () => {
+    switch(characterState) {
+      case 'error':
+        return (
+          <div className="character-face">
+            <div className="eyes">
+              <div className="eye eye-left">✖</div>
+              <div className="eye eye-right">✖</div>
+            </div>
+            <div className="mouth sad">︵</div>
+          </div>
+        );
+      case 'success':
+        return (
+          <div className="character-face">
+            <div className="eyes">
+              <div className="eye eye-left">^</div>
+              <div className="eye eye-right">^</div>
+            </div>
+            <div className="mouth happy">⌣</div>
+          </div>
+        );
+      case 'password':
+        return (
+          <div className="character-face">
+            <div className="eyes">
+              <div className="eye eye-left">👁️</div>
+              <div className="eye eye-right">👁️</div>
+            </div>
+            <div className="mouth curious">o</div>
+          </div>
+        );
+      case 'loading':
+        return (
+          <div className="character-face">
+            <div className="eyes">
+              <div className="eye eye-left spinning">@</div>
+              <div className="eye eye-right spinning">@</div>
+            </div>
+            <div className="mouth">○</div>
+          </div>
+        );
+      default:
+        return (
+          <div className="character-face">
+            <div className="eyes">
+              <div className="eye eye-left">•</div>
+              <div className="eye eye-right">•</div>
+            </div>
+            <div className="mouth">{characterState === 'welcomeBack' ? '◡' : '◠'}</div>
+          </div>
+        );
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className={`bg-white rounded-2xl shadow-xl overflow-hidden max-w-4xl w-full transition-all duration-500 ease-in-out ${animateForm ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
         <div className="md:flex">
-          {/* Left side - Branding */}
-          <div className="md:w-1/2 bg-gray-100 p-8 text-gray-800 flex flex-col justify-center">
-            <div className="mb-8">
+          {/* Left side - Animated Character */}
+          <div className="md:w-1/2 bg-gradient-to-br from-blue-50 to-indigo-100 p-8 flex flex-col items-center justify-center">
+            <div className="mb-6">
               <Link to="/" className="flex items-center space-x-2">
                 <div className="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center">
                   <span className="text-white font-bold text-2xl">P</span>
@@ -185,34 +315,71 @@ const Auth = () => {
               </Link>
             </div>
             
-            <h1 className="text-4xl font-bold mb-6 text-gray-900">
-              {isLogin 
-                ? 'Welcome Back!' 
-                : 'Join PrepZone'}
-            </h1>
-            
-            <p className="text-xl text-gray-600 mb-8">
-              {isLogin 
-                ? 'Sign in to continue your journey to exam success.'
-                : 'Create an account to start acing your exams today.'}
-            </p>
-            
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-              <h3 className="text-xl font-semibold mb-2 text-gray-900">Why PrepZone?</h3>
-              <ul className="space-y-2 text-gray-700">
-                <li className="flex items-center">
-                  <div className="w-6 h-6 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center mr-3">✓</div>
-                  <span>Personalized exam preparation</span>
-                </li>
-                <li className="flex items-center">
-                  <div className="w-6 h-6 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center mr-3">✓</div>
-                  <span>Performance analytics</span>
-                </li>
-                <li className="flex items-center">
-                  <div className="w-6 h-6 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center mr-3">✓</div>
-                  <span>Expert-curated questions</span>
-                </li>
-              </ul>
+            <div className="w-full flex flex-col items-center justify-center">
+              <motion.div 
+                className="character-container"
+                variants={characterVariants}
+                animate={characterState}
+                initial="idle"
+              >
+                {/* Character Body */}
+                <div className="character-body relative w-64 h-64 bg-indigo-500 rounded-full flex items-center justify-center shadow-lg">
+                  {/* Character Face */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-white text-5xl">
+                      {renderCharacterFace()}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+              
+              {/* Speech Bubble */}
+              <motion.div 
+                className="speech-bubble bg-white p-4 rounded-xl mt-6 shadow-md relative text-center max-w-xs"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white rotate-45"></div>
+                <p className="text-gray-800 font-medium">
+                  {characterState === 'idle' && "Hey there! I'm Prepper, your study buddy!"}
+                  {characterState === 'welcomeBack' && "Welcome back! Ready to ace those exams?"}
+                  {characterState === 'newUser' && "Nice to meet you! Let's get you registered!"}
+                  {characterState === 'typing' && "Tell me more about yourself!"}
+                  {characterState === 'password' && "Shhh! Make sure it's a strong password!"}
+                  {characterState === 'loading' && "Working on it... Just a moment!"}
+                  {characterState === 'error' && "Oops! Something's not right. Let's fix it!"}
+                  {characterState === 'success' && "Awesome! You're all set!"}
+                  {focusedField === 'email' && "What's your email address?"}
+                  {focusedField === 'name' && "What should I call you?"}
+                  {focusedField === 'mobile' && "How can we reach you?"}
+                  {focusedField === 'confirmPassword' && "Just making sure you got it right!"}
+                </p>
+              </motion.div>
+              
+              <div className="mt-8 text-center">
+                <h3 className="text-lg font-semibold mb-2">PrepZone Features</h3>
+                <div className="flex justify-center space-x-4 mt-4">
+                  <motion.div 
+                    className="feature-icon bg-primary-100 p-3 rounded-full"
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                  >
+                    <span role="img" aria-label="Personalized" className="text-2xl">📊</span>
+                  </motion.div>
+                  <motion.div 
+                    className="feature-icon bg-primary-100 p-3 rounded-full"
+                    whileHover={{ scale: 1.1, rotate: -5 }}
+                  >
+                    <span role="img" aria-label="Analytics" className="text-2xl">📈</span>
+                  </motion.div>
+                  <motion.div 
+                    className="feature-icon bg-primary-100 p-3 rounded-full"
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                  >
+                    <span role="img" aria-label="Questions" className="text-2xl">📝</span>
+                  </motion.div>
+                </div>
+              </div>
             </div>
           </div>
           
@@ -249,6 +416,8 @@ const Auth = () => {
                         required
                         value={formData.name}
                         onChange={handleChange}
+                        onFocus={() => handleFieldFocus('name')}
+                        onBlur={handleFieldBlur}
                         className={`block w-full pl-10 pr-3 py-3 rounded-lg border ${errors.name ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500'} shadow-sm transition-all`}
                         placeholder="John Doe"
                       />
@@ -270,6 +439,8 @@ const Auth = () => {
                       required
                       value={formData.email}
                       onChange={handleChange}
+                      onFocus={() => handleFieldFocus('email')}
+                      onBlur={handleFieldBlur}
                       className={`block w-full pl-10 pr-3 py-3 rounded-lg border ${errors.email ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500'} shadow-sm transition-all`}
                       placeholder="you@example.com"
                     />
@@ -291,6 +462,8 @@ const Auth = () => {
                         required
                         value={formData.mobile}
                         onChange={handleChange}
+                        onFocus={() => handleFieldFocus('mobile')}
+                        onBlur={handleFieldBlur}
                         className={`block w-full pl-10 pr-3 py-3 rounded-lg border ${errors.mobile ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500'} shadow-sm transition-all`}
                         placeholder="10-digit mobile number"
                         pattern="[0-9]{10}"
@@ -324,7 +497,11 @@ const Auth = () => {
                       required
                       value={formData.password}
                       onChange={handleChange}
-                      onFocus={() => !isLogin && setShowPasswordRequirements(true)}
+                      onFocus={() => {
+                        handleFieldFocus('password');
+                        !isLogin && setShowPasswordRequirements(true);
+                      }}
+                      onBlur={handleFieldBlur}
                       className={`block w-full pl-10 pr-10 py-3 rounded-lg border ${errors.password ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500'} shadow-sm transition-all`}
                       placeholder={isLogin ? "Enter your password" : "Create a strong password"}
                     />
@@ -388,6 +565,8 @@ const Auth = () => {
                         required
                         value={formData.confirmPassword}
                         onChange={handleChange}
+                        onFocus={() => handleFieldFocus('confirmPassword')}
+                        onBlur={handleFieldBlur}
                         className={`block w-full pl-10 pr-3 py-3 rounded-lg border ${errors.confirmPassword ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500'} shadow-sm transition-all`}
                         placeholder="Re-enter your password"
                       />
@@ -415,10 +594,12 @@ const Auth = () => {
                   </div>
                 )}
 
-                <button
+                <motion.button
                   type="submit"
                   disabled={loading}
                   className="w-full flex items-center justify-center bg-primary-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   {loading ? (
                     <>
@@ -431,7 +612,7 @@ const Auth = () => {
                       <ArrowRight className="ml-2 w-5 h-5" />
                     </>
                   )}
-                </button>
+                </motion.button>
 
                 {!isLogin && (
                   <p className="text-xs text-gray-500 text-center mt-4">
@@ -446,6 +627,42 @@ const Auth = () => {
           </div>
         </div>
       </div>
+
+      {/* Add CSS for character styling */}
+      <style jsx>{`
+        .character-face {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+        }
+        
+        .eyes {
+          display: flex;
+          gap: 20px;
+          font-size: 24px;
+        }
+        
+        .mouth {
+          font-size: 30px;
+          line-height: 1;
+        }
+        
+        .mouth.sad {
+          transform: rotate(180deg);
+        }
+        
+        .spinning {
+          display: inline-block;
+          animation: spin 2s linear infinite;
+        }
+        
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };

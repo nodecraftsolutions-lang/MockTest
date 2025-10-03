@@ -3,23 +3,28 @@ import {
   Plus, Edit, Trash2, BookOpen, Search, Filter,
   Eye, Settings, Clock, FileText, AlertCircle, CheckCircle
 } from 'lucide-react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useToast } from '../../context/ToastContext';
 
 const ManageTests = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const companyIdFromUrl = searchParams.get('company');
+  
   const [tests, setTests] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
-  const [filterCompany, setFilterCompany] = useState('all');
+  const [filterCompany, setFilterCompany] = useState(companyIdFromUrl || 'all');
   const [showModal, setShowModal] = useState(false);
   const [editingTest, setEditingTest] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    companyId: '',
+    companyId: companyIdFromUrl || '',
     type: 'free',
     price: 0,
     sections: [
@@ -60,6 +65,25 @@ const ManageTests = () => {
   }, []);
 
   useEffect(() => {
+    if (companyIdFromUrl && companyIdFromUrl !== 'all') {
+      setFilterCompany(companyIdFromUrl);
+      setFormData(prev => ({
+        ...prev,
+        companyId: companyIdFromUrl
+      }));
+    }
+  }, [companyIdFromUrl]);
+
+  useEffect(() => {
+    // Update URL when filter changes
+    if (filterCompany && filterCompany !== 'all') {
+      navigate(`/admin/tests?company=${filterCompany}`, { replace: true });
+    } else if (filterCompany === 'all' && companyIdFromUrl) {
+      navigate('/admin/tests', { replace: true });
+    }
+  }, [filterCompany, navigate]);
+
+  useEffect(() => {
     if (formData.companyId) {
       fetchAvailableSections(formData.companyId);
     }
@@ -67,11 +91,15 @@ const ManageTests = () => {
 
   const fetchTests = async () => {
     try {
-      const response = await api.get('/admin/tests');
+      // Changed from /admin/tests to /tests to match backend API endpoint
+      const response = await api.get('/tests');
       if (response.data.success) {
-        setTests(response.data.data.tests);
+        // Handle different response structures
+        const testsData = response.data.data.tests || response.data.data || [];
+        setTests(testsData);
       }
     } catch (error) {
+      console.error('Error fetching tests:', error);
       showError('Failed to load tests');
     } finally {
       setLoading(false);
@@ -82,10 +110,12 @@ const ManageTests = () => {
     try {
       const response = await api.get('/companies');
       if (response.data.success) {
-        setCompanies(response.data.data.companies);
+        setCompanies(response.data.data.companies || response.data.data || []);
       }
     } catch (error) {
-      console.error('Failed to load companies');
+      console.error('Failed to load companies:', error);
+      showError('Failed to load companies');
+      setCompanies([]);
     }
   };
 
@@ -100,7 +130,7 @@ const ManageTests = () => {
         setAvailableSections(sectionsData);
       }
     } catch (error) {
-      console.error('Failed to load available sections');
+      console.error('Failed to load available sections:', error);
       setAvailableSections({});
     }
   };
@@ -120,7 +150,7 @@ const ManageTests = () => {
       }
 
       if (editingTest) {
-        const response = await api.put(`/admin/tests/${editingTest._id}`, formData);
+        const response = await api.put(`/tests/${editingTest._id}`, formData);
         if (response.data.success) {
           showSuccess('Test updated successfully');
           fetchTests();
@@ -142,7 +172,7 @@ const ManageTests = () => {
   const handleDelete = async (testId) => {
     if (window.confirm('Are you sure you want to delete this test?')) {
       try {
-        const response = await api.delete(`/admin/tests/${testId}`);
+        const response = await api.delete(`/tests/${testId}`);
         if (response.data.success) {
           showSuccess('Test deleted successfully');
           fetchTests();
@@ -169,7 +199,7 @@ const ManageTests = () => {
     setFormData({
       title: '',
       description: '',
-      companyId: '',
+      companyId: filterCompany !== 'all' ? filterCompany : '',
       type: 'free',
       price: 0,
       sections: [
@@ -208,7 +238,7 @@ const ManageTests = () => {
     setFormData({
       title: test.title,
       description: test.description || '',
-      companyId: test.companyId._id,
+      companyId: test.companyId?._id || test.companyId,
       type: test.type,
       price: test.price,
       sections: test.sections || [],
@@ -260,11 +290,22 @@ const ManageTests = () => {
   };
 
   const filteredTests = tests.filter(test => {
-    const matchesSearch = test.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = test.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
     const matchesType = filterType === 'all' || test.type === filterType;
-    const matchesCompany = filterCompany === 'all' || test.companyId._id === filterCompany;
+    const matchesCompany = filterCompany === 'all' || 
+                          (test.companyId && 
+                          (typeof test.companyId === 'string' ? 
+                            test.companyId === filterCompany : 
+                            test.companyId._id === filterCompany));
     return matchesSearch && matchesType && matchesCompany;
   });
+
+  // Get company name for header display
+  const getSelectedCompanyName = () => {
+    if (filterCompany === 'all') return null;
+    const company = companies.find(c => c._id === filterCompany);
+    return company ? company.name : null;
+  };
 
   if (loading) {
     return <LoadingSpinner size="large" />;
@@ -275,7 +316,9 @@ const ManageTests = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Manage Tests</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {getSelectedCompanyName() ? `${getSelectedCompanyName()} Tests` : 'Manage Tests'}
+          </h1>
           <p className="text-gray-600">Create dynamic tests with section-wise question banks</p>
         </div>
         <button
@@ -358,107 +401,132 @@ const ManageTests = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredTests.map((test) => (
-                <tr key={test._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{test.title}</div>
-                      <div className="text-sm text-gray-500">{test.description}</div>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          test.type === 'free' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                        }`}>
-                          {test.type === 'free' ? 'Free' : `₹${test.price}`}
-                        </span>
-                        {test.isFeatured && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                            Featured
+              {filteredTests.length > 0 ? (
+                filteredTests.map((test) => (
+                  <tr key={test._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{test.title}</div>
+                        <div className="text-sm text-gray-500">{test.description}</div>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            test.type === 'free' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {test.type === 'free' ? 'Free' : `₹${test.price}`}
+                          </span>
+                          {test.isFeatured && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                              Featured
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 bg-gray-200 rounded-lg mr-2">
+                          {typeof test.companyId === 'object' && test.companyId?.logoUrl && (
+                            <img 
+                              src={test.companyId.logoUrl} 
+                              alt={test.companyId.name} 
+                              className="w-8 h-8 rounded-lg object-contain"
+                              onError={(e) => {e.target.style.display = 'none'}}
+                            />
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-900">
+                          {typeof test.companyId === 'object' 
+                            ? test.companyId?.name 
+                            : companies.find(c => c._id === test.companyId)?.name || 'Unknown Company'}
+                        </div>
+                      </div>
+                    </td>
+                    
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-wrap gap-1">
+                        {test.sections && test.sections.length > 0 ? (
+                          test.sections.map((section, index) => (
+                            <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                              {section.sectionName} ({section.questionCount})
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-500">No sections</span>
+                        )}
+                      </div>
+                    </td>
+                    
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{test.totalQuestions || 0}</div>
+                      <div className="text-sm text-gray-500">
+                        {test.isGenerated ? (
+                          <span className="flex items-center text-green-600">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Generated
+                          </span>
+                        ) : (
+                          <span className="flex items-center text-yellow-600">
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            Not Generated
                           </span>
                         )}
                       </div>
-                    </div>
-                  </td>
-                  
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="w-8 h-8 bg-gray-200 rounded-lg mr-2"></div>
-                      <div className="text-sm text-gray-900">{test.companyId?.name}</div>
-                    </div>
-                  </td>
-                  
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex flex-wrap gap-1">
-                      {test.sections?.map((section, index) => (
-                        <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                          {section.sectionName} ({section.questionCount})
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{test.totalQuestions}</div>
-                    <div className="text-sm text-gray-500">
-                      {test.isGenerated ? (
-                        <span className="flex items-center text-green-600">
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          Generated
-                        </span>
-                      ) : (
-                        <span className="flex items-center text-yellow-600">
-                          <AlertCircle className="w-3 h-3 mr-1" />
-                          Not Generated
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      test.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {test.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => openEditModal(test)}
-                        className="text-primary-600 hover:text-primary-900"
-                        title="Edit Test"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      
-                      {!test.isGenerated && (
+                    </td>
+                    
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        test.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {test.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center space-x-2">
                         <button
-                          onClick={() => generateTestQuestions(test._id)}
-                          className="text-green-600 hover:text-green-900"
-                          title="Generate Questions"
+                          onClick={() => openEditModal(test)}
+                          className="text-primary-600 hover:text-primary-900"
+                          title="Edit Test"
                         >
-                          <Settings className="w-4 h-4" />
+                          <Edit className="w-4 h-4" />
                         </button>
-                      )}
-                      
-                      <button
-                        className="text-blue-600 hover:text-blue-900"
-                        title="Preview Test"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      
-                      <button
-                        onClick={() => handleDelete(test._id)}
-                        className="text-red-600 hover:text-red-900"
-                        title="Delete Test"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                        
+                        {!test.isGenerated && (
+                          <button
+                            onClick={() => generateTestQuestions(test._id)}
+                            className="text-green-600 hover:text-green-900"
+                            title="Generate Questions"
+                          >
+                            <Settings className="w-4 h-4" />
+                          </button>
+                        )}
+                        
+                        <button
+                          className="text-blue-600 hover:text-blue-900"
+                          title="Preview Test"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        
+                        <button
+                          onClick={() => handleDelete(test._id)}
+                          className="text-red-600 hover:text-red-900"
+                          title="Delete Test"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                    No tests found. Create your first test by clicking the "Create Test" button.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

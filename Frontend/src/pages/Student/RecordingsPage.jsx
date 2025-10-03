@@ -253,17 +253,8 @@ const RecordingsPage = () => {
                   {/* Section Content - Split into Left (Details) and Right (Instructors) */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
                     {/* Left Side - Section Details */}
-                    <div className="space-y-4">
-                      <h4 className="font-medium text-gray-800">About this section</h4>
-                      <ul className="list-disc pl-5 text-gray-700">
-                        {section.description
-                          .split("•")
-                          .map(line => line.trim())
-                          .filter(line => line)
-                          .map((line, idx) => (
-                            <li key={idx}>{line}</li>
-                          ))}
-                      </ul>
+                    <div className="text-gray-700" style={{ whiteSpace: "pre-line" }}>
+                      {section.description}
                     </div>
 
                     {/* Right Side - Instructors */}
