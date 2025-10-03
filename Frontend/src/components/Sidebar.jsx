@@ -400,6 +400,30 @@ const Sidebar = ({ type = "student" }) => {
                 </DropdownContent>
               </div>
 
+              {/* Resource Management Dropdown */}
+              <div className="relative group">
+                <DropdownButton 
+                  icon={FileText} 
+                  label="Resource Management" 
+                  menu="Resource" 
+                  hasChildren={true}
+                />
+                
+                <DropdownContent menu="Resource">
+                  <AdminSubItem 
+                    to="/admin/course/resourcesrec" 
+                    icon={Settings} 
+                    label="Manage Recordings Resources" 
+                  />
+                  <AdminSubItem 
+                    to="/admin/course/resources" 
+                    icon={Settings} 
+                    label="Manage Course Resources" 
+                  />
+                
+                </DropdownContent>
+              </div>
+
               {/* Regular Admin Nav Items */}
               <NavItem 
                 to="/admin/students" 

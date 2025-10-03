@@ -57,6 +57,8 @@ import AdminSettings from './pages/Admin/Settings';
 import NotFound3D from './pages/NotFound3D'
 import './index.css';
 import DynamicGenerateQuestions from './pages/Admin/MockTest/GenerateQuestions';
+import ResourceManagement from './pages/Admin/Course/ResourceManagement';
+import ResourceRecordManagement from './pages/Admin/Course/ResourceRecordManagement';
 
 
 function App() {
@@ -135,6 +137,8 @@ function App() {
 
 
               <Route path="/admin/recordings/upload" element={<RecordingsManagement/>}/>
+              <Route path="/admin/course/resources" element={<ResourceManagement />} />
+              <Route path="/admin/course/resourcesrec" element={<ResourceRecordManagement />} />
 
 
 
