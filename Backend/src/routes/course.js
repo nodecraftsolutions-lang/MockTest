@@ -413,10 +413,14 @@ router.get("/:courseId/resources", async (req, res) => {
   try {
     const { courseId } = req.params;
 
-    const course = await Course.findById(courseId).select("resourceCourse");
+    // Select title + resourceCourse
+    const course = await Course.findById(courseId).select("title resourceCourse");
     if (!course) return res.status(404).json({ message: "Course not found" });
 
-    res.json(course.resourceCourse);
+    res.json({
+      courseName: course.title,
+      resources: course.resourceCourse
+    });
   } catch (err) {
     res.status(500).json({ message: "Error fetching resources", error: err.message });
   }
@@ -497,14 +501,19 @@ router.get("/:courseId/resourcesrecord", async (req, res) => {
   try {
     const { courseId } = req.params;
 
-    const course = await Course.findById(courseId).select("resourceRecordings");
+    // Select title + resourceRecordings
+    const course = await Course.findById(courseId).select("title resourceRecordings");
     if (!course) return res.status(404).json({ message: "Course not found" });
 
-    res.json(course.resourceRecordings);
+    res.json({
+      courseName: course.title,
+      recordings: course.resourceRecordings
+    });
   } catch (err) {
     res.status(500).json({ message: "Error fetching resources", error: err.message });
   }
 });
+
 
 
 // ✅ UPDATE a specific resource in a course
