@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { 
   Upload, 
   Save, 
@@ -17,6 +18,7 @@ import api from "../../../api/axios";
 import { useToast } from "../../../context/ToastContext";
 
 const QuestionBankUpload = () => {
+  const [searchParams] = useSearchParams();
   const { showSuccess, showError } = useToast();
 
   const [companies, setCompanies] = useState([]);
@@ -27,7 +29,7 @@ const QuestionBankUpload = () => {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    companyId: "",
+    companyId: searchParams.get('companyId') || "",
     section: "Aptitude",
     questionFile: null
   });
@@ -38,7 +40,16 @@ const QuestionBankUpload = () => {
   useEffect(() => {
     fetchCompanies();
     fetchUploadHistory();
-  }, []);
+    
+    // If companyId is in URL, set it in form
+    const companyIdFromUrl = searchParams.get('companyId');
+    if (companyIdFromUrl) {
+      setFormData(prev => ({
+        ...prev,
+        companyId: companyIdFromUrl
+      }));
+    }
+  }, [searchParams]);
 
   const fetchCompanies = async () => {
     try {

@@ -64,49 +64,56 @@ const Sidebar = ({ type = "student" }) => {
     }
   };
 
-  const NavItem = ({ to, icon: Icon, label, showLabel = true }) => (
-    <Link
-      to={to}
-      className={`flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-colors group ${
-        location.pathname === to
-          ? "bg-primary-50 text-primary-700 border-l-4 border-primary-500"
-          : "text-gray-600 hover:bg-gray-50"
-      } ${isCollapsed ? "justify-center" : ""}`}
-      title={isCollapsed ? label : ""}
-    >
-      <Icon className={`w-5 h-5 ${isCollapsed ? "" : "mr-3"} text-primary-600`} />
-      {!isCollapsed && showLabel && label}
-      {isCollapsed && (
-        <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">
-          {label}
-        </div>
-      )}
-    </Link>
-  );
+  const NavItem = ({ to, icon: Icon, label, showLabel = true, isActive }) => {
+    const active = isActive !== undefined ? isActive : location.pathname === to;
+    return (
+      <Link
+        to={to}
+        className={`flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 group ${
+          active
+            ? "bg-gradient-to-r from-primary-50 to-primary-25 text-primary-700 border-l-4 border-primary-500 shadow-xs"
+            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+        } ${isCollapsed ? "justify-center" : ""}`}
+        title={isCollapsed ? label : ""}
+      >
+        <Icon className={`w-5 h-5 ${isCollapsed ? "" : "mr-3"} ${active ? "text-primary-600" : "text-gray-500 group-hover:text-primary-600"}`} />
+        {!isCollapsed && showLabel && (
+          <span className={active ? "font-semibold" : ""}>{label}</span>
+        )}
+        {isCollapsed && (
+          <div className="absolute left-full ml-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap shadow-lg">
+            {label}
+          </div>
+        )}
+      </Link>
+    );
+  };
 
   const DropdownButton = ({ icon: Icon, label, menu, hasChildren = false }) => (
     <button
       onClick={() => toggleDropdown(menu)}
-      className={`flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors ${
+      className={`flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
         isCollapsed ? "justify-center" : ""
       } ${
-        openDropdown === menu ? "bg-primary-50 text-primary-700" : "text-gray-600"
+        openDropdown === menu 
+          ? "bg-gradient-to-r from-primary-50 to-primary-25 text-primary-700 shadow-xs" 
+          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
       }`}
       title={isCollapsed ? label : ""}
     >
       <span className={`flex items-center ${isCollapsed ? "" : "flex-1"}`}>
-        <Icon className={`w-5 h-5 ${isCollapsed ? "" : "mr-3"} text-primary-600`} />
-        {!isCollapsed && label}
+        <Icon className={`w-5 h-5 ${isCollapsed ? "" : "mr-3"} ${openDropdown === menu ? "text-primary-600" : "text-gray-500"}`} />
+        {!isCollapsed && <span className={openDropdown === menu ? "font-semibold" : ""}>{label}</span>}
       </span>
       {!isCollapsed && hasChildren && (
         <ChevronDown
-          className={`w-4 h-4 transform transition-transform ${
+          className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
             openDropdown === menu ? "rotate-180" : ""
           }`}
         />
       )}
       {isCollapsed && openDropdown === menu && (
-        <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">
+        <div className="absolute left-full ml-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap shadow-lg">
           {label}
         </div>
       )}
@@ -115,7 +122,7 @@ const Sidebar = ({ type = "student" }) => {
 
   const DropdownContent = ({ children, menu }) =>
     !isCollapsed && openDropdown === menu ? (
-      <div className="ml-4 space-y-1 animate-in fade-in-0 zoom-in-95 border-l-2 border-gray-100 pl-2">
+      <div className="ml-4 mt-1 mb-2 space-y-1 animate-in fade-in-0 zoom-in-95 border-l-2 border-gray-100 pl-3">
         {children}
       </div>
     ) : null;
@@ -123,28 +130,28 @@ const Sidebar = ({ type = "student" }) => {
   const MockTestSubItem = ({ to, icon: Icon, label }) => (
     <Link
       to={to}
-      className={`flex items-center px-3 py-2.5 text-sm rounded-lg transition-colors group ${
+      className={`flex items-center px-3 py-2.5 text-sm rounded-lg transition-all duration-200 group ${
         location.pathname === to
-          ? "bg-primary-50 text-primary-700 border-l-2 border-primary-500 -ml-0.5"
-          : "text-gray-600 hover:bg-gray-50"
+          ? "bg-gradient-to-r from-primary-50 to-primary-25 text-primary-700 font-medium border-l-2 border-primary-500 -ml-0.5 shadow-xs"
+          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
       }`}
     >
-      <Icon className="w-4 h-4 mr-3 text-primary-500" />
-      {label}
+      <Icon className={`w-4 h-4 mr-3 ${location.pathname === to ? "text-primary-500" : "text-gray-400 group-hover:text-primary-500"}`} />
+      <span className={location.pathname === to ? "font-medium" : ""}>{label}</span>
     </Link>
   );
 
   const AdminSubItem = ({ to, icon: Icon, label }) => (
     <Link
       to={to}
-      className={`flex items-center px-3 py-2.5 text-sm rounded-lg transition-colors group ${
+      className={`flex items-center px-3 py-2.5 text-sm rounded-lg transition-all duration-200 group ${
         location.pathname === to
-          ? "bg-primary-50 text-primary-700 border-l-2 border-primary-500 -ml-0.5"
-          : "text-gray-600 hover:bg-gray-50"
+          ? "bg-gradient-to-r from-primary-50 to-primary-25 text-primary-700 font-medium border-l-2 border-primary-500 -ml-0.5 shadow-xs"
+          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
       }`}
     >
-      <Icon className="w-4 h-4 mr-3 text-primary-500" />
-      {label}
+      <Icon className={`w-4 h-4 mr-3 ${location.pathname === to ? "text-primary-500" : "text-gray-400 group-hover:text-primary-500"}`} />
+      <span className={location.pathname === to ? "font-medium" : ""}>{label}</span>
     </Link>
   );
 
@@ -153,32 +160,39 @@ const Sidebar = ({ type = "student" }) => {
       {/* Mobile Overlay */}
       {!isCollapsed && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-30 z-40 lg:hidden transition-opacity duration-300"
           onClick={() => setIsCollapsed(true)}
         />
       )}
 
       <aside
-        className={`fixed top-0 left-0 h-screen bg-white shadow-lg border-r border-gray-200 flex flex-col z-50 transition-all duration-300 ${
+        className={`fixed top-0 left-0 h-screen bg-white border-r border-gray-200 flex flex-col z-50 transition-all duration-300 ease-in-out ${
           isCollapsed ? "w-16" : "w-64"
-        }`}
+        } shadow-lg`}
       >
         {/* Header */}
-        <div className={`px-4 py-5 border-b flex items-center justify-between ${isCollapsed ? "px-3" : ""}`}>
+        <div className={`px-4 py-5 border-b border-gray-100 flex items-center justify-between ${isCollapsed ? "px-3" : ""}`}>
           {!isCollapsed && (
-            <h1 className="text-xl font-bold text-primary-700">
-              {type === "admin" ? "Admin Panel" : "Student Panel"}
-            </h1>
+            <div className="flex items-center">
+              <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center mr-3">
+                <LayoutDashboard className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-lg font-bold text-gray-900 tracking-tight">
+                {type === "admin" ? "Admin Panel" : "Student Panel"}
+              </h1>
+            </div>
           )}
           {isCollapsed && (
-            <Menu className="w-5 h-5 text-primary-600 mx-auto" />
+            <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center">
+              <LayoutDashboard className="w-5 h-5 text-white" />
+            </div>
           )}
           
           {/* Toggle Button */}
           <button
             onClick={toggleSidebar}
-            className={`p-1.5 rounded-lg hover:bg-gray-100 transition-colors ${
-              isCollapsed ? "absolute -right-3 top-6 bg-white border border-gray-200" : ""
+            className={`p-1.5 rounded-lg hover:bg-gray-100 transition-colors duration-200 ${
+              isCollapsed ? "absolute -right-3 top-6 bg-white border border-gray-200 shadow-md hover:shadow-lg" : ""
             }`}
             title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
@@ -191,26 +205,30 @@ const Sidebar = ({ type = "student" }) => {
         </div>
 
         {/* Navigation */}
-        <nav className={`flex-1 px-2 py-4 space-y-2 overflow-y-auto ${isCollapsed ? "px-1" : ""}`}>
+        <nav className={`flex-1 px-2 py-4 overflow-y-auto ${isCollapsed ? "px-1 py-3" : "py-3"}`}>
           {type === "student" ? (
             <>
-              <NavItem 
-                to="/student" 
-                icon={LayoutDashboard} 
-                label="Dashboard" 
-                showLabel={!isCollapsed}
-              />
+              <div className="mb-1">
+                <NavItem 
+                  to="/student" 
+                  icon={LayoutDashboard} 
+                  label="Dashboard" 
+                  showLabel={!isCollapsed}
+                />
+              </div>
 
               {/* Mock Tests */}
-              <NavItem 
-                to="/student/mock-tests" 
-                icon={BookOpen} 
-                label="Mock Tests" 
-                showLabel={!isCollapsed}
-              />
+              <div className="mb-1">
+                <NavItem 
+                  to="/student/mock-tests" 
+                  icon={BookOpen} 
+                  label="Mock Tests" 
+                  showLabel={!isCollapsed}
+                />
+              </div>
 
               {/* Courses Dropdown */}
-              <div className="relative group">
+              <div className="relative group mb-2">
                 <DropdownButton 
                   icon={GraduationCap} 
                   label="Courses" 
@@ -220,20 +238,30 @@ const Sidebar = ({ type = "student" }) => {
                 
                 <DropdownContent menu="courses">
                   {/* All available courses */}
-                  {courses.map((c) => (
+                  {courses.slice(0, 5).map((c) => (
                     <Link
                       key={c._id}
                       to={`/student/courses/${c._id}`}
-                      className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                      className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors truncate"
+                      title={c.title}
                     >
                       {c.title}
                     </Link>
                   ))}
+                  
+                  {courses.length > 5 && (
+                    <Link
+                      to="/student/courses"
+                      className="block px-3 py-2 text-sm text-primary-600 hover:bg-primary-50 rounded-lg font-medium transition-colors mt-1"
+                    >
+                      View All Courses
+                    </Link>
+                  )}
 
                   {/* My Courses link */}
                   <Link
                     to="/student/my-courses"
-                    className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors"
+                    className="block px-3 py-2 text-sm text-primary-600 hover:bg-primary-50 rounded-lg font-medium transition-colors mt-1"
                   >
                     My Courses
                   </Link>
@@ -241,7 +269,7 @@ const Sidebar = ({ type = "student" }) => {
               </div>
 
               {/* Recordings Dropdown */}
-              <div className="relative group">
+              <div className="relative group mb-2">
                 <DropdownButton 
                   icon={Video} 
                   label="Recordings" 
@@ -251,67 +279,87 @@ const Sidebar = ({ type = "student" }) => {
                 
                 <DropdownContent menu="recordings">
                   {recordings.length > 0 ? (
-                    recordings.map((c) => (
+                    recordings.slice(0, 5).map((c) => (
                       <Link
                         key={c._id}
                         to={`/student/recordings/${c._id}`}
-                        className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                        className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors truncate"
+                        title={c.title}
                       >
                         {c.title}
                       </Link>
                     ))
                   ) : (
                     <p className="px-3 py-2 text-xs text-gray-400 italic">
-                      No courses available
+                      No recordings available
                     </p>
+                  )}
+                  {recordings.length > 5 && (
+                    <Link
+                      to="/student/recordings"
+                      className="block px-3 py-2 text-sm text-primary-600 hover:bg-primary-50 rounded-lg font-medium transition-colors mt-1"
+                    >
+                      View All Recordings
+                    </Link>
                   )}
                 </DropdownContent>
               </div>
 
               {/* Regular Nav Items */}
-              <NavItem 
-                to="/student/results" 
-                icon={BarChart3} 
-                label="Results" 
-                showLabel={!isCollapsed}
-              />
-              <NavItem 
-                to="/student/orders" 
-                icon={ShoppingBag} 
-                label="Orders" 
-                showLabel={!isCollapsed}
-              />
-              <NavItem 
-                to="/student/leaderboard" 
-                icon={Trophy} 
-                label="Leaderboard" 
-                showLabel={!isCollapsed}
-              />
-              <NavItem 
-                to="/student/profile" 
-                icon={User} 
-                label="Profile" 
-                showLabel={!isCollapsed}
-              />
-              <NavItem 
-                to="/student/contact" 
-                icon={Headphones} 
-                label="Contact" 
-                showLabel={!isCollapsed}
-              />
+              <div className="mb-1">
+                <NavItem 
+                  to="/student/results" 
+                  icon={BarChart3} 
+                  label="Results" 
+                  showLabel={!isCollapsed}
+                />
+              </div>
+              <div className="mb-1">
+                <NavItem 
+                  to="/student/orders" 
+                  icon={ShoppingBag} 
+                  label="Orders" 
+                  showLabel={!isCollapsed}
+                />
+              </div>
+              <div className="mb-1">
+                <NavItem 
+                  to="/student/leaderboard" 
+                  icon={Trophy} 
+                  label="Leaderboard" 
+                  showLabel={!isCollapsed}
+                />
+              </div>
+              <div className="mb-1">
+                <NavItem 
+                  to="/student/profile" 
+                  icon={User} 
+                  label="Profile" 
+                  showLabel={!isCollapsed}
+                />
+              </div>
+              <div className="mb-1">
+                <NavItem 
+                  to="/student/contact" 
+                  icon={Headphones} 
+                  label="Contact" 
+                  showLabel={!isCollapsed}
+                />
+              </div>
             </>
           ) : (
             <>
-              <NavItem 
-                to="/admin" 
-                icon={LayoutDashboard} 
-                label="Dashboard" 
-                showLabel={!isCollapsed}
-              />
-              
+              <div className="mb-1">
+                <NavItem 
+                  to="/admin" 
+                  icon={LayoutDashboard} 
+                  label="Dashboard" 
+                  showLabel={!isCollapsed}
+                />
+              </div>
               
               {/* MockTest Dropdown with nested items */}
-              <div className="relative group">
+              <div className="relative group mb-2">
                 <DropdownButton 
                   icon={Building} 
                   label="MockTest" 
@@ -321,40 +369,25 @@ const Sidebar = ({ type = "student" }) => {
                 
                 <DropdownContent menu="mocktest">
                   <MockTestSubItem 
-                    to="/admin/mocktest/create-company" 
-                    icon={Plus} 
-                    label="Create Company" 
-                  />
-                  <MockTestSubItem 
-                    to="/admin/mocktest/test-creation" 
-                    icon={BookOpen} 
-                    label="Test Creation for Company" 
-                  />
-                  <MockTestSubItem 
-                    to="/admin/mocktest/question-bank-upload" 
-                    icon={Upload} 
-                    label="Question Bank Upload" 
+                    to="/admin/mocktest" 
+                    icon={Building} 
+                    label="Company & Test Management" 
                   />
                   <MockTestSubItem 
                     to="/admin/mocktest/question-generate" 
                     icon={ListStartIcon} 
                     label="Generate Test Questions" 
                   />
-                  {/* Added: Manage/View Companies and Tests */}
                   <MockTestSubItem 
-                    to="/admin/companies" 
-                    icon={Building} 
-                    label="Manage Companies" 
-                  />
-                  <MockTestSubItem 
-                    to="/admin/tests" 
-                    icon={FileCheck} 
-                    label="Manage Tests" 
+                    to="/admin/mocktest/question-bank-upload" 
+                    icon={Upload} 
+                    label="Question Bank Upload" 
                   />
                 </DropdownContent>
               </div>
+              
               {/* Course Management Dropdown */}
-              <div className="relative group">
+              <div className="relative group mb-2">
                 <DropdownButton 
                   icon={BookOpen} 
                   label="Course Management" 
@@ -382,7 +415,7 @@ const Sidebar = ({ type = "student" }) => {
               </div>
 
               {/* Recordings Management Dropdown */}
-              <div className="relative group">
+              <div className="relative group mb-2">
                 <DropdownButton 
                   icon={Video} 
                   label="Recordings Management" 
@@ -396,12 +429,11 @@ const Sidebar = ({ type = "student" }) => {
                     icon={Settings} 
                     label="Manage Recordings" 
                   />
-                
                 </DropdownContent>
               </div>
 
               {/* Resource Management Dropdown */}
-              <div className="relative group">
+              <div className="relative group mb-2">
                 <DropdownButton 
                   icon={FileText} 
                   label="Resource Management" 
@@ -420,49 +452,56 @@ const Sidebar = ({ type = "student" }) => {
                     icon={Settings} 
                     label="Manage Course Resources" 
                   />
-                
                 </DropdownContent>
               </div>
 
               {/* Regular Admin Nav Items */}
-              <NavItem 
-                to="/admin/students" 
-                icon={Users} 
-                label="Students" 
-                showLabel={!isCollapsed}
-              />
-              <NavItem 
-                to="/admin/results" 
-                icon={BarChart3} 
-                label="Results" 
-                showLabel={!isCollapsed}
-              />
-              <NavItem 
-                to="/admin/payments" 
-                icon={DollarSign} 
-                label="Payments" 
-                showLabel={!isCollapsed}
-              />
-              <NavItem 
-                to="/admin/settings" 
-                icon={Settings} 
-                label="Settings" 
-                showLabel={!isCollapsed}
-              />
+              <div className="mb-1">
+                <NavItem 
+                  to="/admin/students" 
+                  icon={Users} 
+                  label="Students" 
+                  showLabel={!isCollapsed}
+                />
+              </div>
+              <div className="mb-1">
+                <NavItem 
+                  to="/admin/results" 
+                  icon={BarChart3} 
+                  label="Results" 
+                  showLabel={!isCollapsed}
+                />
+              </div>
+              <div className="mb-1">
+                <NavItem 
+                  to="/admin/payments" 
+                  icon={DollarSign} 
+                  label="Payments" 
+                  showLabel={!isCollapsed}
+                />
+              </div>
+              <div className="mb-1">
+                <NavItem 
+                  to="/admin/settings" 
+                  icon={Settings} 
+                  label="Settings" 
+                  showLabel={!isCollapsed}
+                />
+              </div>
             </>
           )}
         </nav>
 
         {/* User + Logout */}
-        <div className={`p-4 border-t border-gray-200 ${isCollapsed ? "px-2" : ""}`}>
-          <div className={`flex items-center ${isCollapsed ? "justify-center" : "justify-between"}`}>
-            <div className={`flex items-center ${isCollapsed ? "flex-col space-y-1" : ""}`}>
+        <div className={`p-4 border-t border-gray-100 ${isCollapsed ? "px-2 py-3" : "py-3"}`}>
+          <div className={`flex items-center ${isCollapsed ? "justify-center flex-col" : "justify-between"}`}>
+            <div className={`flex items-center ${isCollapsed ? "flex-col space-y-2" : ""}`}>
               <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
                 <User className="w-5 h-5 text-primary-600" />
               </div>
               {!isCollapsed && (
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-gray-900 truncate max-w-[120px]">
                     {user?.name || (type === "admin" ? "Admin" : "Student")}
                   </p>
                   <p className="text-xs text-gray-500">
@@ -475,7 +514,7 @@ const Sidebar = ({ type = "student" }) => {
             {!isCollapsed && (
               <button
                 onClick={logout}
-                className="text-sm text-red-600 hover:underline flex items-center transition-colors"
+                className="text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg px-2 py-1 flex items-center transition-colors duration-200"
               >
                 <LogOut className="w-4 h-4 mr-1" /> 
                 Logout
@@ -485,7 +524,7 @@ const Sidebar = ({ type = "student" }) => {
             {isCollapsed && (
               <button
                 onClick={logout}
-                className="mt-2 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                className="mt-2 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
                 title="Logout"
               >
                 <LogOut className="w-4 h-4" />
@@ -499,7 +538,7 @@ const Sidebar = ({ type = "student" }) => {
       {isCollapsed && (
         <button
           onClick={() => setIsCollapsed(false)}
-          className="fixed top-4 left-4 z-40 p-2 bg-white border border-gray-200 rounded-lg shadow-lg lg:hidden"
+          className="fixed top-4 left-4 z-40 p-2 bg-white border border-gray-200 rounded-lg shadow-lg lg:hidden hover:bg-gray-50 transition-colors duration-200"
         >
           <Menu className="w-5 h-5 text-gray-600" />
         </button>

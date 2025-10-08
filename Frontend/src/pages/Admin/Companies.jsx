@@ -246,6 +246,9 @@ const ManageCompanies = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Manage Companies</h1>
           <p className="text-gray-600">Add and manage companies for mock tests</p>
+          <p className="text-sm text-blue-600 mt-1">
+            Try the new <a href="/admin/mocktest" className="underline">consolidated management interface</a> for easier workflow
+          </p>
         </div>
         <button
           onClick={() => setShowModal(true)}

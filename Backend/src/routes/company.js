@@ -25,7 +25,7 @@ router.get('/', optionalAuth, async (req, res) => {
     }
 
     const companies = await Company.find(query)
-      .select('name logoUrl description category difficulty totalQuestions totalDuration')
+      .select('name logoUrl description category difficulty totalQuestions totalDuration defaultPattern')
       .sort({ name: 1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -238,7 +238,11 @@ router.post('/', adminAuth, [
       difficulty: difficulty || 'Medium',
       defaultPattern,
       tags: tags || [],
-      metadata: metadata || {},
+      metadata: metadata || {
+        cutoffPercentage: 60,
+        passingCriteria: 'Overall percentage',
+        instructions: []
+      },
       createdBy: req.student.id
     });
 

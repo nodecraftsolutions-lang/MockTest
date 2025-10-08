@@ -7,6 +7,7 @@ import DashboardLayout from './layouts/DashboardLayout';
 import AdminLayout from './layouts/AdminLayout';
 
 //mock test bages
+import CompanyTestManagement from './pages/Admin/MockTest/CompanyTestManagement'
 import CreateCompany from './pages/Admin/MockTest/CreateCompany'
 import TestCreation from './pages/Admin/MockTest/TestCreation'
 import QuestionBankUpload from './pages/Admin/MockTest/QuestionBankUpload'
@@ -125,10 +126,11 @@ function App() {
               }
               
             >
-              <Route path="/admin/mocktest/create-company"element={<CreateCompany/>}/>
-              <Route path="/admin/mocktest/test-creation"element={<TestCreation/>}/>
-              <Route path="/admin/mocktest/question-bank-upload" element={<QuestionBankUpload/>}/>
+              <Route path="/admin/mocktest" element={<CompanyTestManagement/>}/>
               <Route path="/admin/mocktest/question-generate" element={<DynamicGenerateQuestions/>}/>
+              <Route path="/admin/mocktest/question-bank-upload" element={<QuestionBankUpload/>}/>
+              <Route path="/admin/mocktest/create-company" element={<CreateCompany/>}/>
+              <Route path="/admin/mocktest/test-creation" element={<TestCreation/>}/>
 
 
               <Route path="/admin/course/create" element={<CourseCreation/>}/>
@@ -148,6 +150,7 @@ function App() {
               <Route path="companies" element={<ManageCompanies />} />
               <Route path="tests" element={<ManageTests />} />
               <Route path="question-banks" element={<QuestionBanks />} />
+              <Route path="mocktest-management" element={<CompanyTestManagement />} />
               <Route path="students" element={<ManageStudents />} />
               <Route path="results" element={<AdminResults />} />
               <Route path="payments" element={<ManagePayments />} />

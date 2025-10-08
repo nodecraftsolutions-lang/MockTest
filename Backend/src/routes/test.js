@@ -145,7 +145,7 @@ router.get('/', optionalAuth, async (req, res) => {
 
     const tests = await Test.find(query)
       .populate('companyId', 'name logoUrl category')
-      .select('title description type price duration totalQuestions difficulty isFeatured createdAt')
+      .select('title description type price duration totalQuestions difficulty isFeatured createdAt isGenerated sections')
       .sort({ isFeatured: -1, createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
@@ -447,7 +447,7 @@ router.post('/', adminAuth, [
     if (!errors.isEmpty())
       return res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
 
-    const { title, description, companyId, type, price, duration, sections, instructions, difficulty, tags, isFeatured, validFrom, validUntil } = req.body;
+    const { title, description, companyId, type, price, sections, instructions, difficulty, tags, isFeatured, validFrom, validUntil } = req.body;
 
     const company = await Company.findById(companyId);
     if (!company) return res.status(404).json({ success: false, message: 'Company not found' });
@@ -462,13 +462,16 @@ router.post('/', adminAuth, [
       if (existing) return res.status(400).json({ success: false, message: 'Only one free test per company allowed' });
     }
 
+    // Calculate total duration from sections
+    const totalDuration = sections.reduce((sum, section) => sum + (section.duration || 0), 0);
+
     const test = new Test({
       title,
       description,
       companyId,
       type,
       price: type === 'free' ? 0 : price,
-      duration,
+      duration: totalDuration,
       sections,
       instructions: instructions || [],
       difficulty: difficulty || 'Medium',
@@ -656,6 +659,59 @@ router.post('/attempts/:id/submit', auth, async (req, res) => {
 });
 
 // ---------------------------------------------
+// PUT /api/v1/tests/:id (Admin) - update test
+// ---------------------------------------------
+router.put('/:id', adminAuth, [
+  body('title').optional().trim().isLength({ min: 5, max: 200 }).withMessage('Title 5-200 chars'),
+  body('companyId').optional().isMongoId().withMessage('Valid company ID required'),
+  body('type').optional().isIn(['free', 'paid']).withMessage('Type must be free or paid'),
+  body('price').optional().isNumeric({ min: 0 }).withMessage('Price must be >= 0'),
+  body('sections').optional().isArray({ min: 1 }).withMessage('At least one section required')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty())
+      return res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
+
+    const { id } = req.params;
+    const { title, description, companyId, type, price, sections, instructions, difficulty, tags, isFeatured, validFrom, validUntil } = req.body;
+
+    const test = await Test.findById(id);
+    if (!test) return res.status(404).json({ success: false, message: 'Test not found' });
+
+    // Update fields if provided
+    if (title !== undefined) test.title = title;
+    if (description !== undefined) test.description = description;
+    if (companyId !== undefined) {
+      const company = await Company.findById(companyId);
+      if (!company) return res.status(404).json({ success: false, message: 'Company not found' });
+      test.companyId = companyId;
+    }
+    if (type !== undefined) test.type = type;
+    if (price !== undefined) test.price = type === 'free' ? 0 : price;
+    if (sections !== undefined) {
+      // Calculate total duration from sections
+      const totalDuration = sections.reduce((sum, section) => sum + (section.duration || 0), 0);
+      test.sections = sections;
+      test.duration = totalDuration;
+    }
+    if (instructions !== undefined) test.instructions = instructions;
+    if (difficulty !== undefined) test.difficulty = difficulty;
+    if (tags !== undefined) test.tags = tags;
+    if (isFeatured !== undefined) test.isFeatured = isFeatured;
+    if (validFrom !== undefined) test.validFrom = validFrom ? new Date(validFrom) : undefined;
+    if (validUntil !== undefined) test.validUntil = validUntil ? new Date(validUntil) : undefined;
+
+    await test.save();
+
+    res.json({ success: true, message: 'Test updated successfully', data: { test } });
+  } catch (error) {
+    console.error('Update test error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update test' });
+  }
+});
+
+// ---------------------------------------------
 // POST /api/v1/tests/:id/generate-questions (Admin)
 // ---------------------------------------------
 router.post('/:id/generate-questions', adminAuth, async (req, res) => {
@@ -674,7 +730,8 @@ router.post('/:id/generate-questions', adminAuth, async (req, res) => {
       data: {
         totalQuestions: updatedTest.totalQuestions,
         totalMarks: updatedTest.totalMarks,
-        sectionsGenerated: updatedTest.sections.length
+        sectionsGenerated: updatedTest.sections.length,
+        isGenerated: updatedTest.isGenerated
       }
     });
   } catch (error) {

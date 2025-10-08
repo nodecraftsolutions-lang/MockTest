@@ -320,6 +320,9 @@ const ManageTests = () => {
             {getSelectedCompanyName() ? `${getSelectedCompanyName()} Tests` : 'Manage Tests'}
           </h1>
           <p className="text-gray-600">Create dynamic tests with section-wise question banks</p>
+          <p className="text-sm text-blue-600 mt-1">
+            Try the new <a href="/admin/mocktest" className="underline">consolidated management interface</a> for easier workflow
+          </p>
         </div>
         <button
           onClick={() => setShowModal(true)}
