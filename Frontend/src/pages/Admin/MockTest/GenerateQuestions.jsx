@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { 
   Zap, 
   Play, 
@@ -18,9 +19,10 @@ import api from "../../../api/axios";
 import { useToast } from "../../../context/ToastContext";
 
 const DynamicGenerateQuestions = () => {
+  const [searchParams] = useSearchParams();
   const { showSuccess, showError } = useToast();
   const [tests, setTests] = useState([]);
-  const [selectedTest, setSelectedTest] = useState("");
+  const [selectedTest, setSelectedTest] = useState(searchParams.get('testId') || "");
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState(null);
@@ -33,6 +35,12 @@ const DynamicGenerateQuestions = () => {
       try {
         const res = await api.get("/tests");
         setTests(res.data.data?.tests || []);
+        
+        // If testId is in URL, set it as selected
+        const testIdFromUrl = searchParams.get('testId');
+        if (testIdFromUrl) {
+          setSelectedTest(testIdFromUrl);
+        }
       } catch (error) {
         console.error("Failed to fetch tests:", error);
         setTests([]);
@@ -43,7 +51,7 @@ const DynamicGenerateQuestions = () => {
     };
 
     fetchTests();
-  }, [showError]);
+  }, [showError, searchParams]);
 
   // Fetch test details when selected
   useEffect(() => {

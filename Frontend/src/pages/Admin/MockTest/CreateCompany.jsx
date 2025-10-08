@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   Plus, 
   Trash2, 
@@ -18,6 +19,7 @@ import api from "../../../api/axios";
 import { useToast } from "../../../context/ToastContext";
 
 const CreateCompany = () => {
+  const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
 
   const [formData, setFormData] = useState({
@@ -35,7 +37,6 @@ const CreateCompany = () => {
         negativeMarking: 0.25,
       },
     ],
-    tags: ["Hiring", "Fresher"],
     metadata: {
       cutoffPercentage: 60,
       passingCriteria: "Overall percentage",
@@ -158,7 +159,7 @@ const CreateCompany = () => {
         <div className="mb-8">
           <div className="flex items-center space-x-4 mb-4">
             <button 
-              onClick={() => window.history.back()}
+              onClick={() => navigate(-1)}
               className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
@@ -384,7 +385,7 @@ const CreateCompany = () => {
                               </label>
                               <input
                                 type="number"
-                                step="0.1"
+                                min="0.25"
                                 value={section.marksPerQuestion}
                                 onChange={(e) => handleSectionChange(index, 'marksPerQuestion', e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"

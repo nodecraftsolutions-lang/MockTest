@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { 
   Plus, 
   Trash2, 
@@ -20,6 +21,8 @@ import api from "../../../api/axios";
 import { useToast } from "../../../context/ToastContext";
 
 const TestCreation = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { showSuccess, showError } = useToast();
 
   const [companies, setCompanies] = useState([]);
@@ -30,7 +33,7 @@ const TestCreation = () => {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    companyId: "",
+    companyId: searchParams.get('companyId') || "",
     type: "free",
     price: 0,
     currency: "INR",
@@ -48,7 +51,16 @@ const TestCreation = () => {
 
   useEffect(() => {
     fetchCompanies();
-  }, []);
+    
+    // If companyId is in URL, set it in form
+    const companyIdFromUrl = searchParams.get('companyId');
+    if (companyIdFromUrl) {
+      setFormData(prev => ({
+        ...prev,
+        companyId: companyIdFromUrl
+      }));
+    }
+  }, [searchParams]);
 
   const fetchCompanies = async () => {
     try {
@@ -167,7 +179,7 @@ const TestCreation = () => {
         <div className="mb-8">
           <div className="flex items-center space-x-4 mb-4">
             <button 
-              onClick={() => window.history.back()}
+              onClick={() => navigate(-1)}
               className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
@@ -270,6 +282,53 @@ const TestCreation = () => {
                             </option>
                           ))}
                         </select>
+                        
+                        {/* Show company sections when a company is selected */}
+                        {formData.companyId && (
+                          <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            {(() => {
+                              const selectedCompany = companies.find(company => company._id === formData.companyId);
+                              if (!selectedCompany) return null;
+                              
+                              // Calculate totals for the company pattern
+                              const { totalQuestions, totalDuration } = selectedCompany.defaultPattern?.reduce((totals, section) => ({
+                                totalQuestions: totals.totalQuestions + (section.questionCount || 0),
+                                totalDuration: totals.totalDuration + (section.duration || 0)
+                              }), { totalQuestions: 0, totalDuration: 0 }) || { totalQuestions: 0, totalDuration: 0 };
+                              
+                              return (
+                                <>
+                                  <div className="flex items-center justify-between mb-3">
+                                    <h4 className="text-sm font-medium text-blue-800">Company Information:</h4>
+                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                      {selectedCompany.category}
+                                    </span>
+                                  </div>
+                                  
+                                  <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
+                                    <span>{selectedCompany.difficulty}</span>
+                                    <span>•</span>
+                                    <span>{totalQuestions} questions</span>
+                                    <span>•</span>
+                                    <span>{totalDuration} min</span>
+                                  </div>
+                                  
+                                  <h4 className="text-sm font-medium text-blue-800 mb-2">Company Sections:</h4>
+                                  <div className="flex flex-wrap gap-2">
+                                    {selectedCompany.defaultPattern?.map((section, index) => (
+                                      <span 
+                                        key={index} 
+                                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                                      >
+                                        {section.sectionName} ({section.questionCount} Qs, {section.duration} min)
+                                      </span>
+                                    )) || <span className="text-xs text-blue-600">No sections available</span>}
+                                  </div>
+                                </>
+                              );
+                            })()}
+                          </div>
+                        )}
                       </div>
 
                       <div>
@@ -435,12 +494,12 @@ const TestCreation = () => {
 
                             <div>
                               <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Marks per Question *
+                                Marks per Question
                               </label>
                               <input
                                 type="number"
-                                step="0.1"
-                                min="0"
+                                min="0.25"
+                                step="0.25"
                                 value={section.marksPerQuestion}
                                 onChange={(e) => handleSectionChange(index, 'marksPerQuestion', e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
