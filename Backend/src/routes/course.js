@@ -73,24 +73,34 @@ router.put("/:id", adminAuth, async (req, res) => {
       duration,
       level,
       isPaid,
-      recordingsPrice,  // ✅ allow updates
+      recordingsPrice,
+      sections
     } = req.body;
+
+    // Validation
+    if (!title || !description || !sections || sections.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Title, description, and at least one section are required" 
+      });
+    }
 
     const course = await Course.findByIdAndUpdate(
       req.params.id,
       {
         title,
         description,
-        outcomes,
-        features,
-        price,
-        currency,
-        category,
-        startDate,
-        duration,
-        level,
-        isPaid,
-        recordingsPrice,
+        outcomes: outcomes || [""],
+        features: features || [""],
+        price: price || 0,
+        currency: currency || "INR",
+        category: category || "",
+        startDate: startDate || null,
+        duration: duration || "",
+        level: level || "Beginner",
+        isPaid: isPaid !== undefined ? isPaid : true,
+        recordingsPrice: recordingsPrice || 0,
+        sections: sections || []
       },
       { new: true }
     );
@@ -106,7 +116,7 @@ router.put("/:id", adminAuth, async (req, res) => {
     });
   } catch (error) {
     console.error("Update course error:", error);
-    res.status(500).json({ success: false, message: "Failed to update course" });
+    res.status(500).json({ success: false, message: "Failed to update course: " + error.message });
   }
 });
 
@@ -166,7 +176,28 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get all courses for admin management (Admin only)
+router.get('/admin/all', adminAuth, async (req, res) => {
+  try {
+    const courses = await Course.find({ isActive: true })
+      .select("title description price features outcomes currency isPaid category startDate duration sections enrolledStudents recordingsPrice")
+      .populate("enrolledStudents", "_id");
 
+    // Add discussion count to each course
+    const coursesWithDiscussionCount = await Promise.all(courses.map(async (course) => {
+      const discussionCount = await Discussion.countDocuments({ courseId: course._id });
+      return {
+        ...course.toObject(),
+        discussionCount
+      };
+    }));
+
+    res.json({ success: true, data: coursesWithDiscussionCount });
+  } catch (err) {
+    console.error('Get admin courses error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch courses' });
+  }
+});
 
 // Get single course
 router.get("/:id", auth, async (req, res) => {
@@ -251,6 +282,7 @@ router.get("/:id/discussions", auth, async (req, res) => {
 
     const messages = await Discussion.find({ courseId: req.params.id })
       .populate("studentId", "name email")
+      .populate("replies.userId", "name email")
       .sort({ createdAt: 1 });
 
     res.json({ success: true, data: messages });
@@ -289,6 +321,146 @@ router.post("/:id/discussions", auth, async (req, res) => {
   } catch (err) {
     console.error("Post discussion error:", err);
     res.status(500).json({ success: false, message: "Failed to post message" });
+  }
+});
+
+// ADMIN ROUTES FOR DISCUSSIONS
+// Get all discussions for a course (Admin only)
+router.get("/:id/discussions/admin", adminAuth, async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ success: false, message: "Course not found" });
+    }
+
+    const messages = await Discussion.find({ courseId: req.params.id })
+      .populate("studentId", "name email")
+      .populate("replies.userId", "name email")
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, data: messages });
+  } catch (err) {
+    console.error("Get admin discussions error:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch discussions" });
+  }
+});
+
+// Delete a discussion message (Admin only)
+router.delete("/discussions/:discussionId", adminAuth, async (req, res) => {
+  try {
+    const discussion = await Discussion.findById(req.params.discussionId);
+    if (!discussion) {
+      return res.status(404).json({ success: false, message: "Discussion not found" });
+    }
+
+    await Discussion.findByIdAndDelete(req.params.discussionId);
+    
+    res.json({ success: true, message: "Discussion deleted successfully" });
+  } catch (err) {
+    console.error("Delete discussion error:", err);
+    res.status(500).json({ success: false, message: "Failed to delete discussion" });
+  }
+});
+
+// Add reply to a discussion (Admin only)
+router.post("/discussions/:discussionId/reply", adminAuth, async (req, res) => {
+  try {
+    const { message } = req.body;
+    
+    if (!message || message.trim() === "") {
+      return res.status(400).json({ success: false, message: "Reply message is required" });
+    }
+
+    const discussion = await Discussion.findById(req.params.discussionId);
+    if (!discussion) {
+      return res.status(404).json({ success: false, message: "Discussion not found" });
+    }
+
+    // Add the reply
+    discussion.replies.push({
+      userId: req.student.id,
+      userType: "Admin",
+      message: message.trim()
+    });
+
+    await discussion.save();
+
+    // Populate the reply user info
+    await discussion.populate("replies.userId", "name email");
+    
+    res.json({ 
+      success: true, 
+      message: "Reply added successfully",
+      data: discussion.replies[discussion.replies.length - 1]
+    });
+  } catch (err) {
+    console.error("Add reply error:", err);
+    res.status(500).json({ success: false, message: "Failed to add reply: " + err.message });
+  }
+});
+
+// Delete a specific reply from a discussion (Admin only)
+router.delete("/discussions/:discussionId/reply/:replyId", adminAuth, async (req, res) => {
+  try {
+    const { discussionId, replyId } = req.params;
+
+    const discussion = await Discussion.findById(discussionId);
+    if (!discussion) {
+      return res.status(404).json({ success: false, message: "Discussion not found" });
+    }
+
+    // Find the reply index
+    const replyIndex = discussion.replies.findIndex(reply => reply._id.toString() === replyId);
+    if (replyIndex === -1) {
+      return res.status(404).json({ success: false, message: "Reply not found" });
+    }
+
+    // Remove the reply
+    discussion.replies.splice(replyIndex, 1);
+    await discussion.save();
+
+    res.json({ 
+      success: true, 
+      message: "Reply deleted successfully"
+    });
+  } catch (err) {
+    console.error("Delete reply error:", err);
+    res.status(500).json({ success: false, message: "Failed to delete reply: " + err.message });
+  }
+});
+
+// Get all discussions across all courses (Admin only)
+router.get("/discussions/all", adminAuth, async (req, res) => {
+  try {
+    const { page = 1, limit = 20, courseId } = req.query;
+    
+    const query = {};
+    if (courseId) query.courseId = courseId;
+    
+    const messages = await Discussion.find(query)
+      .populate("courseId", "title")
+      .populate("studentId", "name email")
+      .populate("replies.userId", "name email")
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await Discussion.countDocuments(query);
+
+    res.json({ 
+      success: true, 
+      data: { 
+        messages, 
+        pagination: { 
+          current: parseInt(page), 
+          pages: Math.ceil(total / limit), 
+          total 
+        } 
+      } 
+    });
+  } catch (err) {
+    console.error("Get all discussions error:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch discussions: " + err.message });
   }
 });
 

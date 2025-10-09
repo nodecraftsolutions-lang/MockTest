@@ -36,7 +36,7 @@ const upload = multer({
 // ✅ Admin uploads a recording for a course
 router.post("/", adminAuth, async (req, res) => {
   try {
-    const { courseId, title, description, videoUrl, thumbnailUrl, duration } = req.body;
+    const { courseId, title, description, videoUrl, thumbnailUrl, duration, resources } = req.body;
 
     const course = await Course.findById(courseId);
     if (!course) {
@@ -50,6 +50,7 @@ router.post("/", adminAuth, async (req, res) => {
       videoUrl,
       thumbnailUrl,
       duration,
+      resources: resources || []
     });
 
     await recording.save();
@@ -64,7 +65,7 @@ router.post("/", adminAuth, async (req, res) => {
 router.put("/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, videoUrl, thumbnailUrl, duration } = req.body;
+    const { title, description, videoUrl, thumbnailUrl, duration, resources } = req.body;
 
     // Check if recording exists
     const recording = await Recording.findById(id);
@@ -81,6 +82,7 @@ router.put("/:id", adminAuth, async (req, res) => {
         videoUrl,
         thumbnailUrl,
         duration,
+        resources: resources || [],
         updatedAt: Date.now()
       },
       { new: true, runValidators: true } // Return updated document and run validators
@@ -119,7 +121,7 @@ router.delete("/:id", adminAuth, async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to delete recording" });
   }
 });
-// GET /recordings - Get all recordings with optional filtering
+// GET /recordings - Get all recordings with optional filtering and pagination
 router.get("/", async (req, res) => {
   try {
     const { courseId, page = 1, limit = 10, search, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
@@ -157,7 +159,9 @@ router.get("/", async (req, res) => {
         pagination: {
           current: parseInt(page),
           pages: Math.ceil(total / limit),
-          total
+          total,
+          hasNext: page * limit < total,
+          hasPrev: page > 1
         }
       }
     });
