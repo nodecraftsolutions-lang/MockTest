@@ -478,8 +478,6 @@ const CompanyTestManagement = () => {
     return { totalQuestions, totalDuration, totalMarks };
   };
 
-  const sectionTypes = ['Aptitude', 'Reasoning', 'Technical', 'English', 'General Knowledge', 'Programming'];
-
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -1311,21 +1309,16 @@ const CompanyTestManagement = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Section Type *
+                            Section Name *
                           </label>
-                          <select
+                          <input
+                            type="text"
                             required
                             value={section.sectionName}
                             onChange={(e) => handleTestSectionChange(index, 'sectionName', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          >
-                            <option value="">Select Section</option>
-                            {sectionTypes.map(sectionType => (
-                              <option key={sectionType} value={sectionType}>
-                                {sectionType}
-                              </option>
-                            ))}
-                          </select>
+                            placeholder="e.g., Aptitude"
+                          />
                         </div>
                         
                         <div>
