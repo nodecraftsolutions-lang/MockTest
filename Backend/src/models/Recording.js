@@ -32,6 +32,10 @@ const recordingSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  resources: [{
+    title: { type: String, required: true },
+    link: { type: String, required: true }
+  }]
 }, { timestamps: true });
 
 module.exports = mongoose.model("Recording", recordingSchema);

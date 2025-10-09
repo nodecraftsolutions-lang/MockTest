@@ -27,7 +27,8 @@ import {
   Calendar,
   Play,
   List,
-  FileCheck
+  FileCheck,
+  MessageSquare
 } from "lucide-react";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
@@ -397,19 +398,24 @@ const Sidebar = ({ type = "student" }) => {
                 
                 <DropdownContent menu="course">
                   <AdminSubItem 
+                    to="/admin/course/management" 
+                    icon={Database} 
+                    label="All Courses" 
+                  />
+                  <AdminSubItem 
                     to="/admin/course/create" 
                     icon={Plus} 
-                    label="Course Creation" 
+                    label="Create New Course" 
                   />
                   <AdminSubItem 
                     to="/admin/course/sessions" 
                     icon={Calendar} 
-                    label="Upload Sessions for Courses" 
+                    label="Upload Sessions" 
                   />
                   <AdminSubItem 
-                    to="/admin/course/list" 
-                    icon={Database} 
-                    label="All Courses" 
+                    to="/admin/course/discussions" 
+                    icon={MessageSquare} 
+                    label="Student Discussions" 
                   />
                 </DropdownContent>
               </div>
@@ -428,29 +434,6 @@ const Sidebar = ({ type = "student" }) => {
                     to="/admin/recordings/upload" 
                     icon={Settings} 
                     label="Manage Recordings" 
-                  />
-                </DropdownContent>
-              </div>
-
-              {/* Resource Management Dropdown */}
-              <div className="relative group mb-2">
-                <DropdownButton 
-                  icon={FileText} 
-                  label="Resource Management" 
-                  menu="Resource" 
-                  hasChildren={true}
-                />
-                
-                <DropdownContent menu="Resource">
-                  <AdminSubItem 
-                    to="/admin/course/resourcesrec" 
-                    icon={Settings} 
-                    label="Manage Recordings Resources" 
-                  />
-                  <AdminSubItem 
-                    to="/admin/course/resources" 
-                    icon={Settings} 
-                    label="Manage Course Resources" 
                   />
                 </DropdownContent>
               </div>

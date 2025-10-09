@@ -38,7 +38,11 @@ const RecordingSchema = new Schema({
     }
   },
   duration: { type: Number }, // optional, in minutes
-  uploadedAt: { type: Date, default: Date.now }
+  uploadedAt: { type: Date, default: Date.now },
+  resources: [{
+    title: { type: String, required: true },
+    link: { type: String, required: true }
+  }]
 });
 
 const resourceCourseSchema = new Schema(

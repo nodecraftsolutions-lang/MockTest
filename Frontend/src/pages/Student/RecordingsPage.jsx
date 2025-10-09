@@ -230,9 +230,9 @@ const RecordingsPage = () => {
               onClick={() => setShowRecordingsModal(true)}
               className="btn-secondary px-10 py-4 text-lg font-bold rounded-full shadow-lg flex items-center"
             >
-              <Video className="w-5 h-5 mr-2" /> View
+              <Video className="w-5 h-5 mr-2" /> View Recordings
               <span className="ml-2 bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-sm">
-                {recordings.length}
+                {recordings.length} {recordings.length === 1 ? 'recording' : 'recordings'}
               </span>
             </motion.button>
           )}
@@ -475,6 +475,39 @@ const RecordingsPage = () => {
                         Duration: {selectedRecording.duration} minutes
                       </p>
                     )}
+                    
+                    {/* Recording-specific Resources */}
+                    {selectedRecording.resources && selectedRecording.resources.length > 0 && (
+                      <div className="mt-6">
+                        <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                          <FileText className="w-5 h-5 mr-2 text-green-600" />
+                          Resources for this recording
+                        </h4>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {selectedRecording.resources.map((resource, idx) => (
+                            <div 
+                              key={idx}
+                              className="bg-blue-50 border border-blue-100 rounded-lg p-3 hover:shadow-md transition-all duration-200"
+                            >
+                              <div className="flex items-center mb-1">
+                                <FileText className="w-4 h-4 text-blue-600 mr-2" />
+                                <h5 className="font-medium text-gray-900 text-sm">{resource.title}</h5>
+                              </div>
+                              <a
+                                href={resource.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center mt-1 text-blue-600 hover:text-blue-800 transition-colors text-xs"
+                              >
+                                <ExternalLink className="w-3 h-3 mr-1" />
+                                Access Resource
+                              </a>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -486,7 +519,7 @@ const RecordingsPage = () => {
                       <div className="mb-8 border-b pb-8">
                         <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
                           <FileText className="w-5 h-5 mr-2 text-green-600" />
-                          Resources
+                          General Resources
                         </h3>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -515,10 +548,15 @@ const RecordingsPage = () => {
                     )}
 
                     {/* Recordings Section */}
-                    <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                      <Video className="w-5 h-5 mr-2 text-indigo-600" />
-                      Available Recordings
-                    </h3>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-xl font-semibold text-gray-900 flex items-center">
+                        <Video className="w-5 h-5 mr-2 text-indigo-600" />
+                        Available Recordings
+                      </h3>
+                      <div className="text-sm text-gray-500">
+                        {recordings.length} {recordings.length === 1 ? 'recording' : 'recordings'}
+                      </div>
+                    </div>
 
                     {recordings.length === 0 ? (
                       <div className="text-center py-12">
@@ -534,31 +572,68 @@ const RecordingsPage = () => {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.05 * idx }}
-                            onClick={() => openRecording(rec)}
-                            className="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                            className="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all"
                           >
-                            <div className="relative">
-                              <img
-                                src={rec.thumbnailUrl || "https://via.placeholder.com/530x360.png?text=Recording"}
-                                alt={rec.title}
-                                className="w-full h-48 object-cover"
-                              />
-                              <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <div className="bg-white bg-opacity-90 rounded-full p-3">
-                                  <Play className="w-8 h-8 text-indigo-600" />
+                            <div 
+                              onClick={() => openRecording(rec)}
+                              className="cursor-pointer"
+                            >
+                              <div className="relative">
+                                <img
+                                  src={rec.thumbnailUrl || "https://via.placeholder.com/530x360.png?text=Recording"}
+                                  alt={rec.title}
+                                  className="w-full h-48 object-cover"
+                                />
+                                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                  <div className="bg-white bg-opacity-90 rounded-full p-3">
+                                    <Play className="w-8 h-8 text-indigo-600" />
+                                  </div>
                                 </div>
                               </div>
-                            </div>
 
-                            <div className="p-4">
-                              <h3 className="font-bold text-gray-900">{rec.title}</h3>
-                              {rec.duration > 0 && (
-                                <p className="text-sm text-gray-600 mt-1 flex items-center">
-                                  <Clock className="w-4 h-4 mr-1" />
-                                  {rec.duration} minutes
-                                </p>
-                              )}
+                              <div className="p-4">
+                                <h3 className="font-bold text-gray-900">{rec.title}</h3>
+                                {rec.duration > 0 && (
+                                  <p className="text-sm text-gray-600 mt-1 flex items-center">
+                                    <Clock className="w-4 h-4 mr-1" />
+                                    {rec.duration} minutes
+                                  </p>
+                                )}
+                              </div>
                             </div>
+                            
+                            {/* Recording Resources Section in List View */}
+                            {rec.resources && rec.resources.length > 0 && (
+                              <div className="px-4 pb-4 border-t border-gray-100 bg-blue-50">
+                                <div className="flex items-center justify-between mb-2 pt-3">
+                                  <h4 className="text-sm font-semibold text-blue-800 flex items-center">
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    Additional Resources
+                                  </h4>
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    {rec.resources.length} {rec.resources.length === 1 ? 'item' : 'items'}
+                                  </span>
+                                </div>
+                                <div className="space-y-2">
+                                  {rec.resources.map((resource, resIdx) => (
+                                    <a
+                                      key={resIdx}
+                                      href={resource.link}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors group py-1"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center mr-2 flex-shrink-0">
+                                        <FileText className="w-3 h-3 text-blue-600" />
+                                      </div>
+                                      <span className="truncate group-hover:underline">{resource.title}</span>
+                                      <ExternalLink className="w-4 h-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </motion.div>
                         ))}
                       </div>

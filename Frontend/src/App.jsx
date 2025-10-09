@@ -17,6 +17,7 @@ import QuestionBankUpload from './pages/Admin/MockTest/QuestionBankUpload'
 import CourseCreation from './pages/Admin/Course/CourseCreation'
 import CourseSessions from './pages/Admin/Course/CourseSessions'
 import CoursesList from './pages/Admin/Course/CourseList'
+import CourseManagement from './pages/Admin/Course/CourseManagement'
 
 //recordings
 import RecordingsManagement from './pages/Admin/Recordings/RecordingsManagement';
@@ -60,6 +61,7 @@ import './index.css';
 import DynamicGenerateQuestions from './pages/Admin/MockTest/GenerateQuestions';
 import ResourceManagement from './pages/Admin/Course/ResourceManagement';
 import ResourceRecordManagement from './pages/Admin/Course/ResourceRecordManagement';
+import DiscussionsManagement from './pages/Admin/Course/DiscussionsManagement';
 
 
 function App() {
@@ -136,11 +138,12 @@ function App() {
               <Route path="/admin/course/create" element={<CourseCreation/>}/>
               <Route path="/admin/course/sessions" element={<CourseSessions/>}/>
               <Route path="/admin/course/list" element={<CoursesList/>}/>
-
+              <Route path="/admin/course/management" element={<CourseManagement/>}/>
 
               <Route path="/admin/recordings/upload" element={<RecordingsManagement/>}/>
               <Route path="/admin/course/resources" element={<ResourceManagement />} />
               <Route path="/admin/course/resourcesrec" element={<ResourceRecordManagement />} />
+              <Route path="/admin/course/discussions" element={<DiscussionsManagement />} />
 
 
 
