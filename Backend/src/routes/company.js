@@ -174,7 +174,7 @@ router.post('/', adminAuth, [
     .withMessage('Company name must be between 2 and 100 characters'),
   body('logoUrl')
     .optional()
-    .isURL()
+    .isURL({ protocols: ['http', 'https'], require_protocol: true, allow_underscores: true })
     .withMessage('Please provide a valid logo URL'),
   body('description')
     .optional()
@@ -276,7 +276,7 @@ router.put('/:id', adminAuth, [
     .withMessage('Company name must be between 2 and 100 characters'),
   body('logoUrl')
     .optional()
-    .isURL()
+    .isURL({ protocols: ['http', 'https'], require_protocol: true, allow_underscores: true })
     .withMessage('Please provide a valid logo URL'),
   body('description')
     .optional()

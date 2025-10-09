@@ -30,7 +30,7 @@ const QuestionBankUpload = () => {
     title: "",
     description: "",
     companyId: searchParams.get('companyId') || "",
-    section: "Aptitude",
+    section: "",
     questionFile: null
   });
 
@@ -75,10 +75,20 @@ const QuestionBankUpload = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    // If company changes, reset the section
+    if (name === 'companyId') {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        section: ''
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleFileChange = (e) => {
@@ -132,6 +142,12 @@ const QuestionBankUpload = () => {
 
     if (!formData.companyId) {
       showError('Please select a company');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.section) {
+      showError('Please select a section');
       setLoading(false);
       return;
     }
@@ -251,7 +267,8 @@ const QuestionBankUpload = () => {
     URL.revokeObjectURL(url);
   };
 
-  const sectionOptions = [
+  // Default section options if no company selected or company has no sections
+  const defaultSectionOptions = [
     "Aptitude",
     "Reasoning", 
     "Technical",
@@ -259,6 +276,20 @@ const QuestionBankUpload = () => {
     "General Knowledge",
     "Programming"
   ];
+
+  // Get company sections based on selected company
+  const getCompanySections = (companyId) => {
+    const company = companies.find(c => c._id === companyId);
+    if (company && company.defaultPattern) {
+      return company.defaultPattern.map(section => section.sectionName);
+    }
+    return [];
+  };
+
+  // Get available sections for the selected company
+  const availableSections = formData.companyId 
+    ? getCompanySections(formData.companyId)
+    : defaultSectionOptions;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 sm:px-6 lg:px-8">
@@ -358,11 +389,19 @@ const QuestionBankUpload = () => {
                         onChange={handleChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         required
+                        disabled={!formData.companyId}
                       >
-                        {sectionOptions.map(section => (
+                        <option value="">Select a section</option>
+                        {availableSections.map(section => (
                           <option key={section} value={section}>{section}</option>
                         ))}
                       </select>
+                      {!formData.companyId && (
+                        <p className="text-xs text-gray-500 mt-1">Showing default sections. Select a company to see company-specific sections.</p>
+                      )}
+                      {formData.companyId && availableSections.length === 0 && (
+                        <p className="text-xs text-yellow-600 mt-1">No sections defined for this company</p>
+                      )}
                     </div>
 
                     <div className="md:col-span-2">
