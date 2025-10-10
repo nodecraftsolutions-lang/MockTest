@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { 
   Users, Search, Filter, Eye, UserX, RefreshCw,
-  Download, Upload, Mail, Phone, Calendar, Activity
+  Mail, Phone, Calendar, Activity,
+  ChevronDown, ChevronUp, X, Check, AlertCircle, 
+  UserCheck, FileText, CreditCard, TrendingUp
 } from 'lucide-react';
 import api from '../../api/axios';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useToast } from '../../context/ToastContext';
+import { motion } from 'framer-motion';
 
 const ManageStudents = () => {
   const [students, setStudents] = useState([]);
@@ -16,6 +19,7 @@ const ManageStudents = () => {
   const [sortOrder, setSortOrder] = useState('desc');
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const { showSuccess, showError } = useToast();
 
   useEffect(() => {
@@ -80,27 +84,6 @@ const ManageStudents = () => {
     }
   };
 
-  const exportStudents = async () => {
-    try {
-      const response = await api.get('/admin/students/export', {
-        responseType: 'blob'
-      });
-      
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `students-${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      
-      showSuccess('Students data exported successfully');
-    } catch (error) {
-      showError('Failed to export students data');
-    }
-  };
-
   const filteredStudents = students.filter(student => {
     const matchesSearch = 
       student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -115,79 +98,164 @@ const ManageStudents = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Manage Students</h1>
-          <p className="text-gray-600">View and manage student accounts</p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={exportStudents}
-            className="btn-secondary flex items-center"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Export CSV
-          </button>
-          <button className="btn-secondary flex items-center">
-            <Upload className="w-4 h-4 mr-2" />
-            Import Students
-          </button>
+      {/* Header with gradient background */}
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6 shadow-lg">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-white">Student Management</h1>
+            <p className="text-indigo-100">View and manage student accounts</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Removed export and import buttons */}
+          </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="card">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search students..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="input-field pl-10"
-              />
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Students</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">
+                {students.length}
+              </p>
             </div>
-            
-            <div className="flex items-center space-x-2">
-              <Filter className="w-5 h-5 text-gray-400" />
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="input-field"
+            <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+              <Users className="w-6 h-6 text-indigo-600" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Active Students</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">
+                {students.filter(s => s.isActive).length}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <UserCheck className="w-6 h-6 text-green-600" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Avg Attempts</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">
+                {students.length > 0 
+                  ? Math.round(students.reduce((sum, s) => sum + (s.attemptCount || 0), 0) / students.length)
+                  : 0}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <FileText className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Orders</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">
+                {students.reduce((sum, s) => sum + (s.orderCount || 0), 0)}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+              <CreditCard className="w-6 h-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="relative flex-1 max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search by name, email, or mobile..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2.5 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+            />
+          </div>
+          
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 transition-colors"
+          >
+            <Filter className="w-5 h-5" />
+            <span>Filters</span>
+            {showFilters ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </button>
+        </div>
+        
+        {/* Expanded Filters */}
+        {showFilters && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mt-4 pt-4 border-t border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-4"
+          >
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <select 
+                value={filterStatus} 
+                onChange={(e) => setFilterStatus(e.target.value)} 
+                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
               >
                 <option value="all">All Students</option>
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
               </select>
             </div>
-
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="input-field"
-            >
-              <option value="createdAt">Registration Date</option>
-              <option value="name">Name</option>
-              <option value="lastActiveAt">Last Active</option>
-            </select>
-
-            <select
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
-              className="input-field"
-            >
-              <option value="desc">Descending</option>
-              <option value="asc">Ascending</option>
-            </select>
-          </div>
-        </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+              <select 
+                value={sortBy} 
+                onChange={(e) => setSortBy(e.target.value)} 
+                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+              >
+                <option value="createdAt">Registration Date</option>
+                <option value="name">Name</option>
+                <option value="lastActiveAt">Last Active</option>
+                <option value="attemptCount">Attempts</option>
+                <option value="orderCount">Orders</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Order</label>
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+              >
+                <option value="desc">Descending</option>
+                <option value="asc">Ascending</option>
+              </select>
+            </div>
+          </motion.div>
+        )}
       </div>
 
       {/* Students Table */}
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -213,12 +281,18 @@ const ManageStudents = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredStudents.map((student) => (
-                <tr key={student._id} className="hover:bg-gray-50">
+              {filteredStudents.map((student, index) => (
+                <motion.tr 
+                  key={student._id} 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  className="hover:bg-gray-50 transition-colors"
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                        <Users className="w-5 h-5 text-primary-600" />
+                      <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                        <Users className="w-5 h-5 text-indigo-600" />
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">{student.name}</div>
@@ -230,11 +304,11 @@ const ManageStudents = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
                       <div className="flex items-center mb-1">
-                        <Mail className="w-4 h-4 mr-1 text-gray-400" />
+                        <Mail className="w-4 h-4 mr-1.5 text-gray-400" />
                         {student.email}
                       </div>
                       <div className="flex items-center">
-                        <Phone className="w-4 h-4 mr-1 text-gray-400" />
+                        <Phone className="w-4 h-4 mr-1.5 text-gray-400" />
                         {student.mobile}
                       </div>
                     </div>
@@ -243,28 +317,48 @@ const ManageStudents = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
                       <div className="flex items-center mb-1">
-                        <Calendar className="w-4 h-4 mr-1 text-gray-400" />
-                        Joined: {new Date(student.createdAt).toLocaleDateString()}
+                        <Calendar className="w-4 h-4 mr-1.5 text-gray-400" />
+                        {new Date(student.createdAt).toLocaleDateString()}
                       </div>
                       <div className="flex items-center">
-                        <Activity className="w-4 h-4 mr-1 text-gray-400" />
-                        Last: {new Date(student.lastActiveAt).toLocaleDateString()}
+                        <Activity className="w-4 h-4 mr-1.5 text-gray-400" />
+                        {student.lastActiveAt 
+                          ? new Date(student.lastActiveAt).toLocaleDateString() 
+                          : 'Never'}
                       </div>
                     </div>
                   </td>
                   
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      <div>{student.attemptCount || 0} attempts</div>
-                      <div>{student.orderCount || 0} orders</div>
+                    <div className="flex flex-col space-y-1">
+                      <div className="flex items-center text-sm">
+                        <FileText className="w-4 h-4 mr-1.5 text-gray-400" />
+                        <span>{student.attemptCount || 0} attempts</span>
+                      </div>
+                      <div className="flex items-center text-sm">
+                        <CreditCard className="w-4 h-4 mr-1.5 text-gray-400" />
+                        <span>{student.orderCount || 0} orders</span>
+                      </div>
                     </div>
                   </td>
                   
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      student.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      student.isActive 
+                        ? 'bg-emerald-100 text-emerald-800' 
+                        : 'bg-rose-100 text-rose-800'
                     }`}>
-                      {student.isActive ? 'Active' : 'Inactive'}
+                      {student.isActive ? (
+                        <>
+                          <Check className="w-3 h-3 mr-1" />
+                          Active
+                        </>
+                      ) : (
+                        <>
+                          <X className="w-3 h-3 mr-1" />
+                          Inactive
+                        </>
+                      )}
                     </span>
                   </td>
                   
@@ -272,7 +366,7 @@ const ManageStudents = () => {
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => viewStudentDetails(student._id)}
-                        className="text-primary-600 hover:text-primary-900"
+                        className="inline-flex items-center justify-center p-2 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-lg transition-colors"
                         title="View Details"
                       >
                         <Eye className="w-4 h-4" />
@@ -280,7 +374,11 @@ const ManageStudents = () => {
                       
                       <button
                         onClick={() => handleStatusToggle(student._id, student.isActive)}
-                        className={`${student.isActive ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'}`}
+                        className={`inline-flex items-center justify-center p-2 ${
+                          student.isActive 
+                            ? 'text-rose-600 hover:text-rose-900 hover:bg-rose-50' 
+                            : 'text-emerald-600 hover:text-emerald-900 hover:bg-emerald-50'
+                        } rounded-lg transition-colors`}
                         title={student.isActive ? 'Deactivate' : 'Activate'}
                       >
                         <UserX className="w-4 h-4" />
@@ -288,14 +386,14 @@ const ManageStudents = () => {
                       
                       <button
                         onClick={() => handleResetPassword(student._id)}
-                        className="text-orange-600 hover:text-orange-900"
+                        className="inline-flex items-center justify-center p-2 text-amber-600 hover:text-amber-900 hover:bg-amber-50 rounded-lg transition-colors"
                         title="Reset Password"
                       >
                         <RefreshCw className="w-4 h-4" />
                       </button>
                     </div>
                   </td>
-                </tr>
+                </motion.tr>
               ))}
             </tbody>
           </table>
@@ -304,171 +402,250 @@ const ManageStudents = () => {
 
       {/* Student Details Modal */}
       {showDetailsModal && selectedStudent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Student Details - {selectedStudent.student.name}
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl shadow-xl w-full max-w-6xl max-h-[90vh] overflow-y-auto"
+          >
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center rounded-t-2xl">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Student Profile - {selectedStudent.student.name}
               </h2>
               <button
                 onClick={() => {
                   setShowDetailsModal(false);
                   setSelectedStudent(null);
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100"
               >
-                ×
+                <X className="w-6 h-6" />
               </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Student Information */}
-              <div className="space-y-6">
-                <div className="card">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Name</label>
-                      <p className="text-gray-900">{selectedStudent.student.name}</p>
+            <div className="p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Student Information */}
+                <div className="lg:col-span-1 space-y-6">
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div className="flex flex-col items-center mb-6">
+                      <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+                        <Users className="w-10 h-10 text-indigo-600" />
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-900">{selectedStudent.student.name}</h3>
+                      <p className="text-gray-600">Student ID: {selectedStudent.student._id.slice(-8)}</p>
                     </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Email</label>
-                      <p className="text-gray-900">{selectedStudent.student.email}</p>
+                    
+                    <div className="space-y-4">
+                      <div className="flex items-center">
+                        <Mail className="w-5 h-5 text-gray-400 mr-3" />
+                        <div>
+                          <p className="text-sm text-gray-500">Email</p>
+                          <p className="font-medium">{selectedStudent.student.email}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <Phone className="w-5 h-5 text-gray-400 mr-3" />
+                        <div>
+                          <p className="text-sm text-gray-500">Mobile</p>
+                          <p className="font-medium">{selectedStudent.student.mobile || 'Not provided'}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <Calendar className="w-5 h-5 text-gray-400 mr-3" />
+                        <div>
+                          <p className="text-sm text-gray-500">Joined</p>
+                          <p className="font-medium">{new Date(selectedStudent.student.createdAt).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <Activity className="w-5 h-5 text-gray-400 mr-3" />
+                        <div>
+                          <p className="text-sm text-gray-500">Last Active</p>
+                          <p className="font-medium">
+                            {selectedStudent.student.lastActiveAt 
+                              ? new Date(selectedStudent.student.lastActiveAt).toLocaleDateString()
+                              : 'Never'}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="pt-4">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                          selectedStudent.student.isActive 
+                            ? 'bg-emerald-100 text-emerald-800' 
+                            : 'bg-rose-100 text-rose-800'
+                        }`}>
+                          {selectedStudent.student.isActive ? 'Active Account' : 'Inactive Account'}
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Mobile</label>
-                      <p className="text-gray-900">{selectedStudent.student.mobile}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Status</label>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        selectedStudent.student.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {selectedStudent.student.isActive ? 'Active' : 'Inactive'}
-                      </span>
+                  </div>
+
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Summary</h3>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                        <div className="flex items-center">
+                          <FileText className="w-5 h-5 text-blue-600 mr-3" />
+                          <div>
+                            <p className="font-medium text-gray-900">Total Attempts</p>
+                            <p className="text-sm text-gray-600">Test attempts</p>
+                          </div>
+                        </div>
+                        <p className="text-2xl font-bold text-blue-600">{selectedStudent.statistics.totalAttempts}</p>
+                      </div>
+                      
+                      <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                        <div className="flex items-center">
+                          <Check className="w-5 h-5 text-green-600 mr-3" />
+                          <div>
+                            <p className="font-medium text-gray-900">Completed</p>
+                            <p className="text-sm text-gray-600">Tests finished</p>
+                          </div>
+                        </div>
+                        <p className="text-2xl font-bold text-green-600">{selectedStudent.statistics.completedAttempts}</p>
+                      </div>
+                      
+                      <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                        <div className="flex items-center">
+                          <TrendingUp className="w-5 h-5 text-purple-600 mr-3" />
+                          <div>
+                            <p className="font-medium text-gray-900">Avg Score</p>
+                            <p className="text-sm text-gray-600">Percentage</p>
+                          </div>
+                        </div>
+                        <p className="text-2xl font-bold text-purple-600">{Math.round(selectedStudent.statistics.averageScore)}%</p>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="card">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Statistics</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center p-3 bg-blue-50 rounded-lg">
-                      <div className="text-2xl font-bold text-blue-600">
-                        {selectedStudent.statistics.totalAttempts}
+                {/* Recent Activity */}
+                <div className="lg:col-span-2 space-y-6">
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <FileText className="w-5 h-5 mr-2 text-indigo-600" />
+                      Recent Test Attempts
+                    </h3>
+                    {selectedStudent.recentAttempts && selectedStudent.recentAttempts.length > 0 ? (
+                      <div className="space-y-4">
+                        {selectedStudent.recentAttempts.map((attempt) => (
+                          <div key={attempt._id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-900">{attempt.testId?.title}</p>
+                              <p className="text-sm text-gray-600">
+                                {new Date(attempt.createdAt).toLocaleDateString()} at {new Date(attempt.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            </div>
+                            <div className="text-right ml-4">
+                              <p className="font-semibold text-gray-900">{attempt.score || 0}%</p>
+                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-1 ${
+                                attempt.isPassed 
+                                  ? 'bg-emerald-100 text-emerald-800' 
+                                  : 'bg-rose-100 text-rose-800'
+                              }`}>
+                                {attempt.isPassed ? 'Passed' : 'Failed'}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <div className="text-sm text-gray-600">Total Attempts</div>
-                    </div>
-                    <div className="text-center p-3 bg-green-50 rounded-lg">
-                      <div className="text-2xl font-bold text-green-600">
-                        {selectedStudent.statistics.completedAttempts}
+                    ) : (
+                      <div className="text-center py-8">
+                        <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                        <p className="text-gray-600">No test attempts yet</p>
                       </div>
-                      <div className="text-sm text-gray-600">Completed</div>
-                    </div>
-                    <div className="text-center p-3 bg-purple-50 rounded-lg">
-                      <div className="text-2xl font-bold text-purple-600">
-                        {Math.round(selectedStudent.statistics.averageScore)}%
+                    )}
+                  </div>
+
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <CreditCard className="w-5 h-5 mr-2 text-indigo-600" />
+                      Recent Orders
+                    </h3>
+                    {selectedStudent.recentOrders && selectedStudent.recentOrders.length > 0 ? (
+                      <div className="space-y-4">
+                        {selectedStudent.recentOrders.map((order) => (
+                          <div key={order._id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div>
+                              <p className="font-medium text-gray-900">Order #{order.orderId}</p>
+                              <p className="text-sm text-gray-600">
+                                {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-semibold text-gray-900">₹{order.totalAmount?.toLocaleString() || 0}</p>
+                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-1 ${
+                                order.paymentStatus === 'completed' 
+                                  ? 'bg-emerald-100 text-emerald-800' 
+                                  : order.paymentStatus === 'failed' 
+                                    ? 'bg-rose-100 text-rose-800' 
+                                    : 'bg-amber-100 text-amber-800'
+                              }`}>
+                                {order.paymentStatus}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <div className="text-sm text-gray-600">Avg Score</div>
-                    </div>
-                    <div className="text-center p-3 bg-orange-50 rounded-lg">
-                      <div className="text-2xl font-bold text-orange-600">
-                        {new Date(selectedStudent.student.createdAt).toLocaleDateString()}
+                    ) : (
+                      <div className="text-center py-8">
+                        <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                        <p className="text-gray-600">No orders yet</p>
                       </div>
-                      <div className="text-sm text-gray-600">Joined</div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Recent Activity */}
-              <div className="space-y-6">
-                <div className="card">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Attempts</h3>
-                  {selectedStudent.recentAttempts && selectedStudent.recentAttempts.length > 0 ? (
-                    <div className="space-y-3">
-                      {selectedStudent.recentAttempts.map((attempt) => (
-                        <div key={attempt._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div>
-                            <p className="font-medium text-gray-900">{attempt.testId?.title}</p>
-                            <p className="text-sm text-gray-600">
-                              {new Date(attempt.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-semibold text-gray-900">{attempt.score}%</p>
-                            <p className={`text-sm ${attempt.isPassed ? 'text-green-600' : 'text-red-600'}`}>
-                              {attempt.isPassed ? 'Passed' : 'Failed'}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 text-center py-4">No attempts yet</p>
-                  )}
-                </div>
-
-                <div className="card">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Orders</h3>
-                  {selectedStudent.recentOrders && selectedStudent.recentOrders.length > 0 ? (
-                    <div className="space-y-3">
-                      {selectedStudent.recentOrders.map((order) => (
-                        <div key={order._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div>
-                            <p className="font-medium text-gray-900">Order #{order.orderId}</p>
-                            <p className="text-sm text-gray-600">
-                              {new Date(order.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-semibold text-gray-900">₹{order.totalAmount}</p>
-                            <p className={`text-sm ${
-                              order.paymentStatus === 'completed' ? 'text-green-600' : 
-                              order.paymentStatus === 'failed' ? 'text-red-600' : 'text-yellow-600'
-                            }`}>
-                              {order.paymentStatus}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 text-center py-4">No orders yet</p>
-                  )}
-                </div>
+              <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
+                <button
+                  onClick={() => handleResetPassword(selectedStudent.student._id)}
+                  className="px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg font-medium transition-colors flex items-center justify-center"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Reset Password
+                </button>
+                <button
+                  onClick={() => handleStatusToggle(selectedStudent.student._id, selectedStudent.student.isActive)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center ${
+                    selectedStudent.student.isActive 
+                      ? 'bg-rose-100 hover:bg-rose-200 text-rose-800' 
+                      : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-800'
+                  }`}
+                >
+                  <UserX className="w-4 h-4 mr-2" />
+                  {selectedStudent.student.isActive ? 'Deactivate Account' : 'Activate Account'}
+                </button>
               </div>
             </div>
-
-            <div className="flex justify-end space-x-4 mt-6 pt-6 border-t border-gray-200">
-              <button
-                onClick={() => handleResetPassword(selectedStudent.student._id)}
-                className="btn-secondary"
-              >
-                Reset Password
-              </button>
-              <button
-                onClick={() => handleStatusToggle(selectedStudent.student._id, selectedStudent.student.isActive)}
-                className={selectedStudent.student.isActive ? 'btn-danger' : 'btn-primary'}
-              >
-                {selectedStudent.student.isActive ? 'Deactivate Account' : 'Activate Account'}
-              </button>
-            </div>
-          </div>
+          </motion.div>
         </div>
       )}
 
       {/* Empty State */}
       {filteredStudents.length === 0 && (
-        <div className="text-center py-12">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
           <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No Students Found</h3>
-          <p className="text-gray-600">
+          <p className="text-gray-600 max-w-md mx-auto">
             {searchTerm || filterStatus !== 'all' 
               ? 'Try adjusting your search or filter criteria'
               : 'No students have registered yet'
             }
           </p>
+          {!(searchTerm || filterStatus !== 'all') && (
+            <button 
+              onClick={() => setShowFilters(true)}
+              className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              Add Filters
+            </button>
+          )}
         </div>
       )}
     </div>

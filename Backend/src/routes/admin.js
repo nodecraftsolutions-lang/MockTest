@@ -480,8 +480,14 @@ router.get('/results', adminAuth, async (req, res) => {
 
     const attempts = await Attempt.find(query)
       .populate('studentId', 'name email')
-      .populate('testId', 'title type companyId')
-      .populate('testId.companyId', 'name')
+      .populate({
+        path: 'testId',
+        select: 'title companyId',
+        populate: {
+          path: 'companyId',
+          select: 'name'
+        }
+      })
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
@@ -514,20 +520,33 @@ router.get('/results', adminAuth, async (req, res) => {
 // @access  Private/Admin
 router.get('/results/export', adminAuth, async (req, res) => {
   try {
-    const { testId, fromDate, toDate, format = 'csv' } = req.query;
+    const { testId, fromDate, toDate, format = 'csv', attemptId } = req.query;
     
     const query = {};
-    if (testId) query.testId = testId;
-    if (fromDate || toDate) {
-      query.createdAt = {};
-      if (fromDate) query.createdAt.$gte = new Date(fromDate);
-      if (toDate) query.createdAt.$lte = new Date(toDate);
+    
+    // If specific attemptId is provided, fetch only that attempt
+    if (attemptId) {
+      query._id = attemptId;
+    } else {
+      // Otherwise apply filters
+      if (testId) query.testId = testId;
+      if (fromDate || toDate) {
+        query.createdAt = {};
+        if (fromDate) query.createdAt.$gte = new Date(fromDate);
+        if (toDate) query.createdAt.$lte = new Date(toDate);
+      }
     }
 
     const attempts = await Attempt.find(query)
       .populate('studentId', 'name email')
-      .populate('testId', 'title companyId')
-      .populate('testId.companyId', 'name')
+      .populate({
+        path: 'testId',
+        select: 'title companyId',
+        populate: {
+          path: 'companyId',
+          select: 'name'
+        }
+      })
       .sort({ createdAt: -1 });
 
     if (format === 'csv') {
