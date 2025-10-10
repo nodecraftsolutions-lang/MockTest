@@ -147,7 +147,7 @@ const CompanyDetails = () => {
                   {pattern.pattern.map((section, index) => (
                     <tr key={index} className="hover:bg-primary-50 transition">
                       <td className="px-6 py-4">{section.sectionName}</td>
-                      <td className="px-6 py-4">{section.questions}</td>
+                      <td className="px-6 py-4">{section.questionCount}</td>
                       <td className="px-6 py-4">{section.duration} min</td>
                       <td className="px-6 py-4">
                         {section.marksPerQuestion || 1}

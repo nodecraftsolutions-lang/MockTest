@@ -62,7 +62,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
     const company = await Company.findOne({ 
       _id: req.params.id, 
       isActive: true 
-    });
+    }).select('name logoUrl description category difficulty totalQuestions totalDuration defaultPattern metadata');
 
     if (!company) {
       return res.status(404).json({
@@ -445,44 +445,6 @@ router.get('/:id/stats', adminAuth, async (req, res) => {
   }
 });
 
-// Get company details
-router.get("/:id", async (req, res) => {
-  try {
-    const company = await Company.findById(req.params.id);
-    if (!company) {
-      return res.status(404).json({ success: false, message: "Company not found" });
-    }
-    res.json({ success: true, data: { company } });
-  } catch (err) {
-    console.error("Get company error:", err);
-    res.status(500).json({ success: false, message: "Failed to get company" });
-  }
-});
-
-// Get company exam pattern
-router.get("/:id/pattern", async (req, res) => {
-  try {
-    const company = await Company.findById(req.params.id);
-    if (!company) {
-      return res.status(404).json({ success: false, message: "Company not found" });
-    }
-
-    res.json({
-      success: true,
-      data: {
-        companyName: company.name,
-        totalQuestions: company.totalQuestions,
-        totalDuration: company.totalDuration,
-        cutoffPercentage: company.metadata.cutoffPercentage,
-        instructions: company.metadata.instructions,
-        pattern: company.defaultPattern || []
-      }
-    });
-  } catch (err) {
-    console.error("Get company pattern error:", err);
-    res.status(500).json({ success: false, message: "Failed to get company pattern" });
-  }
-});
 // @route   POST /api/v1/companies/:id/enroll
 // @desc    Enroll a student into a company's paid tests
 // @access  Private/Student

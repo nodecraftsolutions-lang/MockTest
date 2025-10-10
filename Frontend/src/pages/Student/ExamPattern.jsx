@@ -131,17 +131,25 @@ const ExamPattern = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {selectedCompany.defaultPattern.map((section, index) => (
-                      <tr key={index}>
-                        <td className="px-6 py-4">{section.sectionName}</td>
-                        <td className="px-6 py-4">{section.questionCount}</td>
-                        <td className="px-6 py-4">{section.duration} min</td>
-                        <td className="px-6 py-4">
-                          {section.negativeMarking ? `${section.negativeMarking * 100}%` : 'No'}
+                    {selectedCompany.defaultPattern && selectedCompany.defaultPattern.length > 0 ? (
+                      selectedCompany.defaultPattern.map((section, index) => (
+                        <tr key={index}>
+                          <td className="px-6 py-4">{section.sectionName}</td>
+                          <td className="px-6 py-4">{section.questionCount}</td>
+                          <td className="px-6 py-4">{section.duration} min</td>
+                          <td className="px-6 py-4">
+                            {section.negativeMarking ? `${section.negativeMarking * 100}%` : 'No'}
+                          </td>
+                          <td className="px-6 py-4">{section.marksPerQuestion || 1}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                          No section data available
                         </td>
-                        <td className="px-6 py-4">{section.marksPerQuestion || 1}</td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
