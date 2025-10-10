@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react';
 import { 
   Users, Building, BookOpen, DollarSign, TrendingUp, 
-  Activity, Award, BarChart3, Calendar, Eye 
+  Activity, Award, BarChart3, Calendar, Eye, RefreshCw,
+  TrendingUp as TrendingUpIcon, UserCheck, FileText
 } from 'lucide-react';
 import api from '../../api/axios';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useToast } from '../../context/ToastContext';
+import { Link } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { showError } = useToast();
+  const [refreshing, setRefreshing] = useState(false);
+  const { showError, showSuccess } = useToast();
 
   useEffect(() => {
     fetchDashboardData();
@@ -26,7 +29,13 @@ const AdminDashboard = () => {
       showError('Failed to load dashboard data');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchDashboardData();
   };
 
   if (loading) {
@@ -40,58 +49,70 @@ const AdminDashboard = () => {
       title: 'Total Students',
       value: overview?.totalStudents || 0,
       icon: Users,
-      color: 'bg-blue-500',
+      color: 'from-blue-500 to-blue-600',
       change: '+12%',
-      active: overview?.activeStudents || 0
+      active: overview?.activeStudents || 0,
+      link: '/admin/students'
     },
     {
       title: 'Total Companies',
       value: overview?.totalCompanies || 0,
       icon: Building,
-      color: 'bg-green-500',
-      change: '+5%'
+      color: 'from-green-500 to-green-600',
+      change: '+5%',
+      link: '/admin/companies'
     },
     {
       title: 'Total Tests',
       value: overview?.totalTests || 0,
       icon: BookOpen,
-      color: 'bg-purple-500',
-      change: '+8%'
+      color: 'from-purple-500 to-purple-600',
+      change: '+8%',
+      link: '/admin/tests'
     },
     {
       title: 'Total Revenue',
-      value: `₹${overview?.totalRevenue || 0}`,
+      value: `₹${overview?.totalRevenue?.toLocaleString() || 0}`,
       icon: DollarSign,
-      color: 'bg-orange-500',
-      change: '+15%'
+      color: 'from-orange-500 to-orange-600',
+      change: '+15%',
+      link: '/admin/orders'
     },
     {
       title: 'Total Attempts',
       value: overview?.totalAttempts || 0,
       icon: Activity,
-      color: 'bg-indigo-500',
-      change: '+20%'
+      color: 'from-indigo-500 to-indigo-600',
+      change: '+20%',
+      link: '/admin/results'
     },
     {
       title: 'Total Orders',
       value: overview?.totalOrders || 0,
       icon: Award,
-      color: 'bg-pink-500',
-      change: '+10%'
+      color: 'from-pink-500 to-pink-600',
+      change: '+10%',
+      link: '/admin/orders'
     }
   ];
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
           <p className="text-gray-600">Overview of platform performance and activities</p>
         </div>
-        <div className="flex items-center space-x-3">
-          <button className="btn-secondary">Export Report</button>
-          <button className="btn-primary">View Analytics</button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+          </button>
         </div>
       </div>
 
@@ -100,21 +121,31 @@ const AdminDashboard = () => {
         {statCards.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <div key={index} className="card">
+            <Link 
+              key={index} 
+              to={stat.link}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200 block"
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                  {stat.active && (
-                    <p className="text-sm text-gray-500">{stat.active} active</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                  {stat.active !== undefined && (
+                    <div className="flex items-center mt-1">
+                      <UserCheck className="w-4 h-4 text-green-500 mr-1" />
+                      <p className="text-sm text-gray-500">{stat.active} active</p>
+                    </div>
                   )}
-                  <p className="text-sm text-green-600">{stat.change} from last month</p>
+                  <div className="flex items-center mt-2">
+                    <TrendingUpIcon className="w-4 h-4 text-green-500 mr-1" />
+                    <p className="text-sm text-green-600">{stat.change} from last month</p>
+                  </div>
                 </div>
-                <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}>
+                <div className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-lg flex items-center justify-center`}>
                   <Icon className="w-6 h-6 text-white" />
                 </div>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>
@@ -122,19 +153,21 @@ const AdminDashboard = () => {
       {/* Recent Activities */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Students */}
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Recent Students</h3>
-            <button className="text-primary-600 hover:text-primary-700 text-sm">View All</button>
+            <Link to="/admin/students" className="text-indigo-600 hover:text-indigo-700 text-sm font-medium">
+              View All
+            </Link>
           </div>
           
           {recentActivities?.students && recentActivities.students.length > 0 ? (
             <div className="space-y-3">
               {recentActivities.students.map((student) => (
-                <div key={student._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div key={student._id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                      <Users className="w-5 h-5 text-primary-600" />
+                    <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                      <Users className="w-5 h-5 text-indigo-600" />
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">{student.name}</p>
@@ -158,19 +191,21 @@ const AdminDashboard = () => {
         </div>
 
         {/* Recent Attempts */}
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Recent Attempts</h3>
-            <button className="text-primary-600 hover:text-primary-700 text-sm">View All</button>
+            <Link to="/admin/results" className="text-indigo-600 hover:text-indigo-700 text-sm font-medium">
+              View All
+            </Link>
           </div>
           
           {recentActivities?.attempts && recentActivities.attempts.length > 0 ? (
             <div className="space-y-3">
               {recentActivities.attempts.map((attempt) => (
-                <div key={attempt._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div key={attempt._id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                      <BookOpen className="w-5 h-5 text-green-600" />
+                      <FileText className="w-5 h-5 text-green-600" />
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">{attempt.testId?.title}</p>
@@ -178,7 +213,7 @@ const AdminDashboard = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-gray-900">{attempt.score}%</p>
+                    <p className="font-semibold text-gray-900">{attempt.score || 0}%</p>
                     <p className="text-sm text-gray-600">
                       {new Date(attempt.createdAt).toLocaleDateString()}
                     </p>
@@ -188,7 +223,7 @@ const AdminDashboard = () => {
             </div>
           ) : (
             <div className="text-center py-8">
-              <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
               <p className="text-gray-600">No recent attempts</p>
             </div>
           )}
@@ -196,11 +231,11 @@ const AdminDashboard = () => {
       </div>
 
       {/* Monthly Statistics Chart */}
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-gray-900">Monthly Performance</h3>
           <div className="flex items-center space-x-2">
-            <select className="input-field text-sm">
+            <select className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
               <option>Last 12 months</option>
               <option>Last 6 months</option>
               <option>Last 3 months</option>
@@ -211,7 +246,7 @@ const AdminDashboard = () => {
         {monthlyStats && monthlyStats.length > 0 ? (
           <div className="space-y-4">
             {monthlyStats.map((stat, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div key={index} className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-lg transition-colors">
                 <div className="flex items-center space-x-3">
                   <Calendar className="w-5 h-5 text-gray-600" />
                   <div>
@@ -223,14 +258,22 @@ const AdminDashboard = () => {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-8">
                   <div className="text-center">
                     <p className="text-lg font-semibold text-gray-900">{stat.attempts}</p>
                     <p className="text-sm text-gray-600">Attempts</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-lg font-semibold text-gray-900">{Math.round(stat.avgScore)}%</p>
+                    <p className="text-lg font-semibold text-gray-900">{Math.round(stat.avgScore || 0)}%</p>
                     <p className="text-sm text-gray-600">Avg Score</p>
+                  </div>
+                  <div className="w-32">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-indigo-600 h-2 rounded-full" 
+                        style={{ width: `${Math.min(100, Math.round(stat.avgScore || 0))}%` }}
+                      ></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -245,10 +288,12 @@ const AdminDashboard = () => {
       </div>
 
       {/* Recent Orders */}
-      <div className="card">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Recent Orders</h3>
-          <button className="text-primary-600 hover:text-primary-700 text-sm">View All</button>
+          <Link to="/admin/orders" className="text-indigo-600 hover:text-indigo-700 text-sm font-medium">
+            View All
+          </Link>
         </div>
         
         {recentActivities?.orders && recentActivities.orders.length > 0 ? (
@@ -278,7 +323,7 @@ const AdminDashboard = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {recentActivities.orders.map((order) => (
-                  <tr key={order._id}>
+                  <tr key={order._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {order.orderId}
                     </td>
@@ -286,10 +331,10 @@ const AdminDashboard = () => {
                       {order.studentId?.name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ₹{order.totalAmount}
+                      ₹{order.totalAmount?.toLocaleString() || 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         order.paymentStatus === 'completed' ? 'bg-green-100 text-green-800' :
                         order.paymentStatus === 'failed' ? 'bg-red-100 text-red-800' :
                         'bg-yellow-100 text-yellow-800'
@@ -301,10 +346,10 @@ const AdminDashboard = () => {
                       {new Date(order.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button className="text-primary-600 hover:text-primary-900 flex items-center">
+                      <Link to={`/admin/orders/${order._id}`} className="text-indigo-600 hover:text-indigo-900 flex items-center">
                         <Eye className="w-4 h-4 mr-1" />
                         View
-                      </button>
+                      </Link>
                     </td>
                   </tr>
                 ))}
