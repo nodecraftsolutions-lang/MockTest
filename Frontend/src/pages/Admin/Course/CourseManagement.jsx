@@ -17,7 +17,8 @@ import {
   Save,
   User,
   Award,
-  Clock
+  Clock,
+  List
 } from "lucide-react";
 import api from "../../../api/axios";
 import { useToast } from "../../../context/ToastContext";
@@ -45,7 +46,10 @@ const CourseManagement = () => {
     level: "Beginner",
     isPaid: true,
     recordingsPrice: "",
-    sections: []
+    curriculum: {
+      phases: []
+    },
+    instructors: [{ name: "", bio: "", experience: "", expertise: "", photoUrl: "" }]
   });
 
   // Fetch all courses
@@ -124,20 +128,67 @@ const CourseManagement = () => {
       level: course.level || "Beginner",
       isPaid: course.isPaid !== undefined ? course.isPaid : true,
       recordingsPrice: course.recordingsPrice || "",
-      sections: course.sections || []
+      curriculum: course.curriculum || { phases: [] },
+      instructors: course.instructors || [{ name: "", bio: "", experience: "", expertise: "", photoUrl: "" }]
     });
     setActiveTab("edit");
   };
 
   // Update course
   const updateCourse = async () => {
-    if (!courseData.title || !courseData.description || courseData.sections.length === 0) {
-      showError("Title, description, and at least one section are required");
+    if (!courseData.title || !courseData.description) {
+      showError("Title and description are required");
+      return;
+    }
+
+    // Validate that each phase has at least one week
+    for (const phase of courseData.curriculum.phases) {
+      if (!phase.weeks || phase.weeks.length === 0) {
+        showError(`Phase "${phase.title}" must have at least one week`);
+        return;
+      }
+      
+      // Validate that each week has at least one topic
+      for (const week of phase.weeks) {
+        if (!week.topics || week.topics.length === 0) {
+          showError(`Week "${week.title}" in phase "${phase.title}" must have at least one topic`);
+          return;
+        }
+      }
+    }
+
+    // Validate that there's at least one instructor
+    if (courseData.instructors.length === 0 || !courseData.instructors[0].name) {
+      showError("At least one instructor with a name is required");
       return;
     }
 
     try {
-      const response = await api.put(`/courses/${editingCourse}`, courseData);
+      // Ensure we're sending the complete course data including all instructor fields
+      const courseUpdateData = {
+        title: courseData.title,
+        description: courseData.description,
+        outcomes: courseData.outcomes,
+        features: courseData.features,
+        price: courseData.price,
+        currency: courseData.currency,
+        category: courseData.category,
+        startDate: courseData.startDate,
+        duration: courseData.duration,
+        level: courseData.level,
+        isPaid: courseData.isPaid,
+        recordingsPrice: courseData.recordingsPrice,
+        curriculum: courseData.curriculum,
+        instructors: courseData.instructors.map(instructor => ({
+          name: instructor.name,
+          bio: instructor.bio,
+          experience: instructor.experience,
+          expertise: instructor.expertise,
+          photoUrl: instructor.photoUrl
+        }))
+      };
+
+      const response = await api.put(`/courses/${editingCourse}`, courseUpdateData);
       showSuccess("Course updated successfully!");
       console.log("Course updated:", response.data);
       
@@ -181,24 +232,284 @@ const CourseManagement = () => {
     }));
   };
 
-  // Section management
-  const [editingSectionIndex, setEditingSectionIndex] = useState(null);
-  const [newSection, setNewSection] = useState({
+  // Phase management
+  const [editingPhaseIndex, setEditingPhaseIndex] = useState(null);
+  const [newPhase, setNewPhase] = useState({
+    phaseNumber: "",
     title: "",
     description: "",
-    lessonsCount: "",
-    instructors: [{ name: "", bio: "", experience: "", expertise: "", photoUrl: "" }]
+    goal: "",
+    weeks: []
   });
 
-  const handleNewSectionChange = (field, value) => {
-    setNewSection(prev => ({
+  const handleNewPhaseChange = (field, value) => {
+    setNewPhase(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
+  const addPhase = () => {
+    if (!newPhase.phaseNumber || !newPhase.title) {
+      showError("Phase number and title are required");
+      return;
+    }
+
+    // Check if phase number already exists
+    const phaseExists = courseData.curriculum.phases.some(
+      phase => phase.phaseNumber === parseInt(newPhase.phaseNumber)
+    );
+    
+    if (phaseExists) {
+      showError("Phase number already exists");
+      return;
+    }
+
+    setCourseData(prev => ({
+      ...prev,
+      curriculum: {
+        ...prev.curriculum,
+        phases: [...prev.curriculum.phases, { ...newPhase, phaseNumber: parseInt(newPhase.phaseNumber) }]
+      }
+    }));
+
+    // Reset new phase form
+    setNewPhase({
+      phaseNumber: "",
+      title: "",
+      description: "",
+      goal: "",
+      weeks: []
+    });
+
+    showSuccess("Phase added successfully!");
+  };
+
+  const removePhase = (index) => {
+    setCourseData(prev => ({
+      ...prev,
+      curriculum: {
+        ...prev.curriculum,
+        phases: prev.curriculum.phases.filter((_, i) => i !== index)
+      }
+    }));
+  };
+
+  const startEditingPhase = (index) => {
+    setEditingPhaseIndex(index);
+    setNewPhase(courseData.curriculum.phases[index]);
+  };
+
+  const updatePhase = () => {
+    if (!newPhase.phaseNumber || !newPhase.title) {
+      showError("Phase number and title are required");
+      return;
+    }
+
+    // Check if phase number already exists (excluding current editing phase)
+    const phaseExists = courseData.curriculum.phases.some(
+      (phase, i) => phase.phaseNumber === parseInt(newPhase.phaseNumber) && i !== editingPhaseIndex
+    );
+    
+    if (phaseExists) {
+      showError("Phase number already exists");
+      return;
+    }
+
+    setCourseData(prev => ({
+      ...prev,
+      curriculum: {
+        ...prev.curriculum,
+        phases: prev.curriculum.phases.map((phase, i) => 
+          i === editingPhaseIndex ? { ...newPhase, phaseNumber: parseInt(newPhase.phaseNumber) } : phase
+        )
+      }
+    }));
+
+    setEditingPhaseIndex(null);
+    setNewPhase({
+      phaseNumber: "",
+      title: "",
+      description: "",
+      goal: "",
+      weeks: []
+    });
+
+    showSuccess("Phase updated successfully!");
+  };
+
+  const cancelEditPhase = () => {
+    setEditingPhaseIndex(null);
+    setNewPhase({
+      phaseNumber: "",
+      title: "",
+      description: "",
+      goal: "",
+      weeks: []
+    });
+  };
+
+  // Week management
+  const [editingWeekIndices, setEditingWeekIndices] = useState({ phaseIndex: null, weekIndex: null });
+  const [newWeek, setNewWeek] = useState({
+    weekNumber: "",
+    title: "",
+    topics: [{ title: "", description: "" }],
+    goal: ""
+  });
+
+  const handleNewWeekChange = (field, value) => {
+    setNewWeek(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const addTopicToWeek = () => {
+    setNewWeek(prev => ({
+      ...prev,
+      topics: [...prev.topics, { title: "", description: "" }]
+    }));
+  };
+
+  const removeTopicFromWeek = (index) => {
+    setNewWeek(prev => ({
+      ...prev,
+      topics: prev.topics.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleTopicChange = (index, field, value) => {
+    setNewWeek(prev => ({
+      ...prev,
+      topics: prev.topics.map((topic, i) => 
+        i === index ? { ...topic, [field]: value } : topic
+      )
+    }));
+  };
+
+  const addWeekToPhase = (phaseIndex) => {
+    if (!newWeek.weekNumber || !newWeek.title) {
+      showError("Week number and title are required");
+      return;
+    }
+
+    // Check if week number already exists in this phase
+    const weekExists = courseData.curriculum.phases[phaseIndex].weeks.some(
+      week => week.weekNumber === parseInt(newWeek.weekNumber)
+    );
+    
+    if (weekExists) {
+      showError("Week number already exists in this phase");
+      return;
+    }
+
+    const updatedPhases = [...courseData.curriculum.phases];
+    updatedPhases[phaseIndex].weeks.push({ ...newWeek, weekNumber: parseInt(newWeek.weekNumber) });
+
+    setCourseData(prev => ({
+      ...prev,
+      curriculum: {
+        ...prev.curriculum,
+        phases: updatedPhases
+      }
+    }));
+
+    // Reset new week form
+    setNewWeek({
+      weekNumber: "",
+      title: "",
+      topics: [{ title: "", description: "" }],
+      goal: ""
+    });
+
+    showSuccess("Week added successfully!");
+  };
+
+  const removeWeekFromPhase = (phaseIndex, weekIndex) => {
+    const updatedPhases = [...courseData.curriculum.phases];
+    updatedPhases[phaseIndex].weeks.splice(weekIndex, 1);
+
+    setCourseData(prev => ({
+      ...prev,
+      curriculum: {
+        ...prev.curriculum,
+        phases: updatedPhases
+      }
+    }));
+  };
+
+  // Start editing a week
+  const startEditingWeek = (phaseIndex, weekIndex) => {
+    setEditingWeekIndices({ phaseIndex, weekIndex });
+    setNewWeek(courseData.curriculum.phases[phaseIndex].weeks[weekIndex]);
+  };
+
+  // Update a week
+  const updateWeek = () => {
+    if (!newWeek.weekNumber || !newWeek.title) {
+      showError("Week number and title are required");
+      return;
+    }
+
+    // Check if week number already exists in this phase (excluding current editing week)
+    const weekExists = courseData.curriculum.phases[editingWeekIndices.phaseIndex].weeks.some(
+      (week, i) => week.weekNumber === parseInt(newWeek.weekNumber) && i !== editingWeekIndices.weekIndex
+    );
+    
+    if (weekExists) {
+      showError("Week number already exists in this phase");
+      return;
+    }
+
+    const updatedPhases = [...courseData.curriculum.phases];
+    updatedPhases[editingWeekIndices.phaseIndex].weeks[editingWeekIndices.weekIndex] = { 
+      ...newWeek, 
+      weekNumber: parseInt(newWeek.weekNumber) 
+    };
+
+    setCourseData(prev => ({
+      ...prev,
+      curriculum: {
+        ...prev.curriculum,
+        phases: updatedPhases
+      }
+    }));
+
+    setEditingWeekIndices({ phaseIndex: null, weekIndex: null });
+    setNewWeek({
+      weekNumber: "",
+      title: "",
+      topics: [{ title: "", description: "" }],
+      goal: ""
+    });
+
+    showSuccess("Week updated successfully!");
+  };
+
+  // Cancel editing a week
+  const cancelEditWeek = () => {
+    setEditingWeekIndices({ phaseIndex: null, weekIndex: null });
+    setNewWeek({
+      weekNumber: "",
+      title: "",
+      topics: [{ title: "", description: "" }],
+      goal: ""
+    });
+  };
+
+  // Instructor management
+  const [editingInstructorIndex, setEditingInstructorIndex] = useState(null);
+  const [newInstructor, setNewInstructor] = useState({
+    name: "",
+    bio: "",
+    experience: "",
+    expertise: "",
+    photoUrl: ""
+  });
+
   const handleInstructorChange = (index, field, value) => {
-    setNewSection(prev => ({
+    setCourseData(prev => ({
       ...prev,
       instructors: prev.instructors.map((instructor, i) => 
         i === index ? { ...instructor, [field]: value } : instructor
@@ -206,87 +517,89 @@ const CourseManagement = () => {
     }));
   };
 
-  const addInstructor = () => {
-    setNewSection(prev => ({
+  const handleNewInstructorChange = (field, value) => {
+    setNewInstructor(prev => ({
       ...prev,
-      instructors: [...prev.instructors, { name: "", bio: "", experience: "", expertise: "", photoUrl: "" }]
+      [field]: value
     }));
+  };
+
+  const addInstructor = () => {
+    if (!newInstructor.name) {
+      showError("Instructor name is required");
+      return;
+    }
+
+    setCourseData(prev => ({
+      ...prev,
+      instructors: [...prev.instructors, newInstructor]
+    }));
+
+    // Reset new instructor form
+    setNewInstructor({
+      name: "",
+      bio: "",
+      experience: "",
+      expertise: "",
+      photoUrl: ""
+    });
+
+    showSuccess("Instructor added successfully!");
   };
 
   const removeInstructor = (index) => {
-    if (newSection.instructors.length > 1) {
-      setNewSection(prev => ({
+    if (courseData.instructors.length > 1) {
+      setCourseData(prev => ({
         ...prev,
         instructors: prev.instructors.filter((_, i) => i !== index)
       }));
+    } else {
+      showError("At least one instructor is required");
     }
   };
 
-  const addSection = () => {
-    if (!newSection.title || !newSection.lessonsCount) {
-      showError("Section title and lessons count are required");
+  const startEditingInstructor = (index) => {
+    setEditingInstructorIndex(index);
+    setNewInstructor(courseData.instructors[index]);
+  };
+
+  const updateInstructor = () => {
+    if (!newInstructor.name) {
+      showError("Instructor name is required");
       return;
     }
 
+    // Create a copy of the current instructors array
+    const updatedInstructors = [...courseData.instructors];
+    // Update the specific instructor at the editing index
+    updatedInstructors[editingInstructorIndex] = { ...newInstructor };
+
+    // Update the courseData state with the modified instructors array
     setCourseData(prev => ({
       ...prev,
-      sections: [...prev.sections, { ...newSection, lessonsCount: parseInt(newSection.lessonsCount) }]
+      instructors: updatedInstructors
     }));
 
-    // Reset new section form
-    setNewSection({
-      title: "",
-      description: "",
-      lessonsCount: "",
-      instructors: [{ name: "", bio: "", experience: "", expertise: "", photoUrl: "" }]
+    setEditingInstructorIndex(null);
+    setNewInstructor({
+      name: "",
+      bio: "",
+      experience: "",
+      expertise: "",
+      photoUrl: ""
     });
 
-    showSuccess("Section added successfully!");
+    showSuccess("Instructor updated successfully!");
   };
 
-  const removeSection = (index) => {
-    setCourseData(prev => ({
-      ...prev,
-      sections: prev.sections.filter((_, i) => i !== index)
-    }));
-  };
-
-  const startEditingSection = (index) => {
-    setEditingSectionIndex(index);
-    setNewSection(courseData.sections[index]);
-  };
-
-  const updateSection = () => {
-    if (!newSection.title || !newSection.lessonsCount) {
-      showError("Section title and lessons count are required");
-      return;
-    }
-
-    setCourseData(prev => ({
-      ...prev,
-      sections: prev.sections.map((section, i) => 
-        i === editingSectionIndex ? { ...newSection, lessonsCount: parseInt(newSection.lessonsCount) } : section
-      )
-    }));
-
-    setEditingSectionIndex(null);
-    setNewSection({
-      title: "",
-      description: "",
-      lessonsCount: "",
-      instructors: [{ name: "", bio: "", experience: "", expertise: "", photoUrl: "" }]
-    });
-
-    showSuccess("Section updated successfully!");
-  };
-
-  const cancelEditSection = () => {
-    setEditingSectionIndex(null);
-    setNewSection({
-      title: "",
-      description: "",
-      lessonsCount: "",
-      instructors: [{ name: "", bio: "", experience: "", expertise: "", photoUrl: "" }]
+  const cancelEditInstructor = () => {
+    setEditingInstructorIndex(null);
+    setNewInstructor({
+      name: "",
+      bio: "",
+      experience: "",
+      expertise: "",
+      photoUrl: ""
     });
   };
 
@@ -338,7 +651,10 @@ const CourseManagement = () => {
                   level: "Beginner",
                   isPaid: true,
                   recordingsPrice: "",
-                  sections: []
+                  curriculum: {
+                    phases: []
+                  },
+                  instructors: [{ name: "", bio: "", experience: "", expertise: "", photoUrl: "" }]
                 });
                 setActiveTab("create");
               }}
@@ -381,7 +697,10 @@ const CourseManagement = () => {
                     level: "Beginner",
                     isPaid: true,
                     recordingsPrice: "",
-                    sections: []
+                    curriculum: {
+                      phases: []
+                    },
+                    instructors: [{ name: "", bio: "", experience: "", expertise: "", photoUrl: "" }]
                   });
                   setActiveTab("create");
                 }}
@@ -477,7 +796,10 @@ const CourseManagement = () => {
                         level: "Beginner",
                         isPaid: true,
                         recordingsPrice: "",
-                        sections: []
+                        curriculum: {
+                          phases: []
+                        },
+                        instructors: [{ name: "", bio: "", experience: "", expertise: "", photoUrl: "" }]
                       });
                       setActiveTab("create");
                     }}
@@ -550,21 +872,41 @@ const CourseManagement = () => {
                               </div>
                             </div>
                             
-                            {/* Sections Preview */}
+                            {/* Curriculum Preview */}
                             <div className="mb-4">
                               <div className="flex items-center text-sm text-gray-700 mb-2">
-                                <Award className="w-4 h-4 mr-2 text-orange-600" />
-                                <span className="font-medium">Sections ({course.sections?.length || 0})</span>
+                                <BookOpen className="w-4 h-4 mr-2 text-orange-600" />
+                                <span className="font-medium">Curriculum</span>
                               </div>
                               <div className="flex flex-wrap gap-2">
-                                {course.sections?.slice(0, 3).map((section, index) => (
+                                {course.curriculum?.phases?.slice(0, 3).map((phase, index) => (
                                   <span key={index} className="bg-blue-50 text-blue-800 text-xs px-2 py-1 rounded">
-                                    {section.title}
+                                    Phase {phase.phaseNumber}: {phase.title}
                                   </span>
                                 ))}
-                                {course.sections?.length > 3 && (
+                                {course.curriculum?.phases?.length > 3 && (
                                   <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
-                                    +{course.sections.length - 3} more
+                                    +{course.curriculum.phases.length - 3} more
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* Instructors Preview */}
+                            <div className="mb-4">
+                              <div className="flex items-center text-sm text-gray-700 mb-2">
+                                <Users className="w-4 h-4 mr-2 text-green-600" />
+                                <span className="font-medium">Instructors ({course.instructors?.length || 0})</span>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {course.instructors?.slice(0, 3).map((instructor, index) => (
+                                  <span key={index} className="bg-green-50 text-green-800 text-xs px-2 py-1 rounded">
+                                    {instructor.name}
+                                  </span>
+                                ))}
+                                {course.instructors?.length > 3 && (
+                                  <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
+                                    +{course.instructors.length - 3} more
                                   </span>
                                 )}
                               </div>
@@ -836,57 +1178,92 @@ const CourseManagement = () => {
                   </button>
                 </div>
                 
-                {/* Sections Management */}
+                {/* Curriculum Management */}
                 <div className="border border-gray-200 rounded-xl p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <Users className="w-5 h-5 mr-2 text-indigo-600" />
-                    Course Sections *
+                    <BookOpen className="w-5 h-5 mr-2 text-purple-600" />
+                    Course Curriculum *
                   </h3>
                   
-                  {courseData.sections.length === 0 ? (
+                  {courseData.curriculum.phases.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
-                      <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                      <p>No sections added yet</p>
+                      <BookOpen className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                      <p>No phases added yet</p>
                     </div>
                   ) : (
                     <div className="space-y-6">
-                      {courseData.sections.map((section, index) => (
-                        <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                      {courseData.curriculum.phases.map((phase, phaseIndex) => (
+                        <div key={phaseIndex} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                           <div className="flex justify-between items-center mb-3">
-                            <h4 className="font-medium text-gray-900">Section {index + 1}: {section.title}</h4>
+                            <h4 className="font-medium text-gray-900">Phase {phase.phaseNumber}: {phase.title}</h4>
                             <div className="flex space-x-2">
                               <button
-                                onClick={() => startEditingSection(index)}
+                                onClick={() => startEditingPhase(phaseIndex)}
                                 className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded"
-                                title="Edit section"
+                                title="Edit phase"
                               >
                                 <Edit className="w-4 h-4" />
                               </button>
                               <button
-                                onClick={() => removeSection(index)}
+                                onClick={() => removePhase(phaseIndex)}
                                 className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded"
-                                title="Remove section"
+                                title="Remove phase"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
                           </div>
                           
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-3">
                             <div>
-                              <span className="text-gray-500">Lessons:</span>
-                              <span className="ml-2 font-medium">{section.lessonsCount}</span>
+                              <span className="text-gray-500">Goal:</span>
+                              <span className="ml-2 font-medium">{phase.goal || "Not specified"}</span>
                             </div>
                             <div>
-                              <span className="text-gray-500">Instructors:</span>
-                              <span className="ml-2 font-medium">{section.instructors?.length || 0}</span>
+                              <span className="text-gray-500">Weeks:</span>
+                              <span className="ml-2 font-medium">{phase.weeks?.length || 0}</span>
                             </div>
                           </div>
                           
-                          {section.description && (
-                            <div className="mt-2 text-sm text-gray-600">
+                          {phase.description && (
+                            <div className="text-sm text-gray-600 mb-3">
                               <span className="text-gray-500">Description:</span>
-                              <span className="ml-2">{section.description}</span>
+                              <span className="ml-2">{phase.description}</span>
+                            </div>
+                          )}
+                          
+                          {/* Weeks preview */}
+                          {phase.weeks && phase.weeks.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-gray-200">
+                              <h5 className="text-xs font-medium text-gray-700 mb-2">Weeks:</h5>
+                              <div className="space-y-2">
+                                {phase.weeks.map((week, weekIndex) => (
+                                  <div key={weekIndex} className="flex justify-between items-center bg-white p-2 rounded border">
+                                    <div>
+                                      <span className="font-medium">W{week.weekNumber}: {week.title}</span>
+                                      {week.goal && (
+                                        <span className="text-xs text-gray-600 ml-2">Goal: {week.goal}</span>
+                                      )}
+                                    </div>
+                                    <div className="flex space-x-1">
+                                      <button
+                                        onClick={() => startEditingWeek(phaseIndex, weekIndex)}
+                                        className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                                        title="Edit week"
+                                      >
+                                        <Edit className="w-3 h-3" />
+                                      </button>
+                                      <button
+                                        onClick={() => removeWeekFromPhase(phaseIndex, weekIndex)}
+                                        className="p-1 text-red-600 hover:bg-red-50 rounded"
+                                        title="Remove week"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           )}
                         </div>
@@ -894,136 +1271,64 @@ const CourseManagement = () => {
                     </div>
                   )}
                   
-                  {/* Add/Edit Section Form */}
+                  {/* Add/Edit Phase Form */}
                   <div className="mt-6 p-4 border-2 border-dashed border-gray-300 rounded-lg">
                     <h4 className="font-medium text-gray-900 mb-3">
-                      {editingSectionIndex !== null ? "Edit Section" : "Add New Section"}
+                      {editingPhaseIndex !== null ? "Edit Phase" : "Add New Phase"}
                     </h4>
                     
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Section Title *</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Phase Number *</label>
                           <input
-                            type="text"
-                            value={newSection.title}
-                            onChange={(e) => handleNewSectionChange("title", e.target.value)}
+                            type="number"
+                            value={newPhase.phaseNumber}
+                            onChange={(e) => handleNewPhaseChange("phaseNumber", e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Enter section title"
+                            placeholder="Enter phase number"
                           />
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Lessons Count *</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Phase Title *</label>
                           <input
-                            type="number"
-                            value={newSection.lessonsCount}
-                            onChange={(e) => handleNewSectionChange("lessonsCount", e.target.value)}
+                            type="text"
+                            value={newPhase.title}
+                            onChange={(e) => handleNewPhaseChange("title", e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Enter number of lessons"
+                            placeholder="Enter phase title"
                           />
                         </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Goal</label>
+                        <input
+                          type="text"
+                          value={newPhase.goal}
+                          onChange={(e) => handleNewPhaseChange("goal", e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Enter phase goal"
+                        />
                       </div>
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                         <textarea
-                          value={newSection.description}
-                          onChange={(e) => handleNewSectionChange("description", e.target.value)}
+                          value={newPhase.description}
+                          onChange={(e) => handleNewPhaseChange("description", e.target.value)}
                           rows={2}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="Enter section description"
+                          placeholder="Enter phase description"
                         />
                       </div>
                       
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Instructors</label>
-                        {newSection.instructors.map((instructor, instIndex) => (
-                          <div key={instIndex} className="mb-3 p-3 border border-gray-200 rounded-lg bg-white">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              <div>
-                                <label className="block text-xs text-gray-500 mb-1">Name *</label>
-                                <input
-                                  type="text"
-                                  value={instructor.name}
-                                  onChange={(e) => handleInstructorChange(instIndex, "name", e.target.value)}
-                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                  placeholder="Instructor name"
-                                />
-                              </div>
-                              
-                              <div>
-                                <label className="block text-xs text-gray-500 mb-1">Expertise</label>
-                                <input
-                                  type="text"
-                                  value={instructor.expertise}
-                                  onChange={(e) => handleInstructorChange(instIndex, "expertise", e.target.value)}
-                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                  placeholder="Expertise"
-                                />
-                              </div>
-                              
-                              <div>
-                                <label className="block text-xs text-gray-500 mb-1">Experience</label>
-                                <input
-                                  type="text"
-                                  value={instructor.experience}
-                                  onChange={(e) => handleInstructorChange(instIndex, "experience", e.target.value)}
-                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                  placeholder="Experience"
-                                />
-                              </div>
-                              
-                              <div>
-                                <label className="block text-xs text-gray-500 mb-1">Photo URL</label>
-                                <input
-                                  type="text"
-                                  value={instructor.photoUrl}
-                                  onChange={(e) => handleInstructorChange(instIndex, "photoUrl", e.target.value)}
-                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                  placeholder="Photo URL"
-                                />
-                              </div>
-                            </div>
-                            
-                            <div className="mt-2">
-                              <label className="block text-xs text-gray-500 mb-1">Bio</label>
-                              <textarea
-                                value={instructor.bio}
-                                onChange={(e) => handleInstructorChange(instIndex, "bio", e.target.value)}
-                                rows={2}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="Instructor bio"
-                              />
-                            </div>
-                            
-                            {newSection.instructors.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => removeInstructor(instIndex)}
-                                className="mt-2 text-xs text-red-600 hover:text-red-800"
-                              >
-                                Remove Instructor
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                        
-                        <button
-                          type="button"
-                          onClick={addInstructor}
-                          className="mt-2 text-sm text-blue-600 hover:text-blue-800 flex items-center"
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Add Instructor
-                        </button>
-                      </div>
-                      
                       <div className="flex justify-end space-x-2">
-                        {editingSectionIndex !== null && (
+                        {editingPhaseIndex !== null && (
                           <button
                             type="button"
-                            onClick={cancelEditSection}
+                            onClick={cancelEditPhase}
                             className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                           >
                             Cancel
@@ -1031,11 +1336,250 @@ const CourseManagement = () => {
                         )}
                         <button
                           type="button"
-                          onClick={editingSectionIndex !== null ? updateSection : addSection}
+                          onClick={editingPhaseIndex !== null ? updatePhase : addPhase}
                           className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
                         >
                           <Save className="w-4 h-4 mr-1" />
-                          {editingSectionIndex !== null ? "Update Section" : "Add Section"}
+                          {editingPhaseIndex !== null ? "Update Phase" : "Add Phase"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Add/Edit Week Form (only show when a phase is selected for editing) */}
+                  {editingPhaseIndex !== null && (
+                    <div className="mt-6 p-4 border-2 border-dashed border-gray-300 rounded-lg bg-blue-50">
+                      <h4 className="font-medium text-gray-900 mb-3">
+                        {editingWeekIndices.phaseIndex === editingPhaseIndex ? "Edit Week" : "Add New Week to Phase"}
+                      </h4>
+                      
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Week Number *</label>
+                            <input
+                              type="number"
+                              value={newWeek.weekNumber}
+                              onChange={(e) => handleNewWeekChange("weekNumber", e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="Enter week number"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Week Title *</label>
+                            <input
+                              type="text"
+                              value={newWeek.title}
+                              onChange={(e) => handleNewWeekChange("title", e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="Enter week title"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Goal</label>
+                          <input
+                            type="text"
+                            value={newWeek.goal}
+                            onChange={(e) => handleNewWeekChange("goal", e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Enter week goal"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Topics</label>
+                          {newWeek.topics.map((topic, topicIndex) => (
+                            <div key={topicIndex} className="flex gap-2 mb-2">
+                              <input
+                                type="text"
+                                value={topic.title}
+                                onChange={(e) => handleTopicChange(topicIndex, "title", e.target.value)}
+                                placeholder="Topic Title"
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              />
+                              <input
+                                type="text"
+                                value={topic.description}
+                                onChange={(e) => handleTopicChange(topicIndex, "description", e.target.value)}
+                                placeholder="Topic Description"
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              />
+                              {newWeek.topics.length > 1 && (
+                                <button
+                                  onClick={() => removeTopicFromWeek(topicIndex)}
+                                  className="px-2 py-2 text-red-600 hover:bg-red-50 rounded-lg"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                          <button
+                            onClick={addTopicToWeek}
+                            className="flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium"
+                          >
+                            <Plus className="w-4 h-4 mr-1" />
+                            Add Topic
+                          </button>
+                        </div>
+                        
+                        <div className="flex justify-end space-x-2">
+                          {editingWeekIndices.phaseIndex === editingPhaseIndex && (
+                            <button
+                              type="button"
+                              onClick={cancelEditWeek}
+                              className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                            >
+                              Cancel
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={editingWeekIndices.phaseIndex === editingPhaseIndex ? updateWeek : () => addWeekToPhase(editingPhaseIndex)}
+                            className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+                          >
+                            <Save className="w-4 h-4 mr-1" />
+                            {editingWeekIndices.phaseIndex === editingPhaseIndex ? "Update Week" : "Add Week"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Instructor Management */}
+                <div className="border border-gray-200 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Users className="w-5 h-5 mr-2 text-green-600" />
+                    Course Instructors *
+                  </h3>
+                  
+                  {courseData.instructors.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                      <p>No instructors added yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {courseData.instructors.map((instructor, index) => (
+                        <div key={index} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                          <div className="flex justify-between items-center mb-2">
+                            <h4 className="font-medium text-gray-900">{instructor.name}</h4>
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => startEditingInstructor(index)}
+                                className="p-1 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded"
+                                title="Edit instructor"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => removeInstructor(index)}
+                                className="p-1 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded"
+                                title="Remove instructor"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                            <div className="text-gray-600">
+                              <span className="font-medium">Expertise:</span> {instructor.expertise || "Not specified"}
+                            </div>
+                            <div className="text-gray-600">
+                              <span className="font-medium">Experience:</span> {instructor.experience || "Not specified"}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Add/Edit Instructor Form */}
+                  <div className="mt-6 p-4 border-2 border-dashed border-gray-300 rounded-lg">
+                    <h4 className="font-medium text-gray-900 mb-3">
+                      {editingInstructorIndex !== null ? "Edit Instructor" : "Add New Instructor"}
+                    </h4>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                        <input
+                          type="text"
+                          value={newInstructor.name}
+                          onChange={(e) => handleNewInstructorChange("name", e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Enter instructor name"
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Expertise</label>
+                          <input
+                            type="text"
+                            value={newInstructor.expertise}
+                            onChange={(e) => handleNewInstructorChange("expertise", e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Enter expertise"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Experience</label>
+                          <input
+                            type="text"
+                            value={newInstructor.experience}
+                            onChange={(e) => handleNewInstructorChange("experience", e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Enter experience"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                        <textarea
+                          value={newInstructor.bio}
+                          onChange={(e) => handleNewInstructorChange("bio", e.target.value)}
+                          rows={2}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Enter instructor bio"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Photo URL</label>
+                        <input
+                          type="text"
+                          value={newInstructor.photoUrl}
+                          onChange={(e) => handleNewInstructorChange("photoUrl", e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Enter photo URL"
+                        />
+                      </div>
+                      
+                      <div className="flex justify-end space-x-2">
+                        {editingInstructorIndex !== null && (
+                          <button
+                            type="button"
+                            onClick={cancelEditInstructor}
+                            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={editingInstructorIndex !== null ? updateInstructor : addInstructor}
+                          className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+                        >
+                          <Save className="w-4 h-4 mr-1" />
+                          {editingInstructorIndex !== null ? "Update Instructor" : "Add Instructor"}
                         </button>
                       </div>
                     </div>

@@ -13,7 +13,8 @@ import {
   Users,
   Award,
   FileText,
-  BarChart3
+  BarChart3,
+  List
 } from "lucide-react";
 import api from "../../../api/axios";
 import { useToast } from "../../../context/ToastContext";
@@ -34,15 +35,42 @@ const CourseCreation = () => {
     level: "Beginner",
     isPaid: true,
     recordingsPrice: "",
-    sections: []
+    curriculum: {
+      phases: []
+    },
+    instructors: [{ name: "", bio: "", experience: "", expertise: "", photoUrl: "" }]
   });
 
-  const [editingSection, setEditingSection] = useState(null);
-  const [newSection, setNewSection] = useState({
+  // Phase management
+  const [editingPhase, setEditingPhase] = useState(null);
+  const [newPhase, setNewPhase] = useState({
+    phaseNumber: "",
     title: "",
     description: "",
-    lessonsCount: "",
-    instructors: [{ name: "", bio: "", experience: "", expertise: "", photoUrl: "" }]
+    goal: "",
+    weeks: []
+  });
+
+  // Week management
+  const [editingWeek, setEditingWeek] = useState(null);
+  const [newWeek, setNewWeek] = useState({
+    weekNumber: "",
+    title: "",
+    topics: [{ title: "", description: "" }],
+    goal: ""
+  });
+
+  // Topic management
+  const [newTopic, setNewTopic] = useState({ title: "", description: "" });
+
+  // Instructor management
+  const [editingInstructor, setEditingInstructor] = useState(null);
+  const [newInstructor, setNewInstructor] = useState({
+    name: "",
+    bio: "",
+    experience: "",
+    expertise: "",
+    photoUrl: ""
   });
 
   // Handle basic course info changes
@@ -75,16 +103,199 @@ const CourseCreation = () => {
     }));
   };
 
-  // Section management
-  const handleNewSectionChange = (field, value) => {
-    setNewSection(prev => ({
+  // Phase management
+  const handleNewPhaseChange = (field, value) => {
+    setNewPhase(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
+  const addPhase = () => {
+    if (!newPhase.phaseNumber || !newPhase.title) {
+      showError("Phase number and title are required");
+      return;
+    }
+
+    // Check if phase number already exists
+    const phaseExists = courseData.curriculum.phases.some(
+      phase => phase.phaseNumber === parseInt(newPhase.phaseNumber)
+    );
+    
+    if (phaseExists) {
+      showError("Phase number already exists");
+      return;
+    }
+
+    setCourseData(prev => ({
+      ...prev,
+      curriculum: {
+        ...prev.curriculum,
+        phases: [...prev.curriculum.phases, { ...newPhase, phaseNumber: parseInt(newPhase.phaseNumber) }]
+      }
+    }));
+
+    // Reset new phase form
+    setNewPhase({
+      phaseNumber: "",
+      title: "",
+      description: "",
+      goal: "",
+      weeks: []
+    });
+
+    showSuccess("Phase added successfully!");
+  };
+
+  const removePhase = (index) => {
+    setCourseData(prev => ({
+      ...prev,
+      curriculum: {
+        ...prev.curriculum,
+        phases: prev.curriculum.phases.filter((_, i) => i !== index)
+      }
+    }));
+  };
+
+  const editPhase = (index) => {
+    setEditingPhase(index);
+    setNewPhase(courseData.curriculum.phases[index]);
+  };
+
+  const updatePhase = () => {
+    if (!newPhase.phaseNumber || !newPhase.title) {
+      showError("Phase number and title are required");
+      return;
+    }
+
+    // Check if phase number already exists (excluding current editing phase)
+    const phaseExists = courseData.curriculum.phases.some(
+      (phase, i) => phase.phaseNumber === parseInt(newPhase.phaseNumber) && i !== editingPhase
+    );
+    
+    if (phaseExists) {
+      showError("Phase number already exists");
+      return;
+    }
+
+    setCourseData(prev => ({
+      ...prev,
+      curriculum: {
+        ...prev.curriculum,
+        phases: prev.curriculum.phases.map((phase, i) => 
+          i === editingPhase ? { ...newPhase, phaseNumber: parseInt(newPhase.phaseNumber) } : phase
+        )
+      }
+    }));
+
+    setEditingPhase(null);
+    setNewPhase({
+      phaseNumber: "",
+      title: "",
+      description: "",
+      goal: "",
+      weeks: []
+    });
+
+    showSuccess("Phase updated successfully!");
+  };
+
+  const cancelEditPhase = () => {
+    setEditingPhase(null);
+    setNewPhase({
+      phaseNumber: "",
+      title: "",
+      description: "",
+      goal: "",
+      weeks: []
+    });
+  };
+
+  // Week management
+  const handleNewWeekChange = (field, value) => {
+    setNewWeek(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const addTopicToWeek = () => {
+    setNewWeek(prev => ({
+      ...prev,
+      topics: [...prev.topics, { title: "", description: "" }]
+    }));
+  };
+
+  const removeTopicFromWeek = (index) => {
+    setNewWeek(prev => ({
+      ...prev,
+      topics: prev.topics.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleTopicChange = (index, field, value) => {
+    setNewWeek(prev => ({
+      ...prev,
+      topics: prev.topics.map((topic, i) => 
+        i === index ? { ...topic, [field]: value } : topic
+      )
+    }));
+  };
+
+  const addWeekToPhase = (phaseIndex) => {
+    if (!newWeek.weekNumber || !newWeek.title) {
+      showError("Week number and title are required");
+      return;
+    }
+
+    // Check if week number already exists in this phase
+    const weekExists = courseData.curriculum.phases[phaseIndex].weeks.some(
+      week => week.weekNumber === parseInt(newWeek.weekNumber)
+    );
+    
+    if (weekExists) {
+      showError("Week number already exists in this phase");
+      return;
+    }
+
+    const updatedPhases = [...courseData.curriculum.phases];
+    updatedPhases[phaseIndex].weeks.push({ ...newWeek, weekNumber: parseInt(newWeek.weekNumber) });
+
+    setCourseData(prev => ({
+      ...prev,
+      curriculum: {
+        ...prev.curriculum,
+        phases: updatedPhases
+      }
+    }));
+
+    // Reset new week form
+    setNewWeek({
+      weekNumber: "",
+      title: "",
+      topics: [{ title: "", description: "" }],
+      goal: ""
+    });
+
+    showSuccess("Week added successfully!");
+  };
+
+  const removeWeekFromPhase = (phaseIndex, weekIndex) => {
+    const updatedPhases = [...courseData.curriculum.phases];
+    updatedPhases[phaseIndex].weeks.splice(weekIndex, 1);
+
+    setCourseData(prev => ({
+      ...prev,
+      curriculum: {
+        ...prev.curriculum,
+        phases: updatedPhases
+      }
+    }));
+  };
+
+  // Instructor management
   const handleInstructorChange = (index, field, value) => {
-    setNewSection(prev => ({
+    setCourseData(prev => ({
       ...prev,
       instructors: prev.instructors.map((instructor, i) => 
         i === index ? { ...instructor, [field]: value } : instructor
@@ -92,98 +303,121 @@ const CourseCreation = () => {
     }));
   };
 
-  const addInstructor = () => {
-    setNewSection(prev => ({
+  const handleNewInstructorChange = (field, value) => {
+    setNewInstructor(prev => ({
       ...prev,
-      instructors: [...prev.instructors, { name: "", bio: "", experience: "", expertise: "", photoUrl: "" }]
+      [field]: value
     }));
+  };
+
+  const addInstructor = () => {
+    if (!newInstructor.name) {
+      showError("Instructor name is required");
+      return;
+    }
+
+    setCourseData(prev => ({
+      ...prev,
+      instructors: [...prev.instructors, newInstructor]
+    }));
+
+    // Reset new instructor form
+    setNewInstructor({
+      name: "",
+      bio: "",
+      experience: "",
+      expertise: "",
+      photoUrl: ""
+    });
+
+    showSuccess("Instructor added successfully!");
   };
 
   const removeInstructor = (index) => {
-    if (newSection.instructors.length > 1) {
-      setNewSection(prev => ({
+    if (courseData.instructors.length > 1) {
+      setCourseData(prev => ({
         ...prev,
         instructors: prev.instructors.filter((_, i) => i !== index)
       }));
+    } else {
+      showError("At least one instructor is required");
     }
   };
 
-  const addSection = () => {
-    if (!newSection.title || !newSection.lessonsCount) {
-      showError("Section title and lessons count are required");
+  const editInstructor = (index) => {
+    setEditingInstructor(index);
+    setNewInstructor(courseData.instructors[index]);
+  };
+
+  const updateInstructor = () => {
+    if (!newInstructor.name) {
+      showError("Instructor name is required");
       return;
     }
 
     setCourseData(prev => ({
       ...prev,
-      sections: [...prev.sections, { ...newSection, lessonsCount: parseInt(newSection.lessonsCount) }]
-    }));
-
-    // Reset new section form
-    setNewSection({
-      title: "",
-      description: "",
-      lessonsCount: "",
-      instructors: [{ name: "", bio: "", experience: "", expertise: "", photoUrl: "" }]
-    });
-
-    showSuccess("Section added successfully!");
-  };
-
-  const removeSection = (index) => {
-    setCourseData(prev => ({
-      ...prev,
-      sections: prev.sections.filter((_, i) => i !== index)
-    }));
-  };
-
-  const editSection = (index) => {
-    setEditingSection(index);
-    setNewSection(courseData.sections[index]);
-  };
-
-  const updateSection = () => {
-    if (!newSection.title || !newSection.lessonsCount) {
-      showError("Section title and lessons count are required");
-      return;
-    }
-
-    setCourseData(prev => ({
-      ...prev,
-      sections: prev.sections.map((section, i) => 
-        i === editingSection ? { ...newSection, lessonsCount: parseInt(newSection.lessonsCount) } : section
+      instructors: prev.instructors.map((instructor, i) => 
+        i === editingInstructor ? newInstructor : instructor
       )
     }));
 
-    setEditingSection(null);
-    setNewSection({
-      title: "",
-      description: "",
-      lessonsCount: "",
-      instructors: [{ name: "", bio: "", experience: "", expertise: "", photoUrl: "" }]
+    setEditingInstructor(null);
+    setNewInstructor({
+      name: "",
+      bio: "",
+      experience: "",
+      expertise: "",
+      photoUrl: ""
     });
 
-    showSuccess("Section updated successfully!");
+    showSuccess("Instructor updated successfully!");
   };
 
-  const cancelEdit = () => {
-    setEditingSection(null);
-    setNewSection({
-      title: "",
-      description: "",
-      lessonsCount: "",
-      instructors: [{ name: "", bio: "", experience: "", expertise: "", photoUrl: "" }]
+  const cancelEditInstructor = () => {
+    setEditingInstructor(null);
+    setNewInstructor({
+      name: "",
+      bio: "",
+      experience: "",
+      expertise: "",
+      photoUrl: ""
     });
   };
 
   // Calculate totals
-  const totalLessons = courseData.sections.reduce((sum, section) => sum + (section.lessonsCount || 0), 0);
-  const totalInstructors = courseData.sections.reduce((sum, section) => sum + (section.instructors?.length || 0), 0);
+  const totalPhases = courseData.curriculum.phases.length;
+  const totalWeeks = courseData.curriculum.phases.reduce((sum, phase) => sum + (phase.weeks?.length || 0), 0);
+  const totalTopics = courseData.curriculum.phases.reduce((sum, phase) => 
+    sum + phase.weeks.reduce((weekSum, week) => weekSum + (week.topics?.length || 0), 0), 0);
+  const totalInstructors = courseData.instructors.length;
 
   // Submit course
   const submitCourse = async () => {
-    if (!courseData.title || !courseData.description || courseData.sections.length === 0) {
-      showError("Title, description, and at least one section are required");
+    if (!courseData.title || !courseData.description || courseData.curriculum.phases.length === 0) {
+      showError("Title, description, and at least one phase are required");
+      return;
+    }
+
+    // Validate that each phase has at least one week
+    for (const phase of courseData.curriculum.phases) {
+      if (!phase.weeks || phase.weeks.length === 0) {
+        showError(`Phase "${phase.title}" must have at least one week`);
+        return;
+      }
+      
+      // Validate that each week has at least one topic
+      for (const week of phase.weeks) {
+        if (!week.topics || week.topics.length === 0) {
+          showError(`Week "${week.title}" in phase "${phase.title}" must have at least one topic`);
+          return;
+        }
+      }
+    }
+
+    // Validate that there's at least one instructor
+    if (courseData.instructors.length === 0 || !courseData.instructors[0].name) {
+      showError("At least one instructor with a name is required");
       return;
     }
 
@@ -207,7 +441,10 @@ const CourseCreation = () => {
         level: "Beginner",
         isPaid: true,
         recordingsPrice: "",
-        sections: []
+        curriculum: {
+          phases: []
+        },
+        instructors: [{ name: "", bio: "", experience: "", expertise: "", photoUrl: "" }]
       });
     } catch (error) {
       console.error("Course creation error:", error);
@@ -232,7 +469,7 @@ const CourseCreation = () => {
             Create New Course
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Design comprehensive courses with structured sections and expert instructors
+            Design comprehensive courses with structured curriculum and expert instructors
           </p>
         </div>
 
@@ -429,132 +666,75 @@ const CourseCreation = () => {
               </div>
             </div>
 
-            {/* Section Management */}
+            {/* Curriculum Management */}
             <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
               <div className="bg-gradient-to-r from-purple-500 to-purple-600 px-6 py-4">
                 <h2 className="text-xl font-semibold text-white flex items-center">
                   <BookOpen className="w-5 h-5 mr-2" />
-                  Course Sections
+                  Course Curriculum
                 </h2>
               </div>
               <div className="p-6 space-y-6">
                 
-                {/* Add/Edit Section Form */}
-                <div className="border-2 border-dashed border-gray-300 rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    {editingSection !== null ? 'Edit Section' : 'Add New Section'}
-                  </h3>
+                {/* Phases */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Phases</h3>
                   
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 gap-4">
+                  {/* Add/Edit Phase Form */}
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 mb-6">
+                    <h4 className="text-md font-semibold text-gray-900 mb-4">
+                      {editingPhase !== null ? 'Edit Phase' : 'Add New Phase'}
+                    </h4>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <input
+                        type="number"
+                        value={newPhase.phaseNumber}
+                        onChange={(e) => handleNewPhaseChange("phaseNumber", e.target.value)}
+                        placeholder="Phase Number (e.g., 1)"
+                        className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      
                       <input
                         type="text"
-                        value={newSection.title}
-                        onChange={(e) => handleNewSectionChange("title", e.target.value)}
-                        placeholder="Section title (e.g., Week 1 – Quantitative Aptitude Basics)"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        value={newPhase.title}
+                        onChange={(e) => handleNewPhaseChange("title", e.target.value)}
+                        placeholder="Phase Title (e.g., Foundation Skills)"
+                        className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 gap-4 mb-4">
+                      <input
+                        type="text"
+                        value={newPhase.goal}
+                        onChange={(e) => handleNewPhaseChange("goal", e.target.value)}
+                        placeholder="Phase Goal (e.g., Build strong aptitude, reasoning, and English basics)"
+                        className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                       
                       <textarea
-                        value={newSection.description}
-                        onChange={(e) => handleNewSectionChange("description", e.target.value)}
-                        placeholder="Section description..."
+                        value={newPhase.description}
+                        onChange={(e) => handleNewPhaseChange("description", e.target.value)}
+                        placeholder="Phase Description..."
                         rows="3"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
-                      
-                      <input
-                        type="number"
-                        value={newSection.lessonsCount}
-                        onChange={(e) => handleNewSectionChange("lessonsCount", e.target.value)}
-                        placeholder="Number of lessons"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-
-                    {/* Instructors */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-3">
-                        Instructors
-                      </label>
-                      <div className="space-y-4">
-                        {newSection.instructors.map((instructor, index) => (
-                          <div key={index} className="border border-gray-200 rounded-lg p-4">
-                            <div className="flex justify-between items-center mb-3">
-                              <h4 className="font-medium text-gray-900">Instructor {index + 1}</h4>
-                              {newSection.instructors.length > 1 && (
-                                <button
-                                  onClick={() => removeInstructor(index)}
-                                  className="text-red-600 hover:text-red-700"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              )}
-                            </div>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              <input
-                                type="text"
-                                value={instructor.name}
-                                onChange={(e) => handleInstructorChange(index, "name", e.target.value)}
-                                placeholder="Full Name"
-                                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              />
-                              <input
-                                type="text"
-                                value={instructor.bio}
-                                onChange={(e) => handleInstructorChange(index, "bio", e.target.value)}
-                                placeholder="Bio"
-                                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              />
-                              <input
-                                type="text"
-                                value={instructor.experience}
-                                onChange={(e) => handleInstructorChange(index, "experience", e.target.value)}
-                                placeholder="Experience"
-                                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              />
-                              <input
-                                type="text"
-                                value={instructor.expertise}
-                                onChange={(e) => handleInstructorChange(index, "expertise", e.target.value)}
-                                placeholder="Expertise"
-                                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              />
-                              <input
-                                type="url"
-                                value={instructor.photoUrl}
-                                onChange={(e) => handleInstructorChange(index, "photoUrl", e.target.value)}
-                                placeholder="Photo URL"
-                                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 md:col-span-2"
-                              />
-                            </div>
-                          </div>
-                        ))}
-                        
-                        <button
-                          onClick={addInstructor}
-                          className="flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium"
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Add Another Instructor
-                        </button>
-                      </div>
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-3 pt-4">
-                      {editingSection !== null ? (
+                    <div className="flex gap-3">
+                      {editingPhase !== null ? (
                         <>
                           <button
-                            onClick={updateSection}
+                            onClick={updatePhase}
                             className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                           >
                             <Save className="w-4 h-4 mr-2" />
-                            Update Section
+                            Update Phase
                           </button>
                           <button
-                            onClick={cancelEdit}
+                            onClick={cancelEditPhase}
                             className="flex items-center px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
                           >
                             <X className="w-4 h-4 mr-2" />
@@ -563,38 +743,293 @@ const CourseCreation = () => {
                         </>
                       ) : (
                         <button
-                          onClick={addSection}
+                          onClick={addPhase}
                           className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                         >
                           <Plus className="w-4 h-4 mr-2" />
-                          Add Section
+                          Add Phase
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Existing Phases List */}
+                  {courseData.curriculum.phases.length > 0 && (
+                    <div className="space-y-4">
+                      {courseData.curriculum.phases.map((phase, phaseIndex) => (
+                        <div key={phaseIndex} className="border border-gray-200 rounded-xl overflow-hidden">
+                          <div className="bg-gray-50 p-4 border-b">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <h4 className="font-semibold text-gray-900">Phase {phase.phaseNumber}: {phase.title}</h4>
+                                {phase.goal && (
+                                  <p className="text-sm text-gray-600 mt-1">Goal: {phase.goal}</p>
+                                )}
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => editPhase(phaseIndex)}
+                                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                                >
+                                  <Edit3 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => removePhase(phaseIndex)}
+                                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                            {phase.description && (
+                              <p className="text-sm text-gray-600 mt-2">{phase.description}</p>
+                            )}
+                          </div>
+                          
+                          <div className="p-4">
+                            <h5 className="font-medium text-gray-900 mb-3 flex items-center">
+                              <List className="w-4 h-4 mr-2" />
+                              Weeks in this Phase
+                            </h5>
+                            
+                            {/* Add Week Form */}
+                            <div className="border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50">
+                              <h6 className="font-medium text-gray-800 mb-3">Add Week</h6>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                                <input
+                                  type="number"
+                                  value={newWeek.weekNumber}
+                                  onChange={(e) => handleNewWeekChange("weekNumber", e.target.value)}
+                                  placeholder="Week Number (e.g., 1)"
+                                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                                
+                                <input
+                                  type="text"
+                                  value={newWeek.title}
+                                  onChange={(e) => handleNewWeekChange("title", e.target.value)}
+                                  placeholder="Week Title (e.g., Quantitative Aptitude Basics)"
+                                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                              </div>
+                              
+                              <div className="mb-3">
+                                <input
+                                  type="text"
+                                  value={newWeek.goal}
+                                  onChange={(e) => handleNewWeekChange("goal", e.target.value)}
+                                  placeholder="Week Goal (optional)"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                              </div>
+                              
+                              <div className="mb-3">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Topics</label>
+                                {newWeek.topics.map((topic, topicIndex) => (
+                                  <div key={topicIndex} className="flex gap-2 mb-2">
+                                    <input
+                                      type="text"
+                                      value={topic.title}
+                                      onChange={(e) => handleTopicChange(topicIndex, "title", e.target.value)}
+                                      placeholder="Topic Title"
+                                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                    <input
+                                      type="text"
+                                      value={topic.description}
+                                      onChange={(e) => handleTopicChange(topicIndex, "description", e.target.value)}
+                                      placeholder="Topic Description"
+                                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                    {newWeek.topics.length > 1 && (
+                                      <button
+                                        onClick={() => removeTopicFromWeek(topicIndex)}
+                                        className="px-2 py-2 text-red-600 hover:bg-red-50 rounded-lg"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    )}
+                                  </div>
+                                ))}
+                                <button
+                                  onClick={addTopicToWeek}
+                                  className="flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium"
+                                >
+                                  <Plus className="w-4 h-4 mr-1" />
+                                  Add Topic
+                                </button>
+                              </div>
+                              
+                              <button
+                                onClick={() => addWeekToPhase(phaseIndex)}
+                                className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                              >
+                                <Plus className="w-4 h-4 mr-1" />
+                                Add Week to Phase
+                              </button>
+                            </div>
+                            
+                            {/* Weeks List */}
+                            {phase.weeks && phase.weeks.length > 0 ? (
+                              <div className="space-y-3">
+                                {phase.weeks.map((week, weekIndex) => (
+                                  <div key={weekIndex} className="border border-gray-200 rounded-lg p-3">
+                                    <div className="flex justify-between items-start mb-2">
+                                      <div>
+                                        <h6 className="font-medium text-gray-900">Week {week.weekNumber}: {week.title}</h6>
+                                        {week.goal && (
+                                          <p className="text-xs text-gray-600 mt-1">Goal: {week.goal}</p>
+                                        )}
+                                      </div>
+                                      <button
+                                        onClick={() => removeWeekFromPhase(phaseIndex, weekIndex)}
+                                        className="p-1 text-red-600 hover:bg-red-50 rounded"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                    
+                                    {week.topics && week.topics.length > 0 && (
+                                      <div className="mt-2">
+                                        <p className="text-xs font-medium text-gray-700 mb-1">Topics:</p>
+                                        <ul className="text-xs text-gray-600 space-y-1">
+                                          {week.topics.map((topic, topicIndex) => (
+                                            <li key={topicIndex} className="flex">
+                                              <span className="mr-2">•</span>
+                                              <span>{topic.title}{topic.description ? ` - ${topic.description}` : ''}</span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-gray-500 italic">No weeks added yet</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Instructor Management */}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+              <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
+                <h2 className="text-xl font-semibold text-white flex items-center">
+                  <Users className="w-5 h-5 mr-2" />
+                  Course Instructors
+                </h2>
+              </div>
+              <div className="p-6 space-y-6">
+                
+                {/* Add/Edit Instructor Form */}
+                <div className="border-2 border-dashed border-gray-300 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    {editingInstructor !== null ? 'Edit Instructor' : 'Add New Instructor'}
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 gap-4">
+                      <input
+                        type="text"
+                        value={newInstructor.name}
+                        onChange={(e) => handleNewInstructorChange("name", e.target.value)}
+                        placeholder="Full Name *"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      
+                      <textarea
+                        value={newInstructor.bio}
+                        onChange={(e) => handleNewInstructorChange("bio", e.target.value)}
+                        placeholder="Bio"
+                        rows="2"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      
+                      <input
+                        type="text"
+                        value={newInstructor.experience}
+                        onChange={(e) => handleNewInstructorChange("experience", e.target.value)}
+                        placeholder="Experience (e.g., 5 years in Software Development)"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      
+                      <input
+                        type="text"
+                        value={newInstructor.expertise}
+                        onChange={(e) => handleNewInstructorChange("expertise", e.target.value)}
+                        placeholder="Expertise (e.g., Java, Python, Data Structures)"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      
+                      <input
+                        type="url"
+                        value={newInstructor.photoUrl}
+                        onChange={(e) => handleNewInstructorChange("photoUrl", e.target.value)}
+                        placeholder="Photo URL"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-3 pt-4">
+                      {editingInstructor !== null ? (
+                        <>
+                          <button
+                            onClick={updateInstructor}
+                            className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                          >
+                            <Save className="w-4 h-4 mr-2" />
+                            Update Instructor
+                          </button>
+                          <button
+                            onClick={cancelEditInstructor}
+                            className="flex items-center px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+                          >
+                            <X className="w-4 h-4 mr-2" />
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={addInstructor}
+                          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Instructor
                         </button>
                       )}
                     </div>
                   </div>
                 </div>
 
-                {/* Existing Sections List */}
-                {courseData.sections.length > 0 && (
+                {/* Existing Instructors List */}
+                {courseData.instructors.length > 0 && (
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Course Sections</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Course Instructors</h3>
                     <div className="space-y-4">
-                      {courseData.sections.map((section, index) => (
+                      {courseData.instructors.map((instructor, index) => (
                         <div key={index} className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow">
                           <div className="flex justify-between items-start mb-3">
                             <div>
-                              <h4 className="font-semibold text-gray-900">{section.title}</h4>
-                              <p className="text-sm text-gray-600 mt-1">{section.description}</p>
+                              <h4 className="font-semibold text-gray-900">{instructor.name}</h4>
+                              <p className="text-sm text-gray-600 mt-1">{instructor.bio}</p>
                             </div>
                             <div className="flex gap-2">
                               <button
-                                onClick={() => editSection(index)}
+                                onClick={() => editInstructor(index)}
                                 className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
                               >
                                 <Edit3 className="w-4 h-4" />
                               </button>
                               <button
-                                onClick={() => removeSection(index)}
+                                onClick={() => removeInstructor(index)}
                                 className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -602,27 +1037,22 @@ const CourseCreation = () => {
                             </div>
                           </div>
                           
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                            <div className="flex items-center">
-                              <BookOpen className="w-4 h-4 mr-2 text-blue-600" />
-                              {section.lessonsCount} lessons
-                            </div>
-                            <div className="flex items-center">
-                              <Users className="w-4 h-4 mr-2 text-green-600" />
-                              {section.instructors?.length || 0} instructors
-                            </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                            <div>Experience: {instructor.experience}</div>
+                            <div>Expertise: {instructor.expertise}</div>
                           </div>
                           
-                          {section.instructors && section.instructors.length > 0 && (
-                            <div className="mt-3 pt-3 border-t border-gray-200">
-                              <h5 className="text-sm font-medium text-gray-700 mb-2">Instructors:</h5>
-                              <div className="flex flex-wrap gap-2">
-                                {section.instructors.map((instructor, idx) => (
-                                  <span key={idx} className="bg-gray-100 px-2 py-1 rounded text-xs">
-                                    {instructor.name}
-                                  </span>
-                                ))}
-                              </div>
+                          {instructor.photoUrl && (
+                            <div className="mt-3">
+                              <img 
+                                src={instructor.photoUrl} 
+                                alt={instructor.name} 
+                                className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = `https://ui-avatars.com/api/?background=random&color=fff&name=${encodeURIComponent(instructor.name)}`;
+                                }}
+                              />
                             </div>
                           )}
                         </div>
@@ -636,7 +1066,7 @@ const CourseCreation = () => {
             {/* Submit Button */}
             <button
               onClick={submitCourse}
-              disabled={loading || courseData.sections.length === 0}
+              disabled={loading || courseData.curriculum.phases.length === 0}
               className="w-full flex items-center justify-center px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
@@ -667,33 +1097,41 @@ const CourseCreation = () => {
                 <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                   <div className="flex items-center">
                     <BookOpen className="w-5 h-5 text-blue-600 mr-3" />
-                    <span className="text-sm font-medium text-gray-700">Total Sections</span>
+                    <span className="text-sm font-medium text-gray-700">Total Phases</span>
                   </div>
-                  <span className="text-lg font-bold text-blue-600">{courseData.sections.length}</span>
+                  <span className="text-lg font-bold text-blue-600">{totalPhases}</span>
                 </div>
                 
                 <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                   <div className="flex items-center">
                     <Award className="w-5 h-5 text-green-600 mr-3" />
-                    <span className="text-sm font-medium text-gray-700">Total Lessons</span>
+                    <span className="text-sm font-medium text-gray-700">Total Weeks</span>
                   </div>
-                  <span className="text-lg font-bold text-green-600">{totalLessons}</span>
+                  <span className="text-lg font-bold text-green-600">{totalWeeks}</span>
                 </div>
                 
                 <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
                   <div className="flex items-center">
-                    <Users className="w-5 h-5 text-purple-600 mr-3" />
-                    <span className="text-sm font-medium text-gray-700">Total Instructors</span>
+                    <List className="w-5 h-5 text-purple-600 mr-3" />
+                    <span className="text-sm font-medium text-gray-700">Total Topics</span>
                   </div>
-                  <span className="text-lg font-bold text-purple-600">{totalInstructors}</span>
+                  <span className="text-lg font-bold text-purple-600">{totalTopics}</span>
                 </div>
                 
                 <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
                   <div className="flex items-center">
-                    <Clock className="w-5 h-5 text-orange-600 mr-3" />
+                    <Users className="w-5 h-5 text-orange-600 mr-3" />
+                    <span className="text-sm font-medium text-gray-700">Total Instructors</span>
+                  </div>
+                  <span className="text-lg font-bold text-orange-600">{totalInstructors}</span>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center">
+                    <Clock className="w-5 h-5 text-gray-600 mr-3" />
                     <span className="text-sm font-medium text-gray-700">Duration</span>
                   </div>
-                  <span className="text-lg font-bold text-orange-600">{courseData.duration || 0} days</span>
+                  <span className="text-lg font-bold text-gray-600">{courseData.duration || 0} days</span>
                 </div>
               </div>
             </div>
@@ -756,9 +1194,14 @@ const CourseCreation = () => {
                   Category
                 </div>
                 
-                <div className={`flex items-center ${courseData.sections.length > 0 ? 'text-green-600' : 'text-gray-400'}`}>
-                  <div className={`w-3 h-3 rounded-full mr-3 ${courseData.sections.length > 0 ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  At least one section
+                <div className={`flex items-center ${courseData.curriculum.phases.length > 0 ? 'text-green-600' : 'text-gray-400'}`}>
+                  <div className={`w-3 h-3 rounded-full mr-3 ${courseData.curriculum.phases.length > 0 ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  At least one phase
+                </div>
+                
+                <div className={`flex items-center ${courseData.instructors.length > 0 && courseData.instructors[0].name ? 'text-green-600' : 'text-gray-400'}`}>
+                  <div className={`w-3 h-3 rounded-full mr-3 ${courseData.instructors.length > 0 && courseData.instructors[0].name ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  At least one instructor
                 </div>
               </div>
             </div>

@@ -18,12 +18,27 @@ const InstructorSchema = new Schema({
   photoUrl: { type: String }
 });
 
-// Section schema with instructor(s)
-const SectionSchema = new Schema({
+// Topic schema
+const TopicSchema = new Schema({
+  title: { type: String, required: true },
+  description: { type: String }
+});
+
+// Week schema
+const WeekSchema = new Schema({
+  weekNumber: { type: Number, required: true },
+  title: { type: String, required: true },
+  topics: [TopicSchema],
+  goal: { type: String }
+});
+
+// Phase schema
+const PhaseSchema = new Schema({
+  phaseNumber: { type: Number, required: true },
   title: { type: String, required: true },
   description: { type: String },
-  lessonsCount: { type: Number, default: 0 },
-  instructors: [InstructorSchema]   // ✅ instructor array inside section
+  goal: { type: String },
+  weeks: [WeekSchema]
 });
 
 const RecordingSchema = new Schema({
@@ -92,7 +107,12 @@ const CourseSchema = new Schema({
   isPaid: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
   sessions: [SessionSchema],
-  sections: [SectionSchema],
+  // Remove sections field and replace with curriculum
+  curriculum: {
+    phases: [PhaseSchema]
+  },
+  // Add course-level instructors
+  instructors: [InstructorSchema],
   enrolledStudents: [{ type: Schema.Types.ObjectId, ref: 'Student' }],
   createdBy: { type: Schema.Types.ObjectId, ref: 'Student' },
   createdAt: { type: Date, default: Date.now },
