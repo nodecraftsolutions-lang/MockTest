@@ -172,14 +172,13 @@ router.get("/", async (req, res) => {
 });
 
 // 📜 Get course recordings with unlock status
-// 📜 Get course recordings with unlock status
 router.get("/:courseId", auth, async (req, res) => {
   try {
     const { courseId } = req.params;
 
-    // fetch full course details
+    // fetch full course details including curriculum and instructors
     const course = await Course.findById(courseId).select(
-      "title description outcomes features sections startDate duration recordingsPrice"
+      "title description outcomes features curriculum instructors sections startDate duration recordingsPrice"
     );
 
     if (!course) {
@@ -207,6 +206,8 @@ router.get("/:courseId", auth, async (req, res) => {
         description: course.description,
         outcomes: course.outcomes,
         features: course.features,
+        curriculum: course.curriculum,
+        instructors: course.instructors,
         sections: course.sections,
         startDate: course.startDate,
         duration: course.duration,
@@ -220,8 +221,6 @@ router.get("/:courseId", auth, async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to get recordings" });
   }
 });
-
-
 
 // ✅ Student unlocks recordings for a course
 router.post("/unlock/:courseId", auth, async (req, res) => {

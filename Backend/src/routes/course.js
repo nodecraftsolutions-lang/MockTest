@@ -6,7 +6,6 @@ const Discussion = require('../models/Discussion');
 const router = express.Router();
 
 //ADMIN ROUTES
-// Create course
 // 📌 Create a new course (Admin only)
 router.post("/", adminAuth, async (req, res) => {
   try {
@@ -23,7 +22,8 @@ router.post("/", adminAuth, async (req, res) => {
       level,
       isPaid,
       recordingsPrice,
-      sections   // ✅ NEW field
+      curriculum,   // ✅ NEW field for curriculum
+      instructors   // ✅ NEW field for course-level instructors
     } = req.body;
 
     const course = new Course({
@@ -38,8 +38,9 @@ router.post("/", adminAuth, async (req, res) => {
       duration,
       level,
       isPaid,
-      recordingsPrice: recordingsPrice || 0, // ✅ default 0 if not provided
-      sections,
+      recordingsPrice: recordingsPrice || 0,
+      curriculum: curriculum || { phases: [] },
+      instructors: instructors || [],
       createdBy: req.student.id,
     });
 
@@ -74,14 +75,15 @@ router.put("/:id", adminAuth, async (req, res) => {
       level,
       isPaid,
       recordingsPrice,
-      sections
+      curriculum,   // ✅ NEW field for curriculum
+      instructors   // ✅ NEW field for course-level instructors
     } = req.body;
 
     // Validation
-    if (!title || !description || !sections || sections.length === 0) {
+    if (!title || !description) {
       return res.status(400).json({ 
         success: false, 
-        message: "Title, description, and at least one section are required" 
+        message: "Title and description are required" 
       });
     }
 
@@ -100,7 +102,8 @@ router.put("/:id", adminAuth, async (req, res) => {
         level: level || "Beginner",
         isPaid: isPaid !== undefined ? isPaid : true,
         recordingsPrice: recordingsPrice || 0,
-        sections: sections || []
+        curriculum: curriculum || { phases: [] },
+        instructors: instructors || []
       },
       { new: true }
     );
@@ -167,7 +170,7 @@ router.post('/:id/sessions', adminAuth, async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const courses = await Course.find({ isActive: true })
-      .select("title description price features outcomes currency isPaid category startDate duration sections");
+      .select("title description price features outcomes currency isPaid category startDate duration curriculum instructors");
 
     res.json({ success: true, data: courses });
   } catch (err) {
@@ -180,7 +183,7 @@ router.get('/', async (req, res) => {
 router.get('/admin/all', adminAuth, async (req, res) => {
   try {
     const courses = await Course.find({ isActive: true })
-      .select("title description price features outcomes currency isPaid category startDate duration sections enrolledStudents recordingsPrice")
+      .select("title description price features outcomes currency isPaid category startDate duration curriculum instructors enrolledStudents recordingsPrice")
       .populate("enrolledStudents", "_id");
 
     // Add discussion count to each course

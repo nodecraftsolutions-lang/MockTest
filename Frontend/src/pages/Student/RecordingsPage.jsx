@@ -3,7 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   CheckCircle, Calendar, Clock, DollarSign,
   Video, BookOpen, Award, Users, Lock, Unlock, Play,
-  X, ChevronLeft, FileText, ExternalLink, Download
+  X, ChevronLeft, FileText, ExternalLink, Download,
+  Target, List
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../api/axios";
@@ -38,19 +39,65 @@ const RecordingsPage = () => {
     try {
       setLoading(true);
       const res = await api.get(`/recordings/${courseId}`);
+      console.log("Recordings API response:", res.data); // Debug log
       if (res.data.success) {
-        setCourse({
-          title: res.data.data.courseTitle,
-          description: res.data.data.description,
-          outcomes: res.data.data.outcomes,
-          features: res.data.data.features,
-          sections: res.data.data.sections,
-          startDate: res.data.data.startDate,
-          duration: res.data.data.duration,
-          price: res.data.data.price,
-        });
-        setRecordings(res.data.data.recordings || []);
-        setIsUnlocked(res.data.data.isUnlocked);
+        // Handle the recordings data properly
+        const recordingsData = res.data.data;
+        
+        // Create course object with proper structure
+        const courseData = {
+          title: recordingsData.courseTitle,
+          description: recordingsData.description,
+          outcomes: recordingsData.outcomes || [],
+          features: recordingsData.features || [],
+          curriculum: {
+            phases: []
+          },
+          instructors: [],
+          startDate: recordingsData.startDate,
+          duration: recordingsData.duration,
+          price: recordingsData.price,
+        };
+        
+        // Handle curriculum - try different possible structures
+        if (recordingsData.curriculum && recordingsData.curriculum.phases && recordingsData.curriculum.phases.length > 0) {
+          courseData.curriculum.phases = recordingsData.curriculum.phases;
+        } else if (recordingsData.sections && recordingsData.sections.length > 0) {
+          // Convert sections to phases structure
+          courseData.curriculum.phases = recordingsData.sections.map((section, index) => ({
+            phaseNumber: section.phaseNumber || index + 1,
+            title: section.title,
+            description: section.description,
+            goal: section.goal || "",
+            weeks: section.weeks || []
+          }));
+        }
+        
+        // Handle instructors - try different possible structures
+        if (recordingsData.instructors && recordingsData.instructors.length > 0) {
+          courseData.instructors = recordingsData.instructors;
+        } else if (recordingsData.sections) {
+          // Extract instructors from sections
+          const instructorMap = new Map();
+          recordingsData.sections.forEach(section => {
+            if (section.instructors && section.instructors.length > 0) {
+              section.instructors.forEach(instructor => {
+                if (instructor._id) {
+                  instructorMap.set(instructor._id, instructor);
+                } else {
+                  // Use name as key if no ID
+                  instructorMap.set(instructor.name, instructor);
+                }
+              });
+            }
+          });
+          courseData.instructors = Array.from(instructorMap.values());
+        }
+        
+        console.log("Processed course data:", courseData); // Debug log
+        setCourse(courseData);
+        setRecordings(recordingsData.recordings || []);
+        setIsUnlocked(recordingsData.isUnlocked);
       }
     } catch (err) {
       console.error(err);
@@ -238,8 +285,8 @@ const RecordingsPage = () => {
           )}
         </motion.div>
 
-        {/* Sections with Instructors */}
-        {course.sections?.length > 0 && (
+        {/* Curriculum with Phases, Weeks, and Topics - Updated to match CourseDetail.jsx */}
+        {(course.curriculum?.phases?.length > 0) && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -248,93 +295,135 @@ const RecordingsPage = () => {
           >
             <div className="bg-gradient-to-r from-purple-500 to-indigo-600 p-4">
               <h2 className="text-xl font-bold text-white flex items-center">
-                <BookOpen className="w-5 h-5 mr-2" /> Course Contents
+                <BookOpen className="w-5 h-5 mr-2" /> Course Curriculum
               </h2>
             </div>
-            <div className="p-6 space-y-6">
-              {course.sections.map((section, idx) => (
+            <div className="p-6 space-y-8">
+              {course.curriculum.phases.map((phase, phaseIdx) => (
                 <motion.div
-                  key={idx}
+                  key={phaseIdx}
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 * idx }}
+                  transition={{ delay: 0.1 * phaseIdx }}
                   className="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                 >
-                  {/* Section Header */}
+                  {/* Phase Header */}
                   <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 border-b">
                     <h3 className="text-lg font-bold text-gray-900">
-                      {section.title}
+                      {phase.phaseNumber ? `Phase ${phase.phaseNumber}: ${phase.title}` : phase.title}
                     </h3>
-                    <div className="flex items-center text-sm text-gray-600 mt-1">
-                      <BookOpen className="w-4 h-4 mr-1" />
-                      {section.lessonsCount} {section.lessonsCount === 1 ? 'lesson' : 'lessons'}
-                    </div>
+                    {phase.goal && (
+                      <div className="flex items-center text-sm text-gray-600 mt-1">
+                        <Target className="w-4 h-4 mr-1" />
+                        Goal: {phase.goal}
+                      </div>
+                    )}
                   </div>
 
-                  {/* Section Content - Split into Left (Details) and Right (Instructors) */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
-                    {/* Left Side - Section Details */}
-                    <div className="text-gray-700" style={{ whiteSpace: "pre-line" }}>
-                      {section.description}
-                    </div>
+                  {/* Phase Content */}
+                  <div className="p-4">
+                    {phase.description && (
+                      <div className="text-gray-700 mb-4" style={{ whiteSpace: "pre-line" }}>
+                        {phase.description}
+                      </div>
+                    )}
 
-                    {/* Right Side - Instructors */}
-                    <div className="border-t md:border-t-0 md:border-l border-gray-200 md:pl-4 pt-4 md:pt-0">
-                      {section.instructors?.length > 0 ? (
-                        <div>
-                          <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-                            <Users className="w-4 h-4 mr-2" />
-                            Instructor{section.instructors.length > 1 ? 's' : ''}
-                          </h4>
-                          <div className="space-y-4">
-                            {section.instructors.map((inst, i) => (
-                              <motion.div
-                                key={i}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 0.2 + (0.1 * i) }}
-                                className="flex items-start space-x-3 bg-gray-50 rounded-lg p-3"
-                              >
-                                <img
-                                  src={inst.photoUrl || `${defaultAvatar}${encodeURIComponent(inst.name)}`}
-                                  alt={inst.name}
-                                  className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-sm"
-                                  onError={e => {
-                                    e.target.onerror = null;
-                                    e.target.src = `${defaultAvatar}${encodeURIComponent(inst.name)}`;
-                                  }}
-                                />
-                                <div className="flex-1">
-                                  <p className="font-medium text-gray-900">
-                                    {inst.name}
-                                  </p>
-                                  <p className="text-sm text-gray-700">
-                                    Expertise: {inst.expertise}
-                                  </p>
-                                  {inst.bio && (
-                                    <p className="text-sm text-gray-600 mt-1">
-                                      Bio: {inst.bio}
-                                    </p>
-                                  )}
-                                  {inst.experience && (
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      {inst.experience} experience
-                                    </p>
-                                  )}
-                                </div>
-                              </motion.div>
-                            ))}
+                    {/* Weeks in this Phase */}
+                    <div className="space-y-4">
+                      {phase.weeks?.map((week, weekIdx) => (
+                        <div key={weekIdx} className="border border-gray-200 rounded-lg p-4">
+                          <div className="flex items-center mb-3">
+                            <div className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded mr-3">
+                              {week.weekNumber ? `Week ${week.weekNumber}` : `Week ${weekIdx + 1}`}
+                            </div>
+                            <h4 className="font-semibold text-gray-900">{week.title}</h4>
                           </div>
+
+                          {week.goal && (
+                            <div className="text-sm text-gray-600 mb-3">
+                              <span className="font-medium">Goal:</span> {week.goal}
+                            </div>
+                          )}
+
+                          {/* Topics in this Week */}
+                          {week.topics?.length > 0 && (
+                            <div>
+                              <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                                <List className="w-4 h-4 mr-1" />
+                                Topics Covered:
+                              </h5>
+                              <ul className="space-y-2">
+                                {week.topics.map((topic, topicIdx) => (
+                                  <li key={topicIdx} className="flex items-start">
+                                    <CheckCircle className="w-4 h-4 text-green-500 mt-1 mr-2 flex-shrink-0" />
+                                    <div>
+                                      <span className="font-medium">{topic.title}</span>
+                                      {topic.description && (
+                                        <span className="text-gray-600"> - {topic.description}</span>
+                                      )}
+                                    </div>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                         </div>
-                      ) : (
-                        <div className="flex items-center justify-center h-full text-gray-500">
-                          No instructor information available
-                        </div>
-                      )}
+                      ))}
                     </div>
                   </div>
                 </motion.div>
               ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Course Instructors - Added to match CourseDetail.jsx */}
+        {course.instructors?.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="card bg-white shadow-md rounded-xl overflow-hidden"
+          >
+            <div className="bg-gradient-to-r from-green-500 to-teal-600 p-4">
+              <h2 className="text-xl font-bold text-white flex items-center">
+                <Users className="w-5 h-5 mr-2" /> Faculty You'll Learn From
+              </h2>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {course.instructors.map((instructor, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 * idx }}
+                    className="border border-gray-200 rounded-xl p-4 flex flex-col md:flex-row items-center md:items-start gap-4 hover:shadow-md transition-shadow"
+                  >
+                    <img
+                      src={instructor.photoUrl || `${defaultAvatar}${encodeURIComponent(instructor.name)}`}
+                      alt={instructor.name}
+                      className="w-20 h-20 rounded-full object-cover border-2 border-white shadow-sm"
+                      onError={e => {
+                        e.target.onerror = null;
+                        e.target.src = `${defaultAvatar}${encodeURIComponent(instructor.name)}`;
+                      }}
+                    />
+                    <div className="flex-1 text-center md:text-left">
+                      <h3 className="text-lg font-bold text-gray-900">{instructor.name}</h3>
+                      {instructor.expertise && (
+                        <p className="text-sm text-blue-600 font-medium">{instructor.expertise}</p>
+                      )}
+                      {instructor.experience && (
+                        <p className="text-sm text-gray-600 mt-1">{instructor.experience}</p>
+                      )}
+                      {instructor.bio && (
+                        <p className="text-sm text-gray-700 mt-2">{instructor.bio}</p>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </motion.div>
         )}
@@ -475,7 +564,7 @@ const RecordingsPage = () => {
                         Duration: {selectedRecording.duration} minutes
                       </p>
                     )}
-                    
+
                     {/* Recording-specific Resources */}
                     {selectedRecording.resources && selectedRecording.resources.length > 0 && (
                       <div className="mt-6">
@@ -483,10 +572,10 @@ const RecordingsPage = () => {
                           <FileText className="w-5 h-5 mr-2 text-green-600" />
                           Resources for this recording
                         </h4>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {selectedRecording.resources.map((resource, idx) => (
-                            <div 
+                            <div
                               key={idx}
                               className="bg-blue-50 border border-blue-100 rounded-lg p-3 hover:shadow-md transition-all duration-200"
                             >
@@ -521,10 +610,10 @@ const RecordingsPage = () => {
                           <FileText className="w-5 h-5 mr-2 text-green-600" />
                           General Resources
                         </h3>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {resources.map((resource, idx) => (
-                            <div 
+                            <div
                               key={resource._id}
                               className="bg-green-50 border border-green-100 rounded-xl p-4 hover:shadow-md transition-all duration-200"
                             >
@@ -574,7 +663,7 @@ const RecordingsPage = () => {
                             transition={{ delay: 0.05 * idx }}
                             className="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all"
                           >
-                            <div 
+                            <div
                               onClick={() => openRecording(rec)}
                               className="cursor-pointer"
                             >
@@ -601,7 +690,7 @@ const RecordingsPage = () => {
                                 )}
                               </div>
                             </div>
-                            
+
                             {/* Recording Resources Section in List View */}
                             {rec.resources && rec.resources.length > 0 && (
                               <div className="px-4 pb-4 border-t border-gray-100 bg-blue-50">

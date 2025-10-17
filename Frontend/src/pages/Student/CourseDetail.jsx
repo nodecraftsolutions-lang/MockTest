@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   CheckCircle, Calendar, Clock, DollarSign, User, 
-  BookOpen, Award, Users
+  BookOpen, Award, Users, List, Target
 } from "lucide-react";
 import { motion } from "framer-motion";
 import api from "../../api/axios";
@@ -167,9 +167,8 @@ const CourseDetail = () => {
         )}
       </motion.div>
 
-      {/* ...existing code for sections, outcomes, features... */}
-      {/* Sections with Instructors */}
-      {course.sections?.length > 0 && (
+      {/* Curriculum with Phases, Weeks, and Topics */}
+      {course.curriculum?.phases?.length > 0 && (
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -178,90 +177,80 @@ const CourseDetail = () => {
         >
           <div className="bg-gradient-to-r from-purple-500 to-indigo-600 p-4">
             <h2 className="text-xl font-bold text-white flex items-center">
-              <BookOpen className="w-5 h-5 mr-2" /> Course Contents
+              <BookOpen className="w-5 h-5 mr-2" /> Course Curriculum
             </h2>
           </div>
-          <div className="p-6 space-y-6">
-            {course.sections.map((section, idx) => (
+          <div className="p-6 space-y-8">
+            {course.curriculum.phases.map((phase, phaseIdx) => (
               <motion.div 
-                key={idx} 
+                key={phaseIdx} 
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 * idx }}
+                transition={{ delay: 0.1 * phaseIdx }}
                 className="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
               >
-                {/* Section Header */}
+                {/* Phase Header */}
                 <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 border-b">
                   <h3 className="text-lg font-bold text-gray-900">
-                    {section.title}
+                    Phase {phase.phaseNumber}: {phase.title}
                   </h3>
-                  <div className="flex items-center text-sm text-gray-600 mt-1">
-                    <BookOpen className="w-4 h-4 mr-1" /> 
-                    {section.lessonsCount} {section.lessonsCount === 1 ? 'lesson' : 'lessons'}
-                  </div>
+                  {phase.goal && (
+                    <div className="flex items-center text-sm text-gray-600 mt-1">
+                      <Target className="w-4 h-4 mr-1" /> 
+                      Goal: {phase.goal}
+                    </div>
+                  )}
                 </div>
                 
-                {/* Section Content - Split into Left (Details) and Right (Instructors) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
-                  {/* Left Side - Section Details */}
-                    <div className="text-gray-700" style={{ whiteSpace: "pre-line" }}>
-                      {section.description}
+                {/* Phase Content */}
+                <div className="p-4">
+                  {phase.description && (
+                    <div className="text-gray-700 mb-4" style={{ whiteSpace: "pre-line" }}>
+                      {phase.description}
                     </div>
+                  )}
                   
-                  {/* Right Side - Instructors */}
-                  <div className="border-t md:border-t-0 md:border-l border-gray-200 md:pl-4 pt-4 md:pt-0">
-                    {section.instructors?.length > 0 ? (
-                      <div>
-                        <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-                          <Users className="w-4 h-4 mr-2" /> 
-                          Instructor{section.instructors.length > 1 ? 's' : ''}
-                        </h4>
-                        
-                        <div className="space-y-4">
-                          {section.instructors.map((inst, i) => (
-                            <motion.div
-                              key={i}
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              transition={{ delay: 0.2 + (0.1 * i) }}
-                              className="flex items-start space-x-3 bg-gray-50 rounded-lg p-3"
-                            >
-                            <img
-                              src={inst.photoUrl || `${defaultAvatar}${encodeURIComponent(inst.name)}`}
-                              alt={inst.name}
-                              className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-sm"
-                              onError={e => {
-                                e.target.onerror = null;
-                                e.target.src = `${defaultAvatar}${encodeURIComponent(inst.name)}`;
-                              }}
-                            />
-                              <div className="flex-1">
-                                <p className="font-medium text-gray-900">
-                                  {inst.name}
-                                </p>
-                                <p className="text-sm text-black-700">
-                                  Expertise: {inst.expertise}
-                                </p>
-                                {inst.bio && (
-                                  <p className="text-sm text-gray-600 mt-1">
-                                    Bio:{inst.bio}
-                                  </p>
-                                )}
-                                {inst.experience && (
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    {inst.experience} experience
-                                  </p>
-                                )}
-                              </div>
-                            </motion.div>
-                          ))}
+                  {/* Weeks in this Phase */}
+                  <div className="space-y-4">
+                    {phase.weeks?.map((week, weekIdx) => (
+                      <div key={weekIdx} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center mb-3">
+                          <div className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded mr-3">
+                            Week {week.weekNumber}
+                          </div>
+                          <h4 className="font-semibold text-gray-900">{week.title}</h4>
                         </div>
+                        
+                        {week.goal && (
+                          <div className="text-sm text-gray-600 mb-3">
+                            <span className="font-medium">Goal:</span> {week.goal}
+                          </div>
+                        )}
+                        
+                        {/* Topics in this Week */}
+                        {week.topics?.length > 0 && (
+                          <div>
+                            <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                              <List className="w-4 h-4 mr-1" />
+                              Topics Covered:
+                            </h5>
+                            <ul className="space-y-2">
+                              {week.topics.map((topic, topicIdx) => (
+                                <li key={topicIdx} className="flex items-start">
+                                  <CheckCircle className="w-4 h-4 text-green-500 mt-1 mr-2 flex-shrink-0" />
+                                  <div>
+                                    <span className="font-medium">{topic.title}</span>
+                                    {topic.description && (
+                                      <span className="text-gray-600"> - {topic.description}</span>
+                                    )}
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-gray-500">
-                        No instructor information available
-                      </div>
-                    )}
+                    ))}
                   </div>
                 </div>
               </motion.div>
@@ -269,6 +258,58 @@ const CourseDetail = () => {
           </div>
         </motion.div>
       )}
+      
+      {/* Course Instructors */}
+      {course.instructors?.length > 0 && (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="card bg-white shadow-md rounded-xl overflow-hidden"
+        >
+          <div className="bg-gradient-to-r from-green-500 to-teal-600 p-4">
+            <h2 className="text-xl font-bold text-white flex items-center">
+              <Users className="w-5 h-5 mr-2" /> Faculty You'll Learn From
+            </h2>
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {course.instructors.map((instructor, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 * idx }}
+                  className="border border-gray-200 rounded-xl p-4 flex flex-col md:flex-row items-center md:items-start gap-4 hover:shadow-md transition-shadow"
+                >
+                  <img
+                    src={instructor.photoUrl || `${defaultAvatar}${encodeURIComponent(instructor.name)}`}
+                    alt={instructor.name}
+                    className="w-20 h-20 rounded-full object-cover border-2 border-white shadow-sm"
+                    onError={e => {
+                      e.target.onerror = null;
+                      e.target.src = `${defaultAvatar}${encodeURIComponent(instructor.name)}`;
+                    }}
+                  />
+                  <div className="flex-1 text-center md:text-left">
+                    <h3 className="text-lg font-bold text-gray-900">{instructor.name}</h3>
+                    {instructor.expertise && (
+                      <p className="text-sm text-blue-600 font-medium">{instructor.expertise}</p>
+                    )}
+                    {instructor.experience && (
+                      <p className="text-sm text-gray-600 mt-1">{instructor.experience}</p>
+                    )}
+                    {instructor.bio && (
+                      <p className="text-sm text-gray-700 mt-2">{instructor.bio}</p>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      )}
+      
       {/* Outcomes and Features */}
       {(course.outcomes?.length > 0 || course.features?.length > 0) && (
         <motion.div 
@@ -334,4 +375,5 @@ const CourseDetail = () => {
     </div>
   );
 }
+
 export default CourseDetail;
