@@ -12,7 +12,7 @@ const getBaseURL = () => {
     // For production, assume backend is on same domain with /api prefix
     return `${window.location.protocol}//${hostname}/api/v1`;
   }
-  return 'http://localhost:8000/api/v1';
+  return 'https://mocktest-bckx.onrender.com/api/v1';
 };
 
 const api = axios.create({
