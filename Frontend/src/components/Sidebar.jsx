@@ -33,11 +33,12 @@ import {
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 
-const Sidebar = ({ type = "student" }) => {
+const Sidebar = ({ type = "student", onStateChange }) => {
   const [openDropdown, setOpenDropdown] = useState(null);
   const [courses, setCourses] = useState([]);
   const [recordings, setRecordings] = useState([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = useLocation();
   const { user, logout } = useAuth();
 
@@ -53,15 +54,44 @@ const Sidebar = ({ type = "student" }) => {
     }
   }, [type]);
 
+  // Close mobile sidebar when route changes
+  useEffect(() => {
+    if (window.innerWidth < 1024) {
+      setIsMobileOpen(false);
+    }
+  }, [location.pathname]);
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsMobileOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Notify parent of state changes
+  useEffect(() => {
+    if (onStateChange) {
+      onStateChange(isCollapsed, isMobileOpen);
+    }
+  }, [isCollapsed, isMobileOpen, onStateChange]);
+
   const toggleDropdown = (menu) => {
     setOpenDropdown(openDropdown === menu ? null : menu);
   };
 
   const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
-    // Close all dropdowns when collapsing
-    if (!isCollapsed) {
-      setOpenDropdown(null);
+    if (window.innerWidth < 1024) {
+      setIsMobileOpen(!isMobileOpen);
+    } else {
+      setIsCollapsed(!isCollapsed);
+      if (!isCollapsed) {
+        setOpenDropdown(null);
+      }
     }
   };
 
@@ -70,6 +100,11 @@ const Sidebar = ({ type = "student" }) => {
     return (
       <Link
         to={to}
+        onClick={() => {
+          if (window.innerWidth < 1024) {
+            setIsMobileOpen(false);
+          }
+        }}
         className={`flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 group ${
           active
             ? "bg-gradient-to-r from-primary-50 to-primary-25 text-primary-700 border-l-4 border-primary-500 shadow-xs"
@@ -113,11 +148,6 @@ const Sidebar = ({ type = "student" }) => {
           }`}
         />
       )}
-      {isCollapsed && openDropdown === menu && (
-        <div className="absolute left-full ml-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap shadow-lg">
-          {label}
-        </div>
-      )}
     </button>
   );
 
@@ -131,6 +161,11 @@ const Sidebar = ({ type = "student" }) => {
   const MockTestSubItem = ({ to, icon: Icon, label }) => (
     <Link
       to={to}
+      onClick={() => {
+        if (window.innerWidth < 1024) {
+          setIsMobileOpen(false);
+        }
+      }}
       className={`flex items-center px-3 py-2.5 text-sm rounded-lg transition-all duration-200 group ${
         location.pathname === to
           ? "bg-gradient-to-r from-primary-50 to-primary-25 text-primary-700 font-medium border-l-2 border-primary-500 -ml-0.5 shadow-xs"
@@ -145,6 +180,11 @@ const Sidebar = ({ type = "student" }) => {
   const AdminSubItem = ({ to, icon: Icon, label }) => (
     <Link
       to={to}
+      onClick={() => {
+        if (window.innerWidth < 1024) {
+          setIsMobileOpen(false);
+        }
+      }}
       className={`flex items-center px-3 py-2.5 text-sm rounded-lg transition-all duration-200 group ${
         location.pathname === to
           ? "bg-gradient-to-r from-primary-50 to-primary-25 text-primary-700 font-medium border-l-2 border-primary-500 -ml-0.5 shadow-xs"
@@ -158,16 +198,19 @@ const Sidebar = ({ type = "student" }) => {
 
   return (
     <>
-      {/* Mobile Overlay */}
-      {!isCollapsed && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-30 z-40 lg:hidden transition-opacity duration-300"
-          onClick={() => setIsCollapsed(true)}
-        />
-      )}
+      {/* Mobile Toggle Button */}
+      <button
+        onClick={() => setIsMobileOpen(true)}
+        className="fixed top-4 left-4 z-30 p-2 bg-white border border-gray-200 rounded-lg shadow-lg lg:hidden hover:bg-gray-50 transition-colors duration-200"
+      >
+        <Menu className="w-5 h-5 text-gray-600" />
+      </button>
 
+      {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-screen bg-white border-r border-gray-200 flex flex-col z-50 transition-all duration-300 ease-in-out ${
+        className={`fixed top-0 left-0 h-screen bg-white border-r border-gray-200 flex flex-col z-50 transition-all duration-300 ease-in-out transform ${
+          isMobileOpen ? "translate-x-0" : "-translate-x-full"
+        } lg:translate-x-0 ${
           isCollapsed ? "w-16" : "w-64"
         } shadow-lg`}
       >
@@ -175,17 +218,16 @@ const Sidebar = ({ type = "student" }) => {
         <div className={`px-4 py-5 border-b border-gray-100 flex items-center justify-between ${isCollapsed ? "px-3" : ""}`}>
           {!isCollapsed && (
             <div className="flex items-center">
-                       <div className="flex items-center">
-  <Link to="/" className="flex items-center space-x-2">
-    <img
-      src="../Logo_3.png" // 🟢 replace this with your actual logo path
-      alt="MockTest Pro Logo"
-      className="h-7 w-auto" // adjust height/width as needed
-    />
-  </Link>
-</div>
-              <h1 className="text-lg font-bold text-gray-900 tracking-tight">
-
+              <div className="flex items-center">
+                <Link to="/" className="flex items-center space-x-2">
+                  <img
+                    src="../Logo_3.png"
+                    alt="MockTest Pro Logo"
+                    className="h-7 w-auto"
+                  />
+                </Link>
+              </div>
+              <h1 className="text-lg font-bold text-gray-900 tracking-tight ml-2">
                 {type === "admin" ? "Admin" : "Student"}
               </h1>
             </div>
@@ -225,7 +267,7 @@ const Sidebar = ({ type = "student" }) => {
                 />
               </div>
 
-                {/* Courses Dropdown */}
+              {/* Courses Dropdown */}
               <div className="relative group mb-2">
                 <DropdownButton 
                   icon={GraduationCap} 
@@ -234,8 +276,7 @@ const Sidebar = ({ type = "student" }) => {
                   hasChildren={true}
                 />
 
-                  <DropdownContent menu="courses">
-                  {/* All available courses */}
+                <DropdownContent menu="courses">
                   {courses.slice(0, 5).map((c) => (
                     <Link
                       key={c._id}
@@ -256,7 +297,6 @@ const Sidebar = ({ type = "student" }) => {
                     </Link>
                   )}
 
-                  {/* My Courses link */}
                   <Link
                     to="/student/my-courses"
                     className="block px-3 py-2 text-sm text-primary-600 hover:bg-primary-50 rounded-lg font-medium transition-colors mt-1"
@@ -264,8 +304,9 @@ const Sidebar = ({ type = "student" }) => {
                     My Courses
                   </Link>
                 </DropdownContent>
+              </div>
 
- {/* Recordings Dropdown */}
+              {/* Recordings Dropdown */}
               <div className="relative group mb-2">
                 <DropdownButton 
                   icon={Video} 
@@ -302,7 +343,6 @@ const Sidebar = ({ type = "student" }) => {
                 </DropdownContent>
               </div>
 
-              {/* Mock Tests */}
               <div className="mb-1">
                 <NavItem 
                   to="/student/mock-tests" 
@@ -311,12 +351,7 @@ const Sidebar = ({ type = "student" }) => {
                   showLabel={!isCollapsed}
                 />
               </div>
-                
-                
-              </div>
 
-
-              {/* Regular Nav Items */}
               <div className="mb-1">
                 <NavItem 
                   to="/student/results" 
@@ -333,7 +368,6 @@ const Sidebar = ({ type = "student" }) => {
                   showLabel={!isCollapsed}
                 />
               </div>
-
               <div className="mb-1">
                 <NavItem 
                   to="/student/profile" 
@@ -362,7 +396,6 @@ const Sidebar = ({ type = "student" }) => {
                 />
               </div>
               
-              {/* MockTest Dropdown with nested items */}
               <div className="relative group mb-2">
                 <DropdownButton 
                   icon={Building} 
@@ -390,7 +423,6 @@ const Sidebar = ({ type = "student" }) => {
                 </DropdownContent>
               </div>
               
-              {/* Course Management Dropdown */}
               <div className="relative group mb-2">
                 <DropdownButton 
                   icon={BookOpen} 
@@ -423,7 +455,6 @@ const Sidebar = ({ type = "student" }) => {
                 </DropdownContent>
               </div>
 
-              {/* Recordings Management Dropdown */}
               <div className="relative group mb-2">
                 <DropdownButton 
                   icon={Video} 
@@ -441,7 +472,6 @@ const Sidebar = ({ type = "student" }) => {
                 </DropdownContent>
               </div>
 
-              {/* Regular Admin Nav Items */}
               <div className="mb-1">
                 <NavItem 
                   to="/admin/students" 
@@ -519,16 +549,6 @@ const Sidebar = ({ type = "student" }) => {
           </div>
         </div>
       </aside>
-
-      {/* Mobile Toggle Button (when sidebar is collapsed on mobile) */}
-      {isCollapsed && (
-        <button
-          onClick={() => setIsCollapsed(false)}
-          className="fixed top-4 left-4 z-40 p-2 bg-white border border-gray-200 rounded-lg shadow-lg lg:hidden hover:bg-gray-50 transition-colors duration-200"
-        >
-          <Menu className="w-5 h-5 text-gray-600" />
-        </button>
-      )}
     </>
   );
 };
