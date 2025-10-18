@@ -75,6 +75,8 @@ app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/question-banks', questionBankRoutes);
 app.use('/api/v1/enrollments', require('./routes/enrollment'));
 app.use('/api/v1/recordings',recordingRoutes);
+
+
 // Error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
