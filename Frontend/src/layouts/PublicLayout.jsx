@@ -21,7 +21,7 @@ const PublicLayout = () => {
             {/* Brand */}
             <div className="col-span-2">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                MockTest Pro
+                Prep
               </h3>
               <p className="text-gray-600 text-sm leading-relaxed">
                 Prepare for your dream job with our comprehensive mock test

@@ -78,6 +78,7 @@ function App() {
               <Route path="about" element={<About />} />
               <Route path="contact" element={<Contact />} />
               <Route path="auth" element={<Auth />} />
+              <Route path="/student/contact" element={<Contact />} />
             </Route>
 
             {/* Student Dashboard Routes */}
@@ -128,6 +129,7 @@ function App() {
               }
               
             >
+              
               <Route path="/admin/mocktest" element={<CompanyTestManagement/>}/>
               <Route path="/admin/mocktest/question-generate" element={<DynamicGenerateQuestions/>}/>
               <Route path="/admin/mocktest/question-bank-upload" element={<QuestionBankUpload/>}/>

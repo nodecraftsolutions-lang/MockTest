@@ -175,11 +175,18 @@ const Sidebar = ({ type = "student" }) => {
         <div className={`px-4 py-5 border-b border-gray-100 flex items-center justify-between ${isCollapsed ? "px-3" : ""}`}>
           {!isCollapsed && (
             <div className="flex items-center">
-              <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center mr-3">
-                <LayoutDashboard className="w-5 h-5 text-white" />
-              </div>
+                       <div className="flex items-center">
+  <Link to="/" className="flex items-center space-x-2">
+    <img
+      src="../Logo_3.png" // 🟢 replace this with your actual logo path
+      alt="MockTest Pro Logo"
+      className="h-7 w-auto" // adjust height/width as needed
+    />
+  </Link>
+</div>
               <h1 className="text-lg font-bold text-gray-900 tracking-tight">
-                {type === "admin" ? "Admin Panel" : "Student Panel"}
+
+                {type === "admin" ? "Admin" : "Student"}
               </h1>
             </div>
           )}
@@ -218,17 +225,7 @@ const Sidebar = ({ type = "student" }) => {
                 />
               </div>
 
-              {/* Mock Tests */}
-              <div className="mb-1">
-                <NavItem 
-                  to="/student/mock-tests" 
-                  icon={BookOpen} 
-                  label="Mock Tests" 
-                  showLabel={!isCollapsed}
-                />
-              </div>
-
-              {/* Courses Dropdown */}
+                {/* Courses Dropdown */}
               <div className="relative group mb-2">
                 <DropdownButton 
                   icon={GraduationCap} 
@@ -236,8 +233,8 @@ const Sidebar = ({ type = "student" }) => {
                   menu="courses" 
                   hasChildren={true}
                 />
-                
-                <DropdownContent menu="courses">
+
+                  <DropdownContent menu="courses">
                   {/* All available courses */}
                   {courses.slice(0, 5).map((c) => (
                     <Link
@@ -267,9 +264,8 @@ const Sidebar = ({ type = "student" }) => {
                     My Courses
                   </Link>
                 </DropdownContent>
-              </div>
 
-              {/* Recordings Dropdown */}
+ {/* Recordings Dropdown */}
               <div className="relative group mb-2">
                 <DropdownButton 
                   icon={Video} 
@@ -306,6 +302,20 @@ const Sidebar = ({ type = "student" }) => {
                 </DropdownContent>
               </div>
 
+              {/* Mock Tests */}
+              <div className="mb-1">
+                <NavItem 
+                  to="/student/mock-tests" 
+                  icon={BookOpen} 
+                  label="Mock Tests" 
+                  showLabel={!isCollapsed}
+                />
+              </div>
+                
+                
+              </div>
+
+
               {/* Regular Nav Items */}
               <div className="mb-1">
                 <NavItem 
@@ -323,14 +333,7 @@ const Sidebar = ({ type = "student" }) => {
                   showLabel={!isCollapsed}
                 />
               </div>
-              <div className="mb-1">
-                <NavItem 
-                  to="/student/leaderboard" 
-                  icon={Trophy} 
-                  label="Leaderboard" 
-                  showLabel={!isCollapsed}
-                />
-              </div>
+
               <div className="mb-1">
                 <NavItem 
                   to="/student/profile" 

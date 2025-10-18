@@ -26,14 +26,16 @@ const Header = ({ isPublic = false }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">M</span>
-              </div>
-              <span className="text-xl font-bold text-gray-900">MockTest Pro</span>
-            </Link>
-          </div>
+         <div className="flex items-center">
+  <Link to="/" className="flex items-center space-x-2">
+    <img
+      src="../Logo_3.png" // 🟢 replace this with your actual logo path
+      alt="MockTest Pro Logo"
+      className="h-10 w-auto" // adjust height/width as needed
+    />
+  </Link>
+</div>
+
 
           {/* Public Navigation */}
           {isPublic && (
