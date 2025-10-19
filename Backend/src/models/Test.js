@@ -7,7 +7,6 @@ const testSectionSchema = new mongoose.Schema({
   sectionName: {
     type: String,
     required: [true, 'Section name is required'],
-    enum: ['Aptitude', 'Reasoning', 'Technical', 'English', 'General Knowledge', 'Programming'],
     trim: true
   },
   questionCount: {
