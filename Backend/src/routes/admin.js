@@ -297,4 +297,186 @@ router.post('/students/:id/reset-password', adminAuth, async (req, res) => {
   }
 });
 
+// @route   GET /api/v1/admin/results
+// @desc    Get all test attempts with filters
+// @access  Private/Admin
+router.get('/results', adminAuth, async (req, res) => {
+  try {
+    const { 
+      page = 1, 
+      limit = 20, 
+      testId,
+      status,
+      fromDate,
+      toDate,
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = req.query;
+
+    const query = {};
+    
+    if (testId && testId !== 'all') {
+      query.testId = testId;
+    }
+
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+
+    if (fromDate || toDate) {
+      query.createdAt = {};
+      if (fromDate) {
+        query.createdAt.$gte = new Date(fromDate);
+      }
+      if (toDate) {
+        query.createdAt.$lte = new Date(toDate);
+      }
+    }
+
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const attempts = await Attempt.find(query)
+      .populate('studentId', 'name email')
+      .populate('testId', 'title companyId')
+      .populate('testId.companyId', 'name')
+      .sort(sortOptions)
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await Attempt.countDocuments(query);
+
+    res.json({
+      success: true,
+      data: {
+        attempts,
+        pagination: {
+          current: parseInt(page),
+          pages: Math.ceil(total / limit),
+          total
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Get results error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get results'
+    });
+  }
+});
+
+// @route   GET /api/v1/admin/results/export
+// @desc    Export test attempts as CSV or JSON
+// @access  Private/Admin
+router.get('/results/export', adminAuth, async (req, res) => {
+  try {
+    const { 
+      testId,
+      attemptId,
+      status,
+      fromDate,
+      toDate,
+      format = 'csv'
+    } = req.query;
+
+    const query = {};
+    
+    if (attemptId) {
+      query._id = attemptId;
+    } else {
+      if (testId && testId !== 'all') {
+        query.testId = testId;
+      }
+
+      if (status && status !== 'all') {
+        query.status = status;
+      }
+
+      if (fromDate || toDate) {
+        query.createdAt = {};
+        if (fromDate) {
+          query.createdAt.$gte = new Date(fromDate);
+        }
+        if (toDate) {
+          query.createdAt.$lte = new Date(toDate);
+        }
+      }
+    }
+
+    const attempts = await Attempt.find(query)
+      .populate('studentId', 'name email')
+      .populate('testId', 'title companyId')
+      .populate('testId.companyId', 'name')
+      .sort({ createdAt: -1 });
+
+    if (format === 'json') {
+      return res.json({
+        success: true,
+        data: attempts
+      });
+    }
+
+    // For CSV format
+    if (attempts.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No data found for export'
+      });
+    }
+
+    // Create CSV headers
+    const headers = [
+      'Student Name',
+      'Student Email',
+      'Test Title',
+      'Company',
+      'Score',
+      'Percentage',
+      'Status',
+      'Start Time',
+      'End Time',
+      'Duration (mins)',
+      'Attempted Questions',
+      'Correct Answers',
+      'Rank',
+      'Percentile'
+    ].join(',');
+
+    // Create CSV rows
+    const rows = attempts.map(attempt => {
+      return [
+        attempt.studentId?.name || 'N/A',
+        attempt.studentId?.email || 'N/A',
+        attempt.testId?.title || 'N/A',
+        attempt.testId?.companyId?.name || 'N/A',
+        attempt.score || 0,
+        attempt.percentage || 0,
+        attempt.status || 'N/A',
+        attempt.startTime ? new Date(attempt.startTime).toISOString() : 'N/A',
+        attempt.endTime ? new Date(attempt.endTime).toISOString() : 'N/A',
+        attempt.actualTimeTaken || 0,
+        attempt.attemptedQuestions || 0,
+        attempt.correctAnswers || 0,
+        attempt.rank || 'N/A',
+        attempt.percentile || 'N/A'
+      ].join(',');
+    });
+
+    const csvContent = [headers, ...rows].join('\n');
+    
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="results-${new Date().toISOString().split('T')[0]}.csv"`);
+    res.status(200).send(csvContent);
+
+  } catch (error) {
+    console.error('Export results error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to export results'
+    });
+  }
+});
+
 module.exports = router;

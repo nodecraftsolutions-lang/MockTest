@@ -14,9 +14,21 @@ const Navbar = ({ isPublic = false }) => {
     navigate('/');
   };
 
+  const handleViewTests = () => {
+    if (isAuthenticated) {
+      // If user is logged in, go to student mock tests page
+      navigate('/student/mock-tests');
+    } else {
+      // If user is not logged in, redirect to auth page
+      // Store the redirect path in localStorage
+      localStorage.setItem('redirectAfterLogin', '/student/mock-tests');
+      navigate('/auth');
+    }
+  };
+
   const publicNavItems = [
     { name: 'Home', path: '/' },
-    { name: 'Mock Tests', path: '/mock-tests' },
+    { name: 'Mock Tests', action: handleViewTests },
     { name: 'About', path: '/about' },
     { name: 'Contact', path: '/contact' }
   ];
@@ -40,13 +52,23 @@ const Navbar = ({ isPublic = false }) => {
           {isPublic && (
             <nav className="hidden md:flex md:space-x-1">
               {publicNavItems.map(item => (
-                <Link
-                  key={item.name}
-                  to={item.path}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 rounded-lg hover:text-primary-600 hover:bg-primary-50 transition-all duration-200"
-                >
-                  {item.name}
-                </Link>
+                item.path ? (
+                  <Link
+                    key={item.name}
+                    to={item.path}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 rounded-lg hover:text-primary-600 hover:bg-primary-50 transition-all duration-200"
+                  >
+                    {item.name}
+                  </Link>
+                ) : (
+                  <button
+                    key={item.name}
+                    onClick={item.action}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 rounded-lg hover:text-primary-600 hover:bg-primary-50 transition-all duration-200"
+                  >
+                    {item.name}
+                  </button>
+                )
               ))}
             </nav>
           )}
@@ -127,14 +149,27 @@ const Navbar = ({ isPublic = false }) => {
           <div className="md:hidden py-4 border-t border-gray-200">
             <div className="px-2 space-y-1">
               {publicNavItems.map(item => (
-                <Link
-                  key={item.name}
-                  to={item.path}
-                  className="block px-4 py-3 text-base font-medium text-gray-700 rounded-lg hover:text-primary-600 hover:bg-primary-50 transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {item.name}
-                </Link>
+                item.path ? (
+                  <Link
+                    key={item.name}
+                    to={item.path}
+                    className="block px-4 py-3 text-base font-medium text-gray-700 rounded-lg hover:text-primary-600 hover:bg-primary-50 transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {item.name}
+                  </Link>
+                ) : (
+                  <button
+                    key={item.name}
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      item.action();
+                    }}
+                    className="block w-full text-left px-4 py-3 text-base font-medium text-gray-700 rounded-lg hover:text-primary-600 hover:bg-primary-50 transition-colors"
+                  >
+                    {item.name}
+                  </button>
+                )
               ))}
             </div>
             {!isAuthenticated && (

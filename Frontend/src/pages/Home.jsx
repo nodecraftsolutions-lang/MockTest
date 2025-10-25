@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BookOpen, Users, Award, Clock, ChevronDown, Star, ArrowRight, Play, CheckCircle, TrendingUp, ChevronLeft, ChevronRight, GraduationCap } from "lucide-react";
 import api from '../api/axios';
@@ -277,6 +277,18 @@ const Home = () => {
     }
   };
 
+  const handleViewTests = () => {
+    if (isAuthenticated) {
+      // If user is logged in, go to student mock tests page
+      navigate('/student/mock-tests');
+    } else {
+      // If user is not logged in, redirect to auth page
+      // Store the redirect path in localStorage
+      localStorage.setItem('redirectAfterLogin', '/student/mock-tests');
+      navigate('/auth');
+    }
+  };
+
   const getStaticCourses = () => [
     {
       id: 1,
@@ -486,12 +498,12 @@ const Home = () => {
                       </Link>
                     </div>
                     <div className="mt-2 sm:mt-0 sm:ml-2">
-                      <Link
-                        to="/mock-tests"
+                      <button
+                        onClick={handleViewTests}
                         className="w-full flex items-center justify-center px-6 py-2 border border-transparent text-base font-medium rounded-md text-primary bg-primary/10 hover:bg-primary/20 md:py-3 md:text-lg md:px-8"
                       >
                         View Tests
-                      </Link>
+                      </button>
                     </div>
                   </div>
                 </div>

@@ -26,7 +26,7 @@ const AdminResults = () => {
   useEffect(() => {
     fetchResults();
     fetchTests();
-  }, [filterTest, filterStatus, dateRange]);
+  }, [filterTest, filterStatus, dateRange.fromDate, dateRange.toDate]);
 
   const fetchResults = async () => {
     try {
@@ -671,10 +671,16 @@ ${attempt.studentId?.name || 'N/A'},${attempt.studentId?.email || 'N/A'},${attem
           </p>
           {!(searchTerm || filterTest !== 'all' || filterStatus !== 'all' || dateRange.fromDate || dateRange.toDate) && (
             <button 
-              onClick={() => setShowFilters(true)}
+              onClick={() => {
+                // Reset filters to show all results
+                setFilterTest('all');
+                setFilterStatus('all');
+                setDateRange({ fromDate: '', toDate: '' });
+                setSearchTerm('');
+              }}
               className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
             >
-              Add Filters
+              Reset Filters
             </button>
           )}
         </div>

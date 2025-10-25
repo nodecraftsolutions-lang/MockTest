@@ -7,6 +7,30 @@ const DashboardLayout = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  // Initialize state from localStorage
+  useEffect(() => {
+    const savedState = localStorage.getItem('sidebarCollapsed');
+    if (savedState !== null) {
+      // Small delay to ensure DOM is fully loaded
+      const timer = setTimeout(() => {
+        setIsSidebarCollapsed(JSON.parse(savedState));
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+  
+  // Listen for localStorage changes
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'sidebarCollapsed') {
+        setIsSidebarCollapsed(JSON.parse(e.newValue || 'false'));
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   // Check if device is mobile
   useEffect(() => {
     const checkMobile = () => {
@@ -25,6 +49,8 @@ const DashboardLayout = () => {
   const handleSidebarStateChange = (collapsed, mobileOpen) => {
     setIsSidebarCollapsed(collapsed);
     setIsMobileSidebarOpen(mobileOpen);
+    // Save state to localStorage
+    localStorage.setItem('sidebarCollapsed', JSON.stringify(collapsed));
   };
 
   return (

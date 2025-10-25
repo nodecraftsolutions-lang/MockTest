@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -34,6 +34,7 @@ import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 
 const Sidebar = ({ type = "student", onStateChange }) => {
+  const initializedRef = useRef(false);
   const [openDropdown, setOpenDropdown] = useState(null);
   const [courses, setCourses] = useState([]);
   const [recordings, setRecordings] = useState([]);
@@ -41,6 +42,17 @@ const Sidebar = ({ type = "student", onStateChange }) => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = useLocation();
   const { user, logout } = useAuth();
+
+  // Initialize state from localStorage
+  useEffect(() => {
+    if (!initializedRef.current) {
+      const savedState = localStorage.getItem('sidebarCollapsed');
+      if (savedState !== null) {
+        setIsCollapsed(JSON.parse(savedState));
+      }
+      initializedRef.current = true;
+    }
+  }, []);
 
   useEffect(() => {
     if (type === "student") {
@@ -66,12 +78,15 @@ const Sidebar = ({ type = "student", onStateChange }) => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
         setIsMobileOpen(false);
+      } else {
+        // On mobile, save the current collapsed state before closing
+        localStorage.setItem('sidebarCollapsed', JSON.stringify(isCollapsed));
       }
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [isCollapsed]);
 
   // Notify parent of state changes
   useEffect(() => {
@@ -88,9 +103,16 @@ const Sidebar = ({ type = "student", onStateChange }) => {
     if (window.innerWidth < 1024) {
       setIsMobileOpen(!isMobileOpen);
     } else {
-      setIsCollapsed(!isCollapsed);
-      if (!isCollapsed) {
+      const newCollapsedState = !isCollapsed;
+      setIsCollapsed(newCollapsedState);
+      // Save state to localStorage
+      localStorage.setItem('sidebarCollapsed', JSON.stringify(newCollapsedState));
+      if (newCollapsedState) {
         setOpenDropdown(null);
+      }
+      // Notify parent of state change
+      if (onStateChange) {
+        onStateChange(newCollapsedState, isMobileOpen);
       }
     }
   };
@@ -221,7 +243,7 @@ const Sidebar = ({ type = "student", onStateChange }) => {
               <div className="flex items-center">
                 <Link to="/" className="flex items-center space-x-2">
                   <img
-                    src="../Final Logo.png"
+                    src="/Final Logo.png"
                     alt="MockTest Pro Logo"
                     className="h-7 w-auto"
                   />
