@@ -6,6 +6,7 @@ const Company = require('../models/Company');
 const Test = require('../models/Test');
 const Attempt = require('../models/Attempt');
 const Order = require('../models/Order');
+const Alumni = require('../models/Alumni');
 
 const router = express.Router();
 
@@ -198,72 +199,37 @@ router.get('/students/:id', adminAuth, async (req, res) => {
     const attempts = await Attempt.find({ studentId: req.params.id })
       .populate('testId', 'title type companyId')
       .populate('testId.companyId', 'name')
-      .sort({ createdAt: -1 })
-      .limit(10);
-
-    // Get student's orders
-    const orders = await Order.find({ studentId: req.params.id })
-      .sort({ createdAt: -1 })
-      .limit(10);
-
-    // Calculate statistics
-    const totalAttempts = await Attempt.countDocuments({ studentId: req.params.id });
-    const completedAttempts = await Attempt.countDocuments({ 
-      studentId: req.params.id, 
-      status: { $in: ['submitted', 'auto-submitted'] }
-    });
-    const avgScore = await Attempt.aggregate([
-      { $match: { studentId: student._id, status: { $in: ['submitted', 'auto-submitted'] } } },
-      { $group: { _id: null, avgScore: { $avg: '$score' } } }
-    ]);
+      .sort({ createdAt: -1 });
 
     res.json({
       success: true,
       data: {
-        student,
-        statistics: {
-          totalAttempts,
-          completedAttempts,
-          averageScore: avgScore[0]?.avgScore || 0
-        },
-        recentAttempts: attempts,
-        recentOrders: orders
+        student: student.toJSON(),
+        attempts
       }
     });
 
   } catch (error) {
-    console.error('Get student details error:', error);
+    console.error('Get student error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to get student details'
+      message: 'Failed to get student'
     });
   }
 });
 
 // @route   PUT /api/v1/admin/students/:id/status
-// @desc    Update student status (activate/deactivate)
+// @desc    Toggle student active status
 // @access  Private/Admin
-router.put('/students/:id/status', adminAuth, [
-  body('isActive')
-    .isBoolean()
-    .withMessage('Status must be boolean')
-], async (req, res) => {
+router.put('/students/:id/status', adminAuth, async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: errors.array()
-      });
-    }
-
     const { isActive } = req.body;
     
-    const student = await Student.findOne({ 
-      _id: req.params.id, 
-      role: 'student' 
-    });
+    const student = await Student.findByIdAndUpdate(
+      req.params.id,
+      { isActive },
+      { new: true }
+    );
 
     if (!student) {
       return res.status(404).json({
@@ -272,27 +238,14 @@ router.put('/students/:id/status', adminAuth, [
       });
     }
 
-    student.isActive = isActive;
-    if (!isActive) {
-      student.activeSessionId = null; // Force logout if deactivating
-    }
-    await student.save();
-
     res.json({
       success: true,
       message: `Student ${isActive ? 'activated' : 'deactivated'} successfully`,
-      data: {
-        student: {
-          id: student._id,
-          name: student.name,
-          email: student.email,
-          isActive: student.isActive
-        }
-      }
+      data: student
     });
 
   } catch (error) {
-    console.error('Update student status error:', error);
+    console.error('Toggle student status error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update student status'
@@ -301,15 +254,12 @@ router.put('/students/:id/status', adminAuth, [
 });
 
 // @route   POST /api/v1/admin/students/:id/reset-password
-// @desc    Reset student password
+// @desc    Reset student password and send email
 // @access  Private/Admin
 router.post('/students/:id/reset-password', adminAuth, async (req, res) => {
   try {
-    const student = await Student.findOne({ 
-      _id: req.params.id, 
-      role: 'student' 
-    });
-
+    const student = await Student.findById(req.params.id);
+    
     if (!student) {
       return res.status(404).json({
         success: false,
@@ -320,328 +270,29 @@ router.post('/students/:id/reset-password', adminAuth, async (req, res) => {
     // Generate temporary password
     const tempPassword = Math.random().toString(36).slice(-8);
     
-    student.password = tempPassword;
-    student.activeSessionId = null; // Force re-login
+    // Hash the new password
+    const salt = await bcrypt.genSalt(12);
+    student.password = await bcrypt.hash(tempPassword, salt);
+    
+    // Clear reset token if exists
+    student.resetPasswordToken = undefined;
+    student.resetPasswordExpire = undefined;
+    
     await student.save();
 
     // TODO: Send email with temporary password
-    // For now, return it in response (remove in production)
+    console.log(`Temporary password for ${student.email}: ${tempPassword}`);
+
     res.json({
       success: true,
-      message: 'Password reset successfully',
-      data: {
-        temporaryPassword: process.env.NODE_ENV === 'development' ? tempPassword : undefined
-      }
+      message: 'Password reset successfully. Temporary password logged to console.'
     });
 
   } catch (error) {
-    console.error('Reset password error:', error);
+    console.error('Reset student password error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to reset password'
-    });
-  }
-});
-
-// Test Management Routes
-// @route   GET /api/v1/admin/tests
-// @desc    Get all tests for admin
-// @access  Private/Admin
-router.get('/tests', adminAuth, async (req, res) => {
-  try {
-    const { 
-      page = 1, 
-      limit = 20, 
-      search, 
-      type, 
-      companyId,
-      status = 'all'
-    } = req.query;
-
-    const query = {};
-    
-    if (search) {
-      query.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
-      ];
-    }
-
-    if (type) query.type = type;
-    if (companyId) query.companyId = companyId;
-    if (status !== 'all') query.isActive = status === 'active';
-
-    const tests = await Test.find(query)
-      .populate('companyId', 'name logoUrl')
-      .populate('createdBy', 'name email')
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const total = await Test.countDocuments(query);
-
-    // Get attempt counts for each test
-    const testsWithStats = await Promise.all(
-      tests.map(async (test) => {
-        const stats = await test.getStatistics();
-        return {
-          ...test.toJSON(),
-          statistics: stats
-        };
-      })
-    );
-
-    res.json({
-      success: true,
-      data: {
-        tests: testsWithStats,
-        pagination: {
-          current: parseInt(page),
-          pages: Math.ceil(total / limit),
-          total
-        }
-      }
-    });
-
-  } catch (error) {
-    console.error('Get admin tests error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get tests'
-    });
-  }
-});
-
-// @route   DELETE /api/v1/admin/tests/:id
-// @desc    Delete test
-// @access  Private/Admin
-router.delete('/tests/:id', adminAuth, async (req, res) => {
-  try {
-    const test = await Test.findById(req.params.id);
-    if (!test) {
-      return res.status(404).json({
-        success: false,
-        message: 'Test not found'
-      });
-    }
-
-    // Check if test has attempts
-    const attemptCount = await Attempt.countDocuments({ testId: req.params.id });
-    if (attemptCount > 0) {
-      return res.status(400).json({
-        success: false,
-        message: `Cannot delete test. It has ${attemptCount} attempts. Consider deactivating instead.`
-      });
-    }
-
-    await Test.findByIdAndDelete(req.params.id);
-
-    res.json({
-      success: true,
-      message: 'Test deleted successfully'
-    });
-
-  } catch (error) {
-    console.error('Delete test error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete test'
-    });
-  }
-});
-
-// Results Management Routes
-// @route   GET /api/v1/admin/results
-// @desc    Get all results/attempts
-// @access  Private/Admin
-router.get('/results', adminAuth, async (req, res) => {
-  try {
-    const { 
-      page = 1, 
-      limit = 20, 
-      testId, 
-      studentId, 
-      status,
-      fromDate,
-      toDate
-    } = req.query;
-
-    const query = {};
-    
-    if (testId) query.testId = testId;
-    if (studentId) query.studentId = studentId;
-    if (status) query.status = status;
-    
-    if (fromDate || toDate) {
-      query.createdAt = {};
-      if (fromDate) query.createdAt.$gte = new Date(fromDate);
-      if (toDate) query.createdAt.$lte = new Date(toDate);
-    }
-
-    const attempts = await Attempt.find(query)
-      .populate('studentId', 'name email')
-      .populate({
-        path: 'testId',
-        select: 'title companyId',
-        populate: {
-          path: 'companyId',
-          select: 'name'
-        }
-      })
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const total = await Attempt.countDocuments(query);
-
-    res.json({
-      success: true,
-      data: {
-        attempts,
-        pagination: {
-          current: parseInt(page),
-          pages: Math.ceil(total / limit),
-          total
-        }
-      }
-    });
-
-  } catch (error) {
-    console.error('Get results error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get results'
-    });
-  }
-});
-
-// @route   GET /api/v1/admin/results/export
-// @desc    Export results to CSV
-// @access  Private/Admin
-router.get('/results/export', adminAuth, async (req, res) => {
-  try {
-    const { testId, fromDate, toDate, format = 'csv', attemptId } = req.query;
-    
-    const query = {};
-    
-    // If specific attemptId is provided, fetch only that attempt
-    if (attemptId) {
-      query._id = attemptId;
-    } else {
-      // Otherwise apply filters
-      if (testId) query.testId = testId;
-      if (fromDate || toDate) {
-        query.createdAt = {};
-        if (fromDate) query.createdAt.$gte = new Date(fromDate);
-        if (toDate) query.createdAt.$lte = new Date(toDate);
-      }
-    }
-
-    const attempts = await Attempt.find(query)
-      .populate('studentId', 'name email')
-      .populate({
-        path: 'testId',
-        select: 'title companyId',
-        populate: {
-          path: 'companyId',
-          select: 'name'
-        }
-      })
-      .sort({ createdAt: -1 });
-
-    if (format === 'csv') {
-      const csvData = attempts.map(attempt => ({
-        'Student Name': attempt.studentId?.name || 'N/A',
-        'Student Email': attempt.studentId?.email || 'N/A',
-        'Test Title': attempt.testId?.title || 'N/A',
-        'Company': attempt.testId?.companyId?.name || 'N/A',
-        'Score': attempt.score,
-        'Percentage': attempt.percentage,
-        'Status': attempt.status,
-        'Start Time': attempt.startTime,
-        'End Time': attempt.endTime,
-        'Duration (mins)': attempt.actualTimeTaken,
-        'Attempted Questions': attempt.attemptedQuestions,
-        'Correct Answers': attempt.correctAnswers,
-        'Rank': attempt.rank,
-        'Percentile': attempt.percentile
-      }));
-
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', 'attachment; filename=results.csv');
-      
-      // Simple CSV conversion (in production, use a proper CSV library)
-      const headers = Object.keys(csvData[0] || {});
-      const csvContent = [
-        headers.join(','),
-        ...csvData.map(row => headers.map(header => `"${row[header] || ''}"`).join(','))
-      ].join('\n');
-      
-      res.send(csvContent);
-    } else {
-      res.json({
-        success: true,
-        data: attempts
-      });
-    }
-
-  } catch (error) {
-    console.error('Export results error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to export results'
-    });
-  }
-});
-
-// Orders Management Routes
-// @route   GET /api/v1/admin/orders
-// @desc    Get all orders
-// @access  Private/Admin
-router.get('/orders', adminAuth, async (req, res) => {
-  try {
-    const { 
-      page = 1, 
-      limit = 20, 
-      status, 
-      fromDate, 
-      toDate 
-    } = req.query;
-
-    const query = {};
-    if (status) query.paymentStatus = status;
-    if (fromDate || toDate) {
-      query.createdAt = {};
-      if (fromDate) query.createdAt.$gte = new Date(fromDate);
-      if (toDate) query.createdAt.$lte = new Date(toDate);
-    }
-
-    const orders = await Order.find(query)
-      .populate('studentId', 'name email')
-      .populate('items.testId', 'title companyId')
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const total = await Order.countDocuments(query);
-
-    res.json({
-      success: true,
-      data: {
-        orders,
-        pagination: {
-          current: parseInt(page),
-          pages: Math.ceil(total / limit),
-          total
-        }
-      }
-    });
-
-  } catch (error) {
-    console.error('Get orders error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get orders'
     });
   }
 });

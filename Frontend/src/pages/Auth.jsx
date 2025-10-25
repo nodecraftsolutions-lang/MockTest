@@ -134,7 +134,18 @@ const Auth = () => {
         if (result.success) {
           setCharacterState('success');
           showSuccess('Login successful!');
-          setTimeout(() => navigate('/student'), 1000);
+          // Check if there's a redirect URL stored in localStorage
+          const redirectUrl = localStorage.getItem('redirectAfterLogin');
+          if (redirectUrl) {
+            // Remove the redirect URL from localStorage
+            localStorage.removeItem('redirectAfterLogin');
+            // Redirect to the stored URL
+            setTimeout(() => navigate(redirectUrl), 1000);
+          } else {
+            // Redirect based on user role
+            const userRole = result.data?.student?.role || 'student'; // Default to student if role not specified
+            setTimeout(() => navigate(userRole === 'admin' ? '/admin' : '/student'), 1000);
+          }
         } else {
           setCharacterState('error');
           showError(result.message || 'Login failed');
@@ -152,7 +163,18 @@ const Auth = () => {
           setCharacterState('success');
           showSuccess('Registration successful!');
           if (result.autoLogin) {
-            setTimeout(() => navigate('/student'), 1000);
+            // Check if there's a redirect URL stored in localStorage
+            const redirectUrl = localStorage.getItem('redirectAfterLogin');
+            if (redirectUrl) {
+              // Remove the redirect URL from localStorage
+              localStorage.removeItem('redirectAfterLogin');
+              // Redirect to the stored URL
+              setTimeout(() => navigate(redirectUrl), 1000);
+            } else {
+              // Redirect based on user role
+              const userRole = result.data?.student?.role || 'student'; // Default to student if role not specified
+              setTimeout(() => navigate(userRole === 'admin' ? '/admin' : '/student'), 1000);
+            }
           } else {
             setTimeout(() => {
               setIsLogin(true);
@@ -301,14 +323,14 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className={`bg-white rounded-2xl shadow-xl overflow-hidden max-w-4xl w-full transition-all duration-500 ease-in-out ${animateForm ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
         <div className="md:flex">
           {/* Left side - Animated Character */}
           <div className="md:w-1/2 bg-gradient-to-br from-blue-50 to-indigo-100 p-8 flex flex-col items-center justify-center">
             <div className="mb-6">
               <Link to="/" className="flex items-center space-x-2">
-                <div className="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
                   <span className="text-white font-bold text-2xl">P</span>
                 </div>
                 <span className="text-2xl font-bold text-gray-900">PrepZone</span>

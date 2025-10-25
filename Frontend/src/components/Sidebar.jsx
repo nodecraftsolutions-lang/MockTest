@@ -221,7 +221,7 @@ const Sidebar = ({ type = "student", onStateChange }) => {
               <div className="flex items-center">
                 <Link to="/" className="flex items-center space-x-2">
                   <img
-                    src="../Logo_3.png"
+                    src="../Final Logo.png"
                     alt="MockTest Pro Logo"
                     className="h-7 w-auto"
                   />
@@ -493,6 +493,14 @@ const Sidebar = ({ type = "student", onStateChange }) => {
                   to="/admin/payments" 
                   icon={DollarSign} 
                   label="Payments" 
+                  showLabel={!isCollapsed}
+                />
+              </div>
+              <div className="mb-1">
+                <NavItem 
+                  to="/admin/alumni" 
+                  icon={GraduationCap} 
+                  label="Alumni" 
                   showLabel={!isCollapsed}
                 />
               </div>

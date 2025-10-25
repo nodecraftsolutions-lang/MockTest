@@ -52,10 +52,12 @@ import ManageCompanies from './pages/Admin/Companies';
 import ManageTests from './pages/Admin/Tests';
 import QuestionBanks from './pages/Admin/QuestionBanks';
 import ManageStudents from './pages/Admin/Students';
+import ManageAlumni from './pages/Admin/Alumni';
 import AdminResults from './pages/Admin/Results';
 import ManagePayments from './pages/Admin/Payments';
 import AdminSettings from './pages/Admin/Settings';
 import NotFound3D from './pages/NotFound3D'
+import ColorTest from './components/ColorTest';
 import './index.css';
 import DynamicGenerateQuestions from './pages/Admin/MockTest/GenerateQuestions';
 import ResourceManagement from './pages/Admin/Course/ResourceManagement';
@@ -76,6 +78,7 @@ function App() {
               <Route path="mock-tests" element={<MockTests />} />
               <Route path="about" element={<About />} />
               <Route path="auth" element={<Auth />} />
+              <Route path="color-test" element={<ColorTest />} />
             </Route>
 
             {/* Student Dashboard Routes */}
@@ -146,14 +149,13 @@ function App() {
 
 
 
-
-
               <Route index element={<AdminDashboard />} />
               <Route path="companies" element={<ManageCompanies />} />
               <Route path="tests" element={<ManageTests />} />
               <Route path="question-banks" element={<QuestionBanks />} />
               <Route path="mocktest-management" element={<CompanyTestManagement />} />
               <Route path="students" element={<ManageStudents />} />
+              <Route path="alumni" element={<ManageAlumni />} />
               <Route path="results" element={<AdminResults />} />
               <Route path="payments" element={<ManagePayments />} />
               <Route path="settings" element={<AdminSettings />} />

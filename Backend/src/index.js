@@ -16,6 +16,7 @@ const courseRoutes = require('./routes/course');
 const questionBankRoutes = require('./routes/questionBank');
 const recordingRoutes = require('./routes/recordings');
 const enrollmentRoutes = require('./routes/enrollment');
+const alumniRoutes = require('./routes/alumni');
 
 const socketConfig = require('./socket/socketConfig');
 
@@ -59,6 +60,7 @@ app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/question-banks', questionBankRoutes);
 app.use('/api/v1/enrollments', enrollmentRoutes);
 app.use('/api/v1/recordings', recordingRoutes);
+app.use('/api/v1/alumni', alumniRoutes);
 
 // ✅ Simple 404 handler
 app.use('*', (req, res) => {

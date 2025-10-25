@@ -1,0 +1,42 @@
+/* Color Palette from Logo Image */
+:root {
+  /* Primary color - Trinidad (#f05a00) */
+  --trinidad: #f05a00;
+  --trinidad-50: #fef8f2;
+  --trinidad-100: #fce1c3;
+  --trinidad-200: #f9c996;
+  --trinidad-300: #f5ad70;
+  --trinidad-400: #f27915;
+  --trinidad-500: #f05a00;
+  --trinidad-600: #d44900;
+  --trinidad-700: #b03d00;
+  --trinidad-800: #8c3100;
+  --trinidad-900: #682500;
+  
+  /* Secondary color - Blue Whale (#05253d) */
+  --blue-whale: #05253d;
+  --blue-whale-50: #f0f4f7;
+  --blue-whale-100: #d9e2e9;
+  --blue-whale-200: #a2b0b9;
+  --blue-whale-300: #7a8a99;
+  --blue-whale-400: #4b677a;
+  --blue-whale-500: #05253d;
+  --blue-whale-600: #041f34;
+  --blue-whale-700: #03192b;
+  --blue-whale-800: #021321;
+  --blue-whale-900: #010d17;
+  
+  /* Background color - Spring Wood (#faf9f4) */
+  --spring-wood: #faf9f4;
+  
+  /* Accent colors */
+  --rajah: #f5ad70;
+  --gull-gray: #a2b0b9;
+  --tango: #f27915;
+  --banana-mania: #fce1c3;
+  
+  /* Text colors */
+  --foreground: var(--blue-whale-500);
+  --muted-foreground: var(--blue-whale-400);
+  --background: var(--spring-wood);
+}

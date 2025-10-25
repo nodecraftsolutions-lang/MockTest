@@ -3,6 +3,10 @@ import Cookies from 'js-cookie';
 
 // ✅ Dynamic base URL for deployment flexibility
 const getBaseURL = () => {
+  // Use localhost for development, production URL for production
+  if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') {
+    return 'http://localhost:8000/api/v1';
+  }
   return 'https://mocktest-bckx.onrender.com/api/v1';
 };
 
