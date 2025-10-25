@@ -26,7 +26,6 @@ import RecordingsManagement from './pages/Admin/Recordings/RecordingsManagement'
 import Home from './pages/Home';
 import MockTests from './pages/MockTests';
 import About from './pages/About';
-import Contact from './pages/Contact';
 import Auth from './pages/Auth';
 
 // Student Pages
@@ -76,9 +75,7 @@ function App() {
               <Route index element={<Home />} />
               <Route path="mock-tests" element={<MockTests />} />
               <Route path="about" element={<About />} />
-              <Route path="contact" element={<Contact />} />
               <Route path="auth" element={<Auth />} />
-              <Route path="/student/contact" element={<Contact />} />
             </Route>
 
             {/* Student Dashboard Routes */}
