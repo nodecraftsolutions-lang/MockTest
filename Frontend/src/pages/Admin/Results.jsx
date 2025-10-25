@@ -97,7 +97,9 @@ const AdminResults = () => {
         const attempt = response.data.data[0]; // Get the first (and only) attempt
         
         // Safely extract company name
-        const companyName = attempt.testId?.companyId?.name || 'Unknown Company';
+        const companyName = attempt.testId?.companyId?.name || 
+                           attempt.testId?.company?.name || 
+                           'No Company Assigned';
         
         // Create CSV content
         const csvContent = `Student Name,Student Email,Test Title,Company,Score,Percentage,Status,Start Time,End Time,Duration (mins),Attempted Questions,Correct Answers,Rank,Percentile
@@ -320,7 +322,9 @@ ${attempt.studentId?.name || 'N/A'},${attempt.studentId?.email || 'N/A'},${attem
                         {result.testId?.title || 'Unknown Test'}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {result.testId?.companyId?.name || 'Unknown Company'}
+                        {result.testId?.companyId?.name || 
+                         result.testId?.company?.name || 
+                         'No Company Assigned'}
                       </div>
                     </div>
                   </td>
@@ -467,7 +471,11 @@ ${attempt.studentId?.name || 'N/A'},${attempt.studentId?.email || 'N/A'},${attem
                       
                       <div>
                         <label className="text-sm font-medium text-gray-500">Company</label>
-                        <p className="text-gray-900">{selectedResult.testId?.companyId?.name || 'Unknown Company'}</p>
+                        <p className="text-gray-900">
+                          {selectedResult.testId?.companyId?.name || 
+                           selectedResult.testId?.company?.name || 
+                           'No Company Assigned'}
+                        </p>
                       </div>
                     </div>
                   </div>

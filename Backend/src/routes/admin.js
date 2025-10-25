@@ -338,18 +338,39 @@ router.get('/results', adminAuth, async (req, res) => {
 
     const attempts = await Attempt.find(query)
       .populate('studentId', 'name email')
-      .populate('testId', 'title companyId')
-      .populate('testId.companyId', 'name')
-      .sort(sortOptions)
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+      .populate({
+        path: 'testId',
+        select: 'title companyId',
+        populate: {
+          path: 'companyId',
+          select: 'name'
+        }
+      })
+      .sort(sortOptions);
 
-    const total = await Attempt.countDocuments(query);
+    // Group attempts by studentId and testId and keep only the most recent one for each combination
+    const groupedAttempts = attempts.reduce((acc, attempt) => {
+      const studentId = attempt.studentId?._id.toString();
+      const testId = attempt.testId?._id.toString();
+      if (!studentId || !testId) return acc;
+      
+      const key = `${studentId}-${testId}`;
+      // If this is the first attempt for this student/test combination, or if this attempt is more recent
+      if (!acc[key] || new Date(attempt.createdAt) > new Date(acc[key].createdAt)) {
+        acc[key] = attempt;
+      }
+      return acc;
+    }, {});
+
+    // Convert grouped object back to array and apply pagination
+    const allUniqueAttempts = Object.values(groupedAttempts);
+    const total = allUniqueAttempts.length;
+    const paginatedAttempts = allUniqueAttempts.slice((page - 1) * limit, page * limit);
 
     res.json({
       success: true,
       data: {
-        attempts,
+        attempts: paginatedAttempts,
         pagination: {
           current: parseInt(page),
           pages: Math.ceil(total / limit),
@@ -411,15 +432,32 @@ router.get('/results/export', adminAuth, async (req, res) => {
       .populate('testId.companyId', 'name')
       .sort({ createdAt: -1 });
 
+    // Group attempts by studentId and testId and keep only the most recent one for each combination
+    const groupedAttempts = attempts.reduce((acc, attempt) => {
+      const studentId = attempt.studentId?._id.toString();
+      const testId = attempt.testId?._id.toString();
+      if (!studentId || !testId) return acc;
+      
+      const key = `${studentId}-${testId}`;
+      // If this is the first attempt for this student/test combination, or if this attempt is more recent
+      if (!acc[key] || new Date(attempt.createdAt) > new Date(acc[key].createdAt)) {
+        acc[key] = attempt;
+      }
+      return acc;
+    }, {});
+
+    // Convert grouped object back to array
+    const uniqueAttempts = Object.values(groupedAttempts);
+
     if (format === 'json') {
       return res.json({
         success: true,
-        data: attempts
+        data: uniqueAttempts
       });
     }
 
     // For CSV format
-    if (attempts.length === 0) {
+    if (uniqueAttempts.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'No data found for export'
@@ -445,7 +483,7 @@ router.get('/results/export', adminAuth, async (req, res) => {
     ].join(',');
 
     // Create CSV rows
-    const rows = attempts.map(attempt => {
+    const rows = uniqueAttempts.map(attempt => {
       return [
         attempt.studentId?.name || 'N/A',
         attempt.studentId?.email || 'N/A',
