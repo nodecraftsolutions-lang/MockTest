@@ -24,7 +24,7 @@ const Results = () => {
 
   useEffect(() => {
     fetchAttempts();
-  }, [filter, sortBy, sortOrder]);
+  }, [filter, sortBy, sortOrder, searchQuery]);
 
   const fetchAttempts = async () => {
     try {
@@ -52,7 +52,19 @@ const Results = () => {
   const sortedAttempts = useMemo(() => {
     if (!attempts.length) return [];
     
-    let filtered = [...attempts];
+    // Group attempts by testId and keep only the most recent one
+    const groupedAttempts = attempts.reduce((acc, attempt) => {
+      const testId = attempt.testId?._id || attempt.testId;
+      if (!testId) return acc;
+      
+      if (!acc[testId] || new Date(attempt.createdAt) > new Date(acc[testId].createdAt)) {
+        acc[testId] = attempt;
+      }
+      return acc;
+    }, {});
+    
+    // Convert grouped object back to array
+    let filtered = Object.values(groupedAttempts);
     
     // Apply search filter
     if (searchQuery.trim()) {
@@ -60,7 +72,8 @@ const Results = () => {
       filtered = filtered.filter(
         attempt => 
           (attempt.testId?.title?.toLowerCase().includes(query)) ||
-          (attempt.testId?.companyId?.name?.toLowerCase().includes(query))
+          (attempt.testId?.companyId?.name?.toLowerCase().includes(query)) ||
+          (attempt.testId?.company?.name?.toLowerCase().includes(query))
       );
     }
     
@@ -316,22 +329,28 @@ const Results = () => {
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">{attempt.testId?.title || "Untitled Test"}</div>
-                          <div className="text-sm text-gray-500">{attempt.testId?.companyId?.name || "N/A"}</div>
+                          <div className="text-sm text-gray-500">
+                            {attempt.testId?.companyId?.name || 
+                             (attempt.testId?.company?.name) || 
+                             "No Company Assigned"}
+                          </div>
                         </div>
                       </div>
                     </td>
 
                     {/* Score */}
                     <td className="px-6 py-4">
-                      <div className="text-lg font-semibold text-gray-900">{attempt.score || "N/A"}</div>
+                      <div className="text-lg font-semibold text-gray-900">
+                        {attempt.score !== undefined && attempt.score !== null ? attempt.score : "N/A"}
+                      </div>
                       <div className="text-sm text-gray-500">
                         {attempt.correctAnswers || 0}/{attempt.totalQuestions || 0} correct
                       </div>
-                      {attempt.score && (
+                      {attempt.score !== undefined && attempt.score !== null && (
                         <div className="mt-1 w-full bg-gray-200 rounded-full h-1.5">
                           <div 
                             className="bg-primary-600 h-1.5 rounded-full" 
-                            style={{ width: `${(attempt.score / (attempt.totalMarks || 100)) * 100}%` }}
+                            style={{ width: `${(attempt.score / (attempt.testId?.totalMarks || 100)) * 100}%` }}
                           ></div>
                         </div>
                       )}
@@ -433,17 +452,12 @@ const Results = () => {
                 </button>
               )}
               <Link 
-                to="/student/tests" 
+                to="/student/mock-tests" 
                 className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
               >
                 Browse Tests
               </Link>
-              <Link 
-                to="/student/mock-tests" 
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-              >
-                Take Mock Test
-              </Link>
+              
             </div>
           </motion.div>
         )}

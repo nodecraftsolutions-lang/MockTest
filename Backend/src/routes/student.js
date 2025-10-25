@@ -183,17 +183,36 @@ router.get('/attempts', auth, async (req, res) => {
     if (testId) query.testId = testId;
 
     const attempts = await Attempt.find(query)
-      .populate('testId', 'title type companyId duration totalQuestions')
-      .populate('testId.companyId', 'name logoUrl')
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+      .populate({
+        path: 'testId',
+        select: 'title type companyId duration totalQuestions totalMarks',
+        populate: {
+          path: 'companyId',
+          select: 'name logoUrl'
+        }
+      })
+      .sort({ createdAt: -1 });
 
-    const total = await Attempt.countDocuments(query);
+    // Group attempts by testId and keep only the most recent one for each test
+    const groupedAttempts = attempts.reduce((acc, attempt) => {
+      const testId = attempt.testId?._id.toString();
+      if (!testId) return acc;
+      
+      // If this is the first attempt for this test, or if this attempt is more recent
+      if (!acc[testId] || new Date(attempt.createdAt) > new Date(acc[testId].createdAt)) {
+        acc[testId] = attempt;
+      }
+      return acc;
+    }, {});
+
+    // Convert grouped object back to array and apply pagination
+    const allUniqueAttempts = Object.values(groupedAttempts);
+    const total = allUniqueAttempts.length;
+    const paginatedAttempts = allUniqueAttempts.slice((page - 1) * limit, page * limit);
 
     res.json({
       success: true,
-      data: { attempts, pagination: { current: page, pages: Math.ceil(total / limit), total } }
+      data: { attempts: paginatedAttempts, pagination: { current: page, pages: Math.ceil(total / limit), total } }
     });
   } catch (error) {
     console.error('Get attempts error:', error);
