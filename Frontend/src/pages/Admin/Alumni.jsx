@@ -36,25 +36,25 @@ const ManageAlumni = () => {
   });
 
   // Fetch alumni from backend
-  useEffect(() => {
-    const fetchAlumni = async () => {
-      try {
-        const params = new URLSearchParams();
-        if (filterStatus !== 'all') params.append('status', filterStatus);
+  const fetchAlumni = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (filterStatus !== 'all') params.append('status', filterStatus);
 
-        const response = await api.get(`/alumni?${params.toString()}`);
-        if (response.data.success) {
-          setAlumni(response.data.data.alumni);
-        } else {
-          showError(response.data.message || 'Failed to load alumni');
-        }
-      } catch (error) {
-        showError('Failed to load alumni');
-      } finally {
-        setLoading(false);
+      const response = await api.get(`/alumni?${params.toString()}`);
+      if (response.data.success) {
+        setAlumni(response.data.data.alumni);
+      } else {
+        showError(response.data.message || 'Failed to load alumni');
       }
-    };
+    } catch (error) {
+      showError('Failed to load alumni');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchAlumni();
   }, [filterStatus]);
 
@@ -136,35 +136,20 @@ const ManageAlumni = () => {
       }
       
       if (response.data.success) {
-        // Add a small delay to ensure state updates properly
-        setTimeout(() => {
-          showSuccess(selectedAlumni ? 'Alumni updated successfully' : 'Alumni created successfully');
-          if (selectedAlumni) {
-            setShowEditModal(false);
-          } else {
-            setShowAddModal(false);
-          }
-          fetchAlumni();
-          resetForm();
-        }, 100);
-      } else {
-        showError(response.data.message || 'Failed to save alumni');
-      }
-    } catch (error) {
-      // Even if there's an error, if the alumni was created/updated successfully, don't show error
-      // This handles cases where the request succeeds but the response has issues
-      if (error.response?.status === 200 || error.response?.status === 201) {
         showSuccess(selectedAlumni ? 'Alumni updated successfully' : 'Alumni created successfully');
         if (selectedAlumni) {
           setShowEditModal(false);
         } else {
           setShowAddModal(false);
         }
+        // Refresh the alumni list
         fetchAlumni();
         resetForm();
       } else {
-        showError(error.response?.data?.message || 'Failed to save alumni');
+        showError(response.data.message || 'Failed to save alumni');
       }
+    } catch (error) {
+      showError(error.response?.data?.message || 'Failed to save alumni');
     }
   };
 
@@ -174,6 +159,7 @@ const ManageAlumni = () => {
         const response = await api.delete(`/alumni/${alumniId}`);
         if (response.data.success) {
           showSuccess('Alumni deleted successfully');
+          // Refresh the alumni list
           fetchAlumni();
         } else {
           showError(response.data.message || 'Failed to delete alumni');

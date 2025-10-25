@@ -146,12 +146,9 @@ router.post('/',
         });
       }
       
-      // Return success even if there's an error to prevent the frontend from showing an error message
-      // when the operation actually succeeded
-      res.status(201).json({
-        success: true,
-        message: 'Alumni created successfully',
-        data: null
+      res.status(500).json({
+        success: false,
+        message: 'Failed to create alumni'
       });
     }
   }
@@ -269,12 +266,17 @@ router.put('/:id',
         });
       }
       
-      // Return success even if there's an error to prevent the frontend from showing an error message
-      // when the operation actually succeeded
-      res.json({
-        success: true,
-        message: 'Alumni updated successfully',
-        data: null
+      // Check if this is a CastError (invalid ID format)
+      if (error.name === 'CastError') {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid alumni ID'
+        });
+      }
+      
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update alumni'
       });
     }
   }
@@ -301,6 +303,14 @@ router.delete('/:id', adminAuth, async (req, res) => {
 
   } catch (error) {
     console.error('Delete alumni error:', error);
+    // Check if this is a CastError (invalid ID format)
+    if (error.name === 'CastError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid alumni ID'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Failed to delete alumni'
