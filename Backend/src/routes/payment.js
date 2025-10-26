@@ -9,6 +9,7 @@ const Student = require('../models/Student');
 const Course = require('../models/Course');
 const Enrollment = require('../models/Enrollment');
 const RecordingEnrollment = require('../models/RecordingEnrollment');
+const { generateReceiptPDF } = require('../utils/receiptGenerator'); // Add this import
 
 const router = express.Router();
 
@@ -1501,17 +1502,84 @@ router.get('/orders/:orderId/receipt', auth, async (req, res) => {
     // Generate receipt data
     const receiptData = order.getReceiptData();
     
-    res.json({
-      success: true,
-      data: {
-        receipt: receiptData
-      }
-    });
+    // Generate PDF receipt
+    const pdfBuffer = await generateReceiptPDF(receiptData);
+    
+    // Set headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="receipt-${order.orderId}.pdf"`);
+    res.send(pdfBuffer);
+    
   } catch (error) {
     console.error('Get receipt error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to get receipt'
+      message: 'Failed to generate receipt'
+    });
+  }
+});
+
+// @route   GET /api/v1/admin/orders/:orderId/receipt
+// @desc    Get receipt for an order (Admin version - no auth check)
+// @access  Private/Admin
+router.get('/admin/orders/:orderId/receipt', adminAuth, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    
+    // Find order by ID (admin can access any order)
+    const order = await Order.findById(orderId).populate([
+      {
+        path: 'items.testId',
+        select: 'title'
+      },
+      {
+        path: 'items.courseId',
+        select: 'title'
+      },
+      {
+        path: 'studentId',
+        select: 'name email'
+      }
+    ]);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    // Generate receipt data
+    const receiptData = {
+      orderId: order.orderId,
+      receiptNumber: order.receipt?.receiptNumber || order.orderId,
+      studentName: order.studentId?.name || order.billingDetails?.name || 'N/A',
+      email: order.studentId?.email || order.billingDetails?.email || 'N/A',
+      mobile: order.billingDetails?.mobile || 'N/A',
+      items: order.items,
+      totalAmount: order.totalAmount,
+      currency: order.currency,
+      paymentMethod: order.paymentMethod,
+      transactionId: order.transactionId,
+      paymentDate: order.updatedAt,
+      taxes: order.taxes,
+      discount: order.discountApplied,
+      metadata: order.metadata
+    };
+    
+    // Generate PDF receipt
+    const pdfBuffer = await generateReceiptPDF(receiptData);
+    
+    // Set headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="receipt-${order.orderId}.pdf"`);
+    res.send(pdfBuffer);
+    
+  } catch (error) {
+    console.error('Get receipt error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate receipt'
     });
   }
 });
@@ -1554,12 +1622,21 @@ router.post('/orders/:id/refund', adminAuth, [
       });
     }
 
-    const refundAmount = amount || order.totalAmount;
+    // Validate refund amount
+    const refundAmount = amount ? parseFloat(amount) : order.totalAmount;
     
     if (refundAmount > order.totalAmount) {
       return res.status(400).json({
         success: false,
         message: 'Refund amount cannot exceed order amount'
+      });
+    }
+
+    // Check if order already has a refund
+    if (order.refund && order.refund.refundStatus === 'completed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Order has already been refunded'
       });
     }
 

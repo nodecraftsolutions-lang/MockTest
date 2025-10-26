@@ -7,6 +7,8 @@ const Test = require('../models/Test');
 const Attempt = require('../models/Attempt');
 const Order = require('../models/Order');
 const Alumni = require('../models/Alumni');
+const PDFDocument = require('pdfkit');
+const { generateReceiptPDF } = require('../utils/receiptGenerator');
 
 const router = express.Router();
 
@@ -87,6 +89,7 @@ router.get('/dashboard', adminAuth, async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(5);
 
+    // Enhanced recent orders with more details like in payments page
     const recentOrders = await Order.find()
       .populate('studentId', 'name email')
       .sort({ createdAt: -1 })
@@ -590,9 +593,10 @@ router.get('/results/export', adminAuth, async (req, res) => {
 router.get('/orders', adminAuth, async (req, res) => {
   try {
     const { 
-      page = 1, 
-      limit = 20, 
+      page, 
+      limit, 
       status,
+      type, // New filter for order type
       fromDate,
       toDate,
       sortBy = 'createdAt',
@@ -603,6 +607,37 @@ router.get('/orders', adminAuth, async (req, res) => {
     
     if (status && status !== 'all') {
       query.paymentStatus = status;
+    }
+
+    // Add type filtering logic
+    if (type && type !== 'all') {
+      // For type filtering, we need to check the items array
+      if (type === 'Mock Tests') {
+        // Find orders that have test items but no course items
+        query.$and = [
+          { 'items.testId': { $exists: true, $ne: null } },
+          { 'items.courseId': { $exists: false } }
+        ];
+      } else if (type === 'Courses') {
+        // Find orders that have course items but no test items, and are not recordings
+        query.$and = [
+          { 'items.courseId': { $exists: true, $ne: null } },
+          { 'items.testId': { $exists: false } },
+          { 'metadata.type': { $ne: 'recording' } }
+        ];
+      } else if (type === 'Recordings') {
+        // Find orders that have course items and are marked as recordings
+        query.$and = [
+          { 'items.courseId': { $exists: true, $ne: null } },
+          { 'metadata.type': 'recording' }
+        ];
+      } else if (type === 'Mixed') {
+        // Find orders that have both test and course items
+        query.$and = [
+          { 'items.testId': { $exists: true, $ne: null } },
+          { 'items.courseId': { $exists: true, $ne: null } }
+        ];
+      }
     }
 
     if (fromDate || toDate) {
@@ -618,23 +653,31 @@ router.get('/orders', adminAuth, async (req, res) => {
     const sortOptions = {};
     sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
-    const orders = await Order.find(query)
-      .populate('studentId', 'name email')
-      .sort(sortOptions)
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+    // If no limit is specified, fetch all orders
+    let ordersQuery = Order.find(query).populate('studentId', 'name email').sort(sortOptions);
+    
+    // Only apply pagination if both page and limit are provided
+    if (page && limit) {
+      ordersQuery = ordersQuery.limit(limit * 1).skip((page - 1) * limit);
+    }
 
+    const orders = await ordersQuery;
     const total = await Order.countDocuments(query);
 
     res.json({
       success: true,
       data: {
         orders,
-        pagination: {
-          current: parseInt(page),
-          pages: Math.ceil(total / limit),
+        // Only include pagination info if pagination was applied
+        ...(page && limit ? {
+          pagination: {
+            current: parseInt(page),
+            pages: Math.ceil(total / limit),
+            total
+          }
+        } : {
           total
-        }
+        })
       }
     });
 
@@ -643,6 +686,291 @@ router.get('/orders', adminAuth, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to get orders'
+    });
+  }
+});
+
+// @route   GET /api/v1/admin/orders/export
+// @desc    Export orders as CSV or PDF (Admin only)
+// @access  Private/Admin
+router.get('/orders/export', adminAuth, async (req, res) => {
+  try {
+    const { 
+      status,
+      type, // Add type filter to export
+      fromDate,
+      toDate,
+      format = 'csv'
+    } = req.query;
+
+    const query = {};
+    
+    if (status && status !== 'all') {
+      query.paymentStatus = status;
+    }
+
+    // Add type filtering logic for export
+    if (type && type !== 'all') {
+      // For type filtering, we need to check the items array
+      if (type === 'Mock Tests') {
+        // Find orders that have test items but no course items
+        query.$and = [
+          { 'items.testId': { $exists: true, $ne: null } },
+          { 'items.courseId': { $exists: false } }
+        ];
+      } else if (type === 'Courses') {
+        // Find orders that have course items but no test items, and are not recordings
+        query.$and = [
+          { 'items.courseId': { $exists: true, $ne: null } },
+          { 'items.testId': { $exists: false } },
+          { 'metadata.type': { $ne: 'recording' } }
+        ];
+      } else if (type === 'Recordings') {
+        // Find orders that have course items and are marked as recordings
+        query.$and = [
+          { 'items.courseId': { $exists: true, $ne: null } },
+          { 'metadata.type': 'recording' }
+        ];
+      } else if (type === 'Mixed') {
+        // Find orders that have both test and course items
+        query.$and = [
+          { 'items.testId': { $exists: true, $ne: null } },
+          { 'items.courseId': { $exists: true, $ne: null } }
+        ];
+      }
+    }
+
+    if (fromDate || toDate) {
+      query.createdAt = {};
+      if (fromDate) {
+        query.createdAt.$gte = new Date(fromDate);
+      }
+      if (toDate) {
+        query.createdAt.$lte = new Date(toDate);
+      }
+    }
+
+    const orders = await Order.find(query)
+      .populate('studentId', 'name email')
+      .sort({ createdAt: -1 });
+
+    if (format === 'json') {
+      return res.json({
+        success: true,
+        data: orders
+      });
+    }
+
+    // For PDF format
+    if (format === 'pdf') {
+      // Create a document
+      const doc = new PDFDocument({
+        size: 'A4',
+        margin: 50
+      });
+
+      // Set response headers for PDF
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="orders-${new Date().toISOString().split('T')[0]}.pdf"`);
+      
+      // Pipe the PDF to the response
+      doc.pipe(res);
+
+      // Header
+      doc.fontSize(20).text('Payment Orders Report', { align: 'center' });
+      doc.moveDown();
+      
+      // Report Info
+      const dateRangeText = fromDate && toDate ? `${fromDate} to ${toDate}` : 'All Time';
+      doc.fontSize(12).text(`Report Date: ${new Date().toLocaleDateString()}`, { align: 'right' });
+      doc.fontSize(10).text(`Period: ${dateRangeText}`, { align: 'right' });
+      doc.moveDown(2);
+
+      // Summary Statistics
+      const totalOrders = orders.length;
+      const totalRevenue = orders
+        .filter(o => o.paymentStatus === 'completed')
+        .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+      const completedOrders = orders.filter(o => o.paymentStatus === 'completed').length;
+      const failedOrders = orders.filter(o => o.paymentStatus === 'failed').length;
+
+      doc.fontSize(14).text('Summary:', { underline: true });
+      doc.moveDown();
+      doc.fontSize(10);
+      doc.text(`Total Orders: ${totalOrders}`);
+      doc.text(`Total Revenue: ₹${totalRevenue.toLocaleString()}`);
+      doc.text(`Completed Orders: ${completedOrders}`);
+      doc.text(`Failed Orders: ${failedOrders}`);
+      doc.moveDown(2);
+
+      // Orders Table Header
+      if (orders.length > 0) {
+        doc.fontSize(14).text('Orders Details:', { underline: true });
+        doc.moveDown();
+        
+        // Table headers
+        const tableTop = doc.y;
+        const columns = [
+          { label: 'Order ID', width: 100 },
+          { label: 'Student', width: 120 },
+          { label: 'Items', width: 60 },
+          { label: 'Amount', width: 70 },
+          { label: 'Status', width: 80 },
+          { label: 'Date', width: 80 }
+        ];
+        
+        let currentX = 50;
+        doc.fontSize(10).font('Helvetica-Bold');
+        columns.forEach(col => {
+          doc.text(col.label, currentX, tableTop);
+          currentX += col.width;
+        });
+        doc.font('Helvetica');
+        
+        doc.moveDown();
+        doc.moveTo(50, doc.y).lineTo(50 + columns.reduce((sum, col) => sum + col.width, 0), doc.y).stroke();
+        doc.moveDown(0.5);
+
+        // Orders data
+        let yPos = doc.y;
+        orders.slice(0, 100).forEach((order, index) => { // Limit to first 100 orders for readability
+          if (yPos > 750) { // Create new page if needed
+            doc.addPage();
+            yPos = 50;
+          }
+          
+          currentX = 50;
+          doc.fontSize(8);
+          doc.text(`#${order.orderId?.substring(0, 10) || 'N/A'}`, currentX, yPos);
+          currentX += columns[0].width;
+          
+          doc.text(order.studentId?.name?.substring(0, 15) || 'N/A', currentX, yPos);
+          currentX += columns[1].width;
+          
+          doc.text(order.items?.length || 0, currentX, yPos);
+          currentX += columns[2].width;
+          
+          doc.text(`₹${order.totalAmount?.toLocaleString() || 0}`, currentX, yPos);
+          currentX += columns[3].width;
+          
+          doc.text(order.paymentStatus?.substring(0, 10) || 'N/A', currentX, yPos);
+          currentX += columns[4].width;
+          
+          doc.text(new Date(order.createdAt).toLocaleDateString(), currentX, yPos);
+          
+          yPos += 15;
+        });
+        
+        if (orders.length > 100) {
+          doc.moveDown();
+          doc.fontSize(8).text(`... and ${orders.length - 100} more orders`);
+        }
+      } else {
+        doc.fontSize(12).text('No orders found for the selected criteria.');
+      }
+
+      // Footer
+      doc.moveDown(3);
+      doc.fontSize(10).text('Generated by MockTest Pro Payment System', { align: 'center' });
+
+      // Finalize PDF
+      doc.end();
+      return;
+    }
+
+    // For CSV format (default)
+    if (orders.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No data found for export'
+      });
+    }
+
+    // Create CSV headers with more detailed information
+    const headers = [
+      'Order ID',
+      'Student Name',
+      'Student Email',
+      'Order Type',
+      'Items Count',
+      'Item Details',
+      'Amount',
+      'Currency',
+      'Status',
+      'Payment Method',
+      'Payment Gateway Order ID',
+      'Transaction ID',
+      'Discount Code',
+      'Discount Amount',
+      'Tax Amount',
+      'Created At',
+      'Updated At'
+    ].join(',');
+
+    // Create CSV rows
+    const rows = orders.map(order => {
+      // Determine order type
+      let orderType = 'Unknown';
+      if (order.items && order.items.length > 0) {
+        const hasTests = order.items.some(item => item.testId);
+        const hasCourses = order.items.some(item => item.courseId);
+        
+        if (hasTests && !hasCourses) {
+          orderType = 'Mock Tests';
+        } else if (hasCourses && !hasTests) {
+          if (order.metadata?.type === 'recording') {
+            orderType = 'Recordings';
+          } else {
+            orderType = 'Courses';
+          }
+        } else if (hasTests && hasCourses) {
+          orderType = 'Mixed';
+        }
+      }
+      
+      // Create item details string
+      const itemDetails = order.items?.map(item => {
+        if (item.testId) {
+          return `${item.testTitle || 'Test'} (₹${item.price})`;
+        } else if (item.courseId) {
+          const type = order.metadata?.type === 'recording' ? 'Recording' : 'Course';
+          return `${item.courseTitle || 'Course'} ${type} (₹${item.price})`;
+        }
+        return 'Unknown Item';
+      }).join('; ') || 'No Items';
+
+      return [
+        order.orderId || 'N/A',
+        order.studentId?.name || 'N/A',
+        order.studentId?.email || 'N/A',
+        orderType,
+        order.items?.length || 0,
+        `"${itemDetails}"`,
+        order.totalAmount || 0,
+        order.currency || 'INR',
+        order.paymentStatus || 'N/A',
+        order.paymentMethod || 'N/A',
+        order.paymentGatewayOrderId || 'N/A',
+        order.transactionId || 'N/A',
+        order.discountApplied?.couponCode || 'N/A',
+        order.discountApplied?.discountAmount || 0,
+        order.taxes?.totalTax || 0,
+        order.createdAt ? new Date(order.createdAt).toISOString() : 'N/A',
+        order.updatedAt ? new Date(order.updatedAt).toISOString() : 'N/A'
+      ].join(',');
+    });
+
+    const csvContent = [headers, ...rows].join('\n');
+    
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="orders-${new Date().toISOString().split('T')[0]}.csv"`);
+    res.status(200).send(csvContent);
+
+  } catch (error) {
+    console.error('Export orders error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to export orders'
     });
   }
 });
@@ -686,90 +1014,127 @@ router.get('/orders/:id', adminAuth, async (req, res) => {
   }
 });
 
-// @route   GET /api/v1/admin/orders/export
-// @desc    Export orders as CSV (Admin only)
+// @route   PUT /api/v1/admin/orders/:id/status
+// @desc    Update order status (Admin only)
 // @access  Private/Admin
-router.get('/orders/export', adminAuth, async (req, res) => {
+router.put('/orders/:id/status', adminAuth, [
+  body('status')
+    .isIn(['pending', 'processing', 'completed', 'failed', 'cancelled', 'refunded'])
+    .withMessage('Invalid status value')
+], async (req, res) => {
   try {
-    const { 
-      status,
-      fromDate,
-      toDate,
-      format = 'csv'
-    } = req.query;
-
-    const query = {};
-    
-    if (status && status !== 'all') {
-      query.paymentStatus = status;
-    }
-
-    if (fromDate || toDate) {
-      query.createdAt = {};
-      if (fromDate) {
-        query.createdAt.$gte = new Date(fromDate);
-      }
-      if (toDate) {
-        query.createdAt.$lte = new Date(toDate);
-      }
-    }
-
-    const orders = await Order.find(query)
-      .populate('studentId', 'name email')
-      .sort({ createdAt: -1 });
-
-    if (format === 'json') {
-      return res.json({
-        success: true,
-        data: orders
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
       });
     }
 
-    // For CSV format
-    if (orders.length === 0) {
+    const { status } = req.body;
+    const orderId = req.params.id;
+
+    // Find the order
+    const order = await Order.findById(orderId);
+    
+    if (!order) {
       return res.status(404).json({
         success: false,
-        message: 'No data found for export'
+        message: 'Order not found'
       });
     }
 
-    // Create CSV headers
-    const headers = [
-      'Order ID',
-      'Student Name',
-      'Student Email',
-      'Amount',
-      'Status',
-      'Payment Gateway Order ID',
-      'Transaction ID',
-      'Created At'
-    ].join(',');
+    // Store previous status for reference
+    const previousStatus = order.paymentStatus;
 
-    // Create CSV rows
-    const rows = orders.map(order => {
-      return [
-        order.orderId || 'N/A',
-        order.studentId?.name || 'N/A',
-        order.studentId?.email || 'N/A',
-        order.totalAmount || 0,
-        order.paymentStatus || 'N/A',
-        order.paymentGatewayOrderId || 'N/A',
-        order.transactionId || 'N/A',
-        order.createdAt ? new Date(order.createdAt).toISOString() : 'N/A'
-      ].join(',');
+    // Update the status
+    order.paymentStatus = status;
+    await order.save();
+
+    res.json({
+      success: true,
+      message: 'Order status updated successfully',
+      data: {
+        order: {
+          id: order._id,
+          orderId: order.orderId,
+          previousStatus,
+          newStatus: order.paymentStatus
+        }
+      }
     });
 
-    const csvContent = [headers, ...rows].join('\n');
-    
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename="orders-${new Date().toISOString().split('T')[0]}.csv"`);
-    res.status(200).send(csvContent);
-
   } catch (error) {
-    console.error('Export orders error:', error);
+    console.error('Update order status error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to export orders'
+      message: 'Failed to update order status'
+    });
+  }
+});
+
+// @route   GET /api/v1/admin/orders/:orderId/receipt
+// @desc    Get receipt for an order (Admin version)
+// @access  Private/Admin
+router.get('/orders/:orderId/receipt', adminAuth, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    
+    // Find order by ID (admin can access any order)
+    const order = await Order.findById(orderId).populate([
+      {
+        path: 'items.testId',
+        select: 'title'
+      },
+      {
+        path: 'items.courseId',
+        select: 'title'
+      },
+      {
+        path: 'studentId',
+        select: 'name email'
+      }
+    ]);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    // Generate receipt data
+    const receiptData = {
+      orderId: order.orderId,
+      receiptNumber: order.receipt?.receiptNumber || order.orderId,
+      studentName: order.studentId?.name || order.billingDetails?.name || 'N/A',
+      email: order.studentId?.email || order.billingDetails?.email || 'N/A',
+      mobile: order.billingDetails?.mobile || 'N/A',
+      items: order.items,
+      totalAmount: order.totalAmount,
+      currency: order.currency,
+      paymentMethod: order.paymentMethod,
+      transactionId: order.transactionId,
+      paymentDate: order.updatedAt,
+      taxes: order.taxes,
+      discount: order.discountApplied,
+      metadata: order.metadata
+    };
+    
+    // Generate PDF receipt
+    const pdfBuffer = await generateReceiptPDF(receiptData);
+    
+    // Set headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="receipt-${order.orderId}.pdf"`);
+    res.send(pdfBuffer);
+    
+  } catch (error) {
+    console.error('Get receipt error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate receipt'
     });
   }
 });

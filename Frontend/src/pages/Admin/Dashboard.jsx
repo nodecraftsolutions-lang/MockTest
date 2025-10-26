@@ -55,12 +55,12 @@ const AdminDashboard = () => {
       link: '/admin/students'
     },
     {
-      title: 'Total Companies',
+      title: 'Total Created Test Companies',
       value: overview?.totalCompanies || 0,
       icon: Building,
       color: 'from-green-500 to-green-600',
       change: '+5%',
-      link: '/admin/companies'
+      link: '/admin/mocktest'
     },
     {
       title: 'Total Tests',
@@ -68,7 +68,7 @@ const AdminDashboard = () => {
       icon: BookOpen,
       color: 'from-purple-500 to-purple-600',
       change: '+8%',
-      link: '/admin/tests'
+      link: '/admin/mocktest'
     },
     {
       title: 'Total Courses',
@@ -76,7 +76,7 @@ const AdminDashboard = () => {
       icon: GraduationCap,
       color: 'from-indigo-500 to-indigo-600',
       change: '+15%',
-      link: '/admin/course/list'
+      link: '/admin/course/management'
     },
     {
       title: 'Total Revenue',
@@ -84,7 +84,7 @@ const AdminDashboard = () => {
       icon: DollarSign,
       color: 'from-orange-500 to-orange-600',
       change: '+15%',
-      link: '/admin/orders'
+      link: '/admin/payments'
     },
     {
       title: 'Total Attempts',
@@ -100,7 +100,7 @@ const AdminDashboard = () => {
       icon: Award,
       color: 'from-pink-500 to-pink-600',
       change: '+10%',
-      link: '/admin/orders'
+      link: '/admin/payments'
     },
     {
       title: 'Total Recordings',
@@ -387,7 +387,7 @@ const AdminDashboard = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Recent Orders</h3>
-          <Link to="/admin/orders" className="text-indigo-600 hover:text-indigo-700 text-sm font-medium">
+          <Link to="/admin/payments" className="text-indigo-600 hover:text-indigo-700 text-sm font-medium">
             View All
           </Link>
         </div>
@@ -398,10 +398,13 @@ const AdminDashboard = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Order ID
+                    Order Details
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Student
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Items
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Amount
@@ -412,43 +415,85 @@ const AdminDashboard = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {recentActivities.orders.map((order) => (
-                  <tr key={order._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {order.orderId}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {order.studentId?.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ₹{order.totalAmount?.toLocaleString() || 0}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        order.paymentStatus === 'completed' ? 'bg-green-100 text-green-800' :
-                        order.paymentStatus === 'failed' ? 'bg-red-100 text-red-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {order.paymentStatus}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(order.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <Link to={`/admin/orders/${order._id}`} className="text-indigo-600 hover:text-indigo-900 flex items-center">
-                        <Eye className="w-4 h-4 mr-1" />
-                        View
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
+                {recentActivities.orders.map((order) => {
+                  // Determine order type
+                  let orderType = 'Unknown';
+                  let orderIcon = <BookOpen className="w-4 h-4" />;
+                  
+                  if (order.items && order.items.length > 0) {
+                    const hasTests = order.items.some(item => item.testId);
+                    const hasCourses = order.items.some(item => item.courseId);
+                    
+                    if (hasTests && !hasCourses) {
+                      orderType = 'Mock Tests';
+                      orderIcon = <BookOpen className="w-4 h-4" />;
+                    } else if (hasCourses && !hasTests) {
+                      if (order.metadata?.type === 'recording') {
+                        orderType = 'Recordings';
+                        orderIcon = <Video className="w-4 h-4" />;
+                      } else {
+                        orderType = 'Courses';
+                        orderIcon = <GraduationCap className="w-4 h-4" />;
+                      }
+                    } else if (hasTests && hasCourses) {
+                      orderType = 'Mixed';
+                      orderIcon = <FileText className="w-4 h-4" />;
+                    }
+                  }
+
+                  return (
+                    <tr key={order._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            #{order.orderId}
+                          </div>
+                          <div className="flex items-center text-sm text-gray-500 mt-1">
+                            {orderIcon}
+                            <span className="ml-1">{orderType}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div>
+                          <div className="font-medium">{order.studentId?.name || 'Unknown'}</div>
+                          <div className="text-gray-500">{order.studentId?.email || 'N/A'}</div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div>
+                          <div>{order.items?.length || 0} item(s)</div>
+                          {order.items && order.items.length > 0 && (
+                            <div className="text-gray-500 text-xs">
+                              {order.items[0].testTitle || order.items[0].courseTitle || 'N/A'}
+                              {order.items.length > 1 && ` +${order.items.length - 1} more`}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        ₹{order.totalAmount?.toLocaleString() || 0}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          order.paymentStatus === 'completed' ? 'bg-green-100 text-green-800' :
+                          order.paymentStatus === 'failed' ? 'bg-red-100 text-red-800' :
+                          order.paymentStatus === 'refunded' ? 'bg-purple-100 text-purple-800' :
+                          order.paymentStatus === 'processing' ? 'bg-blue-100 text-blue-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {order.paymentStatus}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(order.createdAt).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

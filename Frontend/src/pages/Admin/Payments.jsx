@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { 
   DollarSign, Search, Filter, Eye, RefreshCw,
   Download, CreditCard, Calendar, TrendingUp, AlertTriangle,
-  Video, BookOpen, GraduationCap
+  Video, BookOpen, GraduationCap, Music, FileText, X, Edit3
 } from 'lucide-react';
 import api from '../../api/axios';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -13,6 +13,7 @@ const ManagePayments = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [filterType, setFilterType] = useState('all');
   const [dateRange, setDateRange] = useState({
     fromDate: '',
     toDate: ''
@@ -20,20 +21,25 @@ const ManagePayments = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showRefundModal, setShowRefundModal] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false); // New state for status modal
   const [refundData, setRefundData] = useState({
     amount: '',
     reason: ''
+  });
+  const [statusData, setStatusData] = useState({
+    status: ''
   });
   const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     fetchOrders();
-  }, [filterStatus, dateRange]);
+  }, [filterStatus, filterType, dateRange]);
 
   const fetchOrders = async () => {
     try {
       const params = new URLSearchParams();
       if (filterStatus !== 'all') params.append('status', filterStatus);
+      if (filterType !== 'all') params.append('type', filterType);
       if (dateRange.fromDate) params.append('fromDate', dateRange.fromDate);
       if (dateRange.toDate) params.append('toDate', dateRange.toDate);
 
@@ -55,6 +61,26 @@ const ManagePayments = () => {
 
   const handleRefund = async (e) => {
     e.preventDefault();
+    
+    // Validate refund amount
+    const refundAmount = parseFloat(refundData.amount);
+    const maxAmount = selectedOrder?.totalAmount || 0;
+    
+    if (refundAmount <= 0) {
+      showError('Refund amount must be greater than zero');
+      return;
+    }
+    
+    if (refundAmount > maxAmount) {
+      showError(`Refund amount cannot exceed ₹${maxAmount.toLocaleString()}`);
+      return;
+    }
+    
+    if (!refundData.reason.trim()) {
+      showError('Refund reason is required');
+      return;
+    }
+    
     try {
       const response = await api.post(`/payments/orders/${selectedOrder._id}/refund`, refundData);
       if (response.data.success) {
@@ -68,13 +94,39 @@ const ManagePayments = () => {
     }
   };
 
+  // New function to handle status update
+  const handleStatusUpdate = async (e) => {
+    e.preventDefault();
+    
+    if (!statusData.status) {
+      showError('Please select a status');
+      return;
+    }
+    
+    try {
+      const response = await api.put(`/admin/orders/${selectedOrder._id}/status`, {
+        status: statusData.status
+      });
+      
+      if (response.data.success) {
+        showSuccess('Order status updated successfully');
+        setShowStatusModal(false);
+        setStatusData({ status: '' });
+        fetchOrders(); // Refresh the orders list
+      }
+    } catch (error) {
+      showError(error.response?.data?.message || 'Failed to update order status');
+    }
+  };
+
   const exportOrders = async () => {
     try {
       const params = new URLSearchParams();
       if (filterStatus !== 'all') params.append('status', filterStatus);
+      if (filterType !== 'all') params.append('type', filterType);
       if (dateRange.fromDate) params.append('fromDate', dateRange.fromDate);
       if (dateRange.toDate) params.append('toDate', dateRange.toDate);
-      params.append('format', 'csv');
+      params.append('format', 'csv'); // Only CSV for Excel export
 
       const response = await api.get(`/admin/orders/export?${params.toString()}`, {
         responseType: 'blob'
@@ -89,7 +141,7 @@ const ManagePayments = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
       
-      showSuccess('Orders exported successfully');
+      showSuccess('Orders exported to Excel successfully');
     } catch (error) {
       showError('Failed to export orders');
     }
@@ -100,7 +152,14 @@ const ManagePayments = () => {
       order.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.studentId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.transactionId?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+    
+    let matchesType = true;
+    if (filterType !== 'all') {
+      const orderType = getOrderType(order.items);
+      matchesType = orderType.type.toLowerCase() === filterType.toLowerCase();
+    }
+    
+    return matchesSearch && matchesType;
   });
 
   // Calculate statistics
@@ -108,7 +167,7 @@ const ManagePayments = () => {
     totalOrders: filteredOrders.length,
     totalRevenue: filteredOrders
       .filter(o => o.paymentStatus === 'completed')
-      .reduce((sum, o) => sum + o.totalAmount, 0),
+      .reduce((sum, o) => sum + (o.totalAmount || 0), 0),
     completedOrders: filteredOrders.filter(o => o.paymentStatus === 'completed').length,
     failedOrders: filteredOrders.filter(o => o.paymentStatus === 'failed').length
   };
@@ -129,11 +188,22 @@ const ManagePayments = () => {
       }
       return { type: 'Courses', icon: <GraduationCap className="w-4 h-4" /> };
     } else if (hasTests && hasCourses) {
-      return { type: 'Mixed', icon: <BookOpen className="w-4 h-4" /> };
+      return { type: 'Mixed', icon: <FileText className="w-4 h-4" /> };
     }
     
     return { type: 'Unknown', icon: <BookOpen className="w-4 h-4" /> };
   };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilterStatus('all');
+    setFilterType('all');
+    setDateRange({ fromDate: '', toDate: '' });
+  };
+
+  // Check if any filters are applied
+  const hasFilters = searchTerm || filterStatus !== 'all' || filterType !== 'all' || dateRange.fromDate || dateRange.toDate;
 
   if (loading) {
     return <LoadingSpinner size="large" />;
@@ -193,7 +263,7 @@ const ManagePayments = () => {
 
       {/* Filters */}
       <div className="card">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
             <input
@@ -215,6 +285,20 @@ const ManagePayments = () => {
             <option value="pending">Pending</option>
             <option value="failed">Failed</option>
             <option value="refunded">Refunded</option>
+            <option value="processing">Processing</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="input-field"
+          >
+            <option value="all">All Types</option>
+            <option value="Mock Tests">Mock Tests</option>
+            <option value="Courses">Courses</option>
+            <option value="Recordings">Recordings</option>
+            <option value="Mixed">Mixed</option>
           </select>
 
           <input
@@ -233,6 +317,19 @@ const ManagePayments = () => {
             placeholder="To Date"
           />
         </div>
+        
+        {/* Clear Filters Button */}
+        {hasFilters && (
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={clearFilters}
+              className="flex items-center text-sm text-gray-600 hover:text-gray-900"
+            >
+              <X className="w-4 h-4 mr-1" />
+              Clear All Filters
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Orders Table */}
@@ -346,6 +443,7 @@ const ManagePayments = () => {
                         order.paymentStatus === 'failed' ? 'bg-red-100 text-red-800' :
                         order.paymentStatus === 'refunded' ? 'bg-purple-100 text-purple-800' :
                         order.paymentStatus === 'processing' ? 'bg-blue-100 text-blue-800' :
+                        order.paymentStatus === 'cancelled' ? 'bg-gray-100 text-gray-800' :
                         'bg-yellow-100 text-yellow-800'
                       }`}>
                         {order.paymentStatus}
@@ -362,6 +460,18 @@ const ManagePayments = () => {
                           <Eye className="w-4 h-4" />
                         </button>
                         
+                        <button
+                          onClick={() => {
+                            setSelectedOrder(order);
+                            setStatusData({ status: order.paymentStatus }); // Pre-fill with current status
+                            setShowStatusModal(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-900"
+                          title="Update Status"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        
                         {order.paymentStatus === 'completed' && (
                           <button
                             onClick={() => {
@@ -376,15 +486,7 @@ const ManagePayments = () => {
                           </button>
                         )}
                         
-                        <button
-                          onClick={() => {
-                            window.open(`/api/v1/payments/orders/${order._id}/receipt`, '_blank');
-                          }}
-                          className="text-green-600 hover:text-green-900"
-                          title="Download Receipt"
-                        >
-                          <Download className="w-4 h-4" />
-                        </button>
+                        {/* Removed individual download receipt button */}
                       </div>
                     </td>
                   </tr>
@@ -439,6 +541,7 @@ const ManagePayments = () => {
                         selectedOrder.paymentStatus === 'failed' ? 'bg-red-100 text-red-800' :
                         selectedOrder.paymentStatus === 'refunded' ? 'bg-purple-100 text-purple-800' :
                         selectedOrder.paymentStatus === 'processing' ? 'bg-blue-100 text-blue-800' :
+                        selectedOrder.paymentStatus === 'cancelled' ? 'bg-gray-100 text-gray-800' :
                         'bg-yellow-100 text-yellow-800'
                       }`}>
                         {selectedOrder.paymentStatus}
@@ -593,6 +696,16 @@ const ManagePayments = () => {
             </div>
 
             <div className="flex justify-end space-x-4 mt-6 pt-6 border-t border-gray-200">
+              <button
+                onClick={() => {
+                  setStatusData({ status: selectedOrder.paymentStatus });
+                  setShowStatusModal(true);
+                }}
+                className="btn-secondary"
+              >
+                Update Status
+              </button>
+              
               {selectedOrder.paymentStatus === 'completed' && !selectedOrder.refund && (
                 <button
                   onClick={() => {
@@ -604,14 +717,7 @@ const ManagePayments = () => {
                   Process Refund
                 </button>
               )}
-              <button
-                onClick={() => {
-                  window.open(`/api/v1/payments/orders/${selectedOrder._id}/receipt`, '_blank');
-                }}
-                className="btn-secondary"
-              >
-                Download Receipt
-              </button>
+              {/* Removed individual download receipt button from modal */}
               <button
                 onClick={() => {
                   setShowDetailsModal(false);
@@ -652,6 +758,7 @@ const ManagePayments = () => {
                   type="number"
                   required
                   min="1"
+                  step="0.01"
                   max={selectedOrder?.totalAmount}
                   value={refundData.amount}
                   onChange={(e) => setRefundData({ ...refundData, amount: e.target.value })}
@@ -697,17 +804,99 @@ const ManagePayments = () => {
         </div>
       )}
 
+      {/* Status Update Modal */}
+      {showStatusModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">Update Order Status</h2>
+              <button
+                onClick={() => {
+                  setShowStatusModal(false);
+                  setStatusData({ status: '' });
+                }}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleStatusUpdate} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Current Status
+                </label>
+                <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mb-3 ${
+                  selectedOrder?.paymentStatus === 'completed' ? 'bg-green-100 text-green-800' :
+                  selectedOrder?.paymentStatus === 'failed' ? 'bg-red-100 text-red-800' :
+                  selectedOrder?.paymentStatus === 'refunded' ? 'bg-purple-100 text-purple-800' :
+                  selectedOrder?.paymentStatus === 'processing' ? 'bg-blue-100 text-blue-800' :
+                  selectedOrder?.paymentStatus === 'cancelled' ? 'bg-gray-100 text-gray-800' :
+                  'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {selectedOrder?.paymentStatus}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  New Status *
+                </label>
+                <select
+                  value={statusData.status}
+                  onChange={(e) => setStatusData({ ...statusData, status: e.target.value })}
+                  className="input-field"
+                  required
+                >
+                  <option value="">Select Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="processing">Processing</option>
+                  <option value="completed">Completed</option>
+                  <option value="failed">Failed</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="refunded">Refunded</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end space-x-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowStatusModal(false);
+                    setStatusData({ status: '' });
+                  }}
+                  className="btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary">
+                  Update Status
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Empty State */}
       {filteredOrders.length === 0 && (
         <div className="text-center py-12">
           <DollarSign className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No Orders Found</h3>
           <p className="text-gray-600">
-            {searchTerm || filterStatus !== 'all' || dateRange.fromDate || dateRange.toDate
+            {hasFilters
               ? 'Try adjusting your search or filter criteria'
               : 'No payment orders available yet'
             }
           </p>
+          {hasFilters && (
+            <button
+              onClick={clearFilters}
+              className="mt-4 btn-secondary"
+            >
+              Clear All Filters
+            </button>
+          )}
         </div>
       )}
     </div>
