@@ -173,6 +173,137 @@ router.get('/dashboard', adminAuth, async (req, res) => {
   }
 });
 
+// @route   GET /api/v1/admin/profile
+// @desc    Get admin profile
+// @access  Private/Admin
+router.get('/profile', adminAuth, async (req, res) => {
+  try {
+    // Since admin is also a student, we can get the profile from the student collection
+    const admin = await Student.findById(req.student.id).select('-password');
+    
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: 'Admin not found'
+      });
+    }
+    
+    if (admin.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin privileges required.'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: admin
+    });
+
+  } catch (error) {
+    console.error('Get admin profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get admin profile'
+    });
+  }
+});
+
+// @route   PUT /api/v1/admin/profile
+// @desc    Update admin profile
+// @access  Private/Admin
+router.put('/profile', 
+  adminAuth,
+  [
+    body('name').optional().notEmpty().withMessage('Name cannot be empty'),
+    body('email').optional().isEmail().withMessage('Please provide a valid email')
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Validation failed',
+          errors: errors.array()
+        });
+      }
+
+      const { name, email, currentPassword, newPassword } = req.body;
+      const adminId = req.student.id;
+
+      // Find admin
+      const admin = await Student.findById(adminId);
+      if (!admin) {
+        return res.status(404).json({
+          success: false,
+          message: 'Admin not found'
+        });
+      }
+      
+      if (admin.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. Admin privileges required.'
+        });
+      }
+
+      // Update name and email if provided
+      if (name) admin.name = name;
+      if (email) admin.email = email;
+
+      // Change password if requested
+      if (currentPassword && newPassword) {
+        // Verify current password
+        const isMatch = await admin.comparePassword(currentPassword);
+        if (!isMatch) {
+          return res.status(400).json({
+            success: false,
+            message: 'Current password is incorrect'
+          });
+        }
+
+        // Validate new password
+        if (newPassword.length < 6) {
+          return res.status(400).json({
+            success: false,
+            message: 'New password must be at least 6 characters long'
+          });
+        }
+
+        // Set new password (this will be hashed by the pre-save hook)
+        admin.password = newPassword;
+      }
+
+      await admin.save();
+
+      // Return updated admin without password
+      const updatedAdmin = await Student.findById(adminId).select('-password');
+
+      res.json({
+        success: true,
+        message: 'Profile updated successfully',
+        data: updatedAdmin
+      });
+
+    } catch (error) {
+      console.error('Update admin profile error:', error);
+      
+      if (error.code === 11000) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email already exists'
+        });
+      }
+      
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update profile'
+      });
+    }
+  }
+);
+
 // Student Management Routes
 // @route   GET /api/v1/admin/students
 // @desc    Get all students with filters
