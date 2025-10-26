@@ -178,7 +178,7 @@ const Home = () => {
         clearInterval(courseIntervalRef.current);
       }
     };
-  }, [courses.length, windowWidth]);
+  }, [courses.length]);
 
   // Pause autoplay on hover for instructors
   const handleInstructorMouseEnter = () => {
