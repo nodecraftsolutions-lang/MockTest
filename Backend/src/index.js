@@ -23,12 +23,40 @@ const socketConfig = require('./socket/socketConfig');
 const app = express();
 const server = createServer(app);
 
-// ✅ Allow all origins (simple CORS)
-app.use(cors());
+// ✅ Configure CORS with specific origins for production
+const corsOptions = {
+  origin: [
+    'http://localhost:5173',  // Local development
+    'http://localhost:3000',  // Alternative local development
+    'https://mock-test-ten.vercel.app',  // Your Vercel frontend
+    'https://mocktest-bckx.onrender.com',  // Your Render backend (for internal requests)
+    /\.vercel\.app$/,  // Any Vercel deployment
+    /\.onrender\.com$/  // Any Render deployment
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+};
+
+// ✅ Apply CORS middleware
+app.use(cors(corsOptions));
+
+// ✅ Handle preflight OPTIONS requests
+app.options('*', cors(corsOptions));
 
 // ✅ Basic body parsing
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// ✅ Simple health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    message: 'Server is running successfully'
+  });
+});
 
 // ✅ MongoDB connection
 mongoose
@@ -42,8 +70,15 @@ mongoose
 // ✅ Socket.io setup
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'https://mock-test-ten.vercel.app',
+      /\.vercel\.app$/,
+      /\.onrender\.com$/
+    ],
     methods: ['GET', 'POST'],
+    credentials: true
   },
 });
 
