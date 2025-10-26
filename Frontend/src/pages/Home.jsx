@@ -15,6 +15,7 @@ const Home = () => {
   const [currentAlumniIndex, setCurrentAlumniIndex] = useState(0);
   const [currentCourseIndex, setCurrentCourseIndex] = useState(0); // For course carousel
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth); // Track window width
   const carouselRef = useRef(null);
   const alumniCarouselRef = useRef(null);
   const courseCarouselRef = useRef(null); // For course carousel
@@ -24,6 +25,16 @@ const Home = () => {
   const { showError } = useToast();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Fetch courses from backend
   useEffect(() => {
@@ -111,11 +122,11 @@ const Home = () => {
 
   // Autoplay functionality for instructors
   useEffect(() => {
-    if (instructors.length > 4) {
+    if (instructors.length > (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4)) {
       intervalRef.current = setInterval(() => {
         setCurrentInstructorIndex(prev => {
           // Calculate next index (wraps around)
-          const nextIndex = prev + 4;
+          const nextIndex = prev + (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4);
           return nextIndex >= instructors.length ? 0 : nextIndex;
         });
       }, 5000); // Change slide every 5 seconds
@@ -127,15 +138,15 @@ const Home = () => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [instructors.length]);
+  }, [instructors.length, windowWidth]);
 
   // Autoplay functionality for alumni
   useEffect(() => {
-    if (alumni.length > 3) {
+    if (alumni.length > 1) {
       alumniIntervalRef.current = setInterval(() => {
         setCurrentAlumniIndex(prev => {
           // Calculate next index (wraps around)
-          const nextIndex = prev + 3;
+          const nextIndex = prev + 1;
           return nextIndex >= alumni.length ? 0 : nextIndex;
         });
       }, 6000); // Change slide every 6 seconds
@@ -151,11 +162,11 @@ const Home = () => {
 
   // Autoplay functionality for courses
   useEffect(() => {
-    if (courses.length > 3) {
+    if (courses.length > 1) {
       courseIntervalRef.current = setInterval(() => {
         setCurrentCourseIndex(prev => {
           // Calculate next index (wraps around)
-          const nextIndex = prev + 3;
+          const nextIndex = prev + 1;
           return nextIndex >= courses.length ? 0 : nextIndex;
         });
       }, 7000); // Change slide every 7 seconds
@@ -167,7 +178,7 @@ const Home = () => {
         clearInterval(courseIntervalRef.current);
       }
     };
-  }, [courses.length]);
+  }, [courses.length, windowWidth]);
 
   // Pause autoplay on hover for instructors
   const handleInstructorMouseEnter = () => {
@@ -177,11 +188,11 @@ const Home = () => {
   };
 
   const handleInstructorMouseLeave = () => {
-    if (instructors.length > 4) {
+    if (instructors.length > (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4)) {
       intervalRef.current = setInterval(() => {
         setCurrentInstructorIndex(prev => {
           // Calculate next index (wraps around)
-          const nextIndex = prev + 4;
+          const nextIndex = prev + (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4);
           return nextIndex >= instructors.length ? 0 : nextIndex;
         });
       }, 5000);
@@ -215,11 +226,11 @@ const Home = () => {
   };
 
   const handleCourseMouseLeave = () => {
-    if (courses.length > 3) {
+    if (courses.length > 1) {
       courseIntervalRef.current = setInterval(() => {
         setCurrentCourseIndex(prev => {
           // Calculate next index (wraps around)
-          const nextIndex = prev + 3;
+          const nextIndex = prev + 1;
           return nextIndex >= courses.length ? 0 : nextIndex;
         });
       }, 7000);
@@ -229,39 +240,41 @@ const Home = () => {
   // Carousel navigation for instructors
   const nextInstructors = () => {
     setCurrentInstructorIndex(prev => 
-      prev + 4 >= instructors.length ? 0 : prev + 4
+      prev + (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4) >= instructors.length ? 0 : prev + (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4)
     );
   };
 
   const prevInstructors = () => {
     setCurrentInstructorIndex(prev => 
-      prev - 4 < 0 ? Math.max(0, instructors.length - 4) : prev - 4
+      prev - (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4) < 0 ? 
+      Math.max(0, instructors.length - (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4)) : 
+      prev - (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4)
     );
   };
 
   // Carousel navigation for alumni
   const nextAlumni = () => {
     setCurrentAlumniIndex(prev => 
-      prev + 3 >= alumni.length ? 0 : prev + 3
+      prev + 1 >= alumni.length ? 0 : prev + 1
     );
   };
 
   const prevAlumni = () => {
     setCurrentAlumniIndex(prev => 
-      prev - 3 < 0 ? Math.max(0, alumni.length - 3) : prev - 3
+      prev - 1 < 0 ? Math.max(0, alumni.length - 1) : prev - 1
     );
   };
 
   // Carousel navigation for courses
   const nextCourses = () => {
     setCurrentCourseIndex(prev => 
-      prev + 3 >= courses.length ? 0 : prev + 3
+      prev + 1 >= courses.length ? 0 : prev + 1
     );
   };
 
   const prevCourses = () => {
     setCurrentCourseIndex(prev => 
-      prev - 3 < 0 ? Math.max(0, courses.length - 3) : prev - 3
+      prev - 1 < 0 ? Math.max(0, courses.length - 1) : prev - 1
     );
   };
 
@@ -480,27 +493,27 @@ const Home = () => {
             <div className="relative z-10 pb-4 bg-background sm:pb-8 md:pb-10 lg:max-w-2xl lg:w-full lg:pb-12 xl:pb-16">
               <main className="mt-0 mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
                 <div className="sm:text-center lg:text-left">
-                  <h1 className="text-4xl tracking-tight font-extrabold text-foreground sm:text-5xl md:text-6xl">
+                  <h1 className="text-3xl tracking-tight font-extrabold text-foreground sm:text-4xl md:text-5xl lg:text-6xl">
                     <span className="block">Up Your Skills</span>
                     <span className="block">To Advance Your</span>
                     <span className="block text-primary">Career Path</span>
                   </h1>
-                  <p className="mt-2 text-base text-muted-foreground sm:mt-3 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-3 md:text-xl lg:mx-0">
+                  <p className="mt-3 text-base text-muted-foreground sm:mt-4 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
                     Discover a world of knowledge and opportunities. Learn from industry experts, gain practical skills, and accelerate your professional growth with our comprehensive online courses.
                   </p>
-                  <div className="mt-4 sm:mt-6 sm:flex sm:justify-center lg:justify-start">
+                  <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
                     <div className="rounded-md shadow">
                       <Link
                         to="/auth"
-                        className="w-full flex items-center justify-center px-6 py-2 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-primary/90 md:py-3 md:text-lg md:px-8"
+                        className="w-full flex items-center justify-center px-5 py-2 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-primary/90 md:py-3 md:text-lg md:px-8"
                       >
                         Get Started
                       </Link>
                     </div>
-                    <div className="mt-2 sm:mt-0 sm:ml-2">
+                    <div className="mt-3 sm:mt-0 sm:ml-3">
                       <button
                         onClick={handleViewTests}
-                        className="w-full flex items-center justify-center px-6 py-2 border border-transparent text-base font-medium rounded-md text-primary bg-primary/10 hover:bg-primary/20 md:py-3 md:text-lg md:px-8"
+                        className="w-full flex items-center justify-center px-5 py-2 border border-transparent text-base font-medium rounded-md text-primary bg-primary/10 hover:bg-primary/20 md:py-3 md:text-lg md:px-8"
                       >
                         View Tests
                       </button>
@@ -558,20 +571,20 @@ const Home = () => {
               onMouseEnter={handleCourseMouseEnter}
               onMouseLeave={handleCourseMouseLeave}
             >
-              {/* Carousel Navigation Buttons */}
-              {courses.length > 3 && (
+              {/* Carousel Navigation Buttons - Now visible on mobile */}
+              {courses.length > 1 && (
                 <>
                   <button 
                     onClick={prevCourses}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
+                    className="absolute left-4 md:left-0 top-1/2 -translate-y-1/2 z-50 bg-white rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
                   >
-                    <ChevronLeft className="w-6 h-6 text-gray-700" />
+                    <ChevronLeft className="w-5 h-5 text-gray-700" />
                   </button>
                   <button 
                     onClick={nextCourses}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
+                    className="absolute right-4 md:right-0 top-1/2 -translate-y-1/2 z-50 bg-white rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
                   >
-                    <ChevronRight className="w-6 h-6 text-gray-700" />
+                    <ChevronRight className="w-5 h-5 text-gray-700" />
                   </button>
                 </>
               )}
@@ -581,12 +594,12 @@ const Home = () => {
                 <div 
                   ref={courseCarouselRef}
                   className="flex transition-transform duration-500 ease-in-out"
-                  style={{ transform: `translateX(-${currentCourseIndex * 33.333}%)` }}
+                  style={{ transform: `translateX(-${currentCourseIndex * (windowWidth < 768 ? 100 : 33.333)}%)` }}
                 >
                   {courses.map((course) => (
                     <div 
                       key={course.id} 
-                      className="flex-shrink-0 w-1/3 px-4"
+                      className="flex-shrink-0 w-full md:w-1/3 px-2"
                     >
                       <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group h-full">
                         <div className="relative h-48 overflow-hidden">
@@ -605,7 +618,7 @@ const Home = () => {
                           </div>
                         </div>
                         
-                        <div className="p-6">
+                        <div className="p-4 md:p-6">
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-xs font-medium text-primary uppercase tracking-wide">
                               {course.category}
@@ -624,7 +637,7 @@ const Home = () => {
                             {course.description}
                           </p>
                           
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
                             <div className="flex items-center gap-1">
                               <Clock className="w-4 h-4" />
                               <span>{course.duration}</span>
@@ -635,13 +648,13 @@ const Home = () => {
                             </div>
                           </div>
                           
-                          <div className="flex items-center justify-between">
+                          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                             <div>
                               <span className="text-2xl font-bold text-foreground">₹{course.price}</span>
                             </div>
                             <button 
                               onClick={() => handleEnrollClick(course.id)}
-                              className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors duration-200 flex items-center gap-2"
+                              className="w-full sm:w-auto bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors duration-200 flex items-center justify-center gap-2"
                             >
                               Enroll Now
                               <ArrowRight className="w-4 h-4" />
@@ -654,16 +667,16 @@ const Home = () => {
                 </div>
               </div>
               
-              {/* Carousel Indicators */}
-              {courses.length > 3 && (
-                <div className="flex justify-center mt-8 space-x-2 pb-4">
-                  {Array(Math.ceil(courses.length / 3)).fill(0).map((_, index) => (
+              {/* Carousel Indicators - Visible on mobile */}
+              {courses.length > 1 && (
+                <div className="flex justify-center mt-6 space-x-2 pb-4">
+                  {Array(Math.ceil(courses.length / (windowWidth < 768 ? 1 : 3))).fill(0).map((_, index) => (
                     <button
                       key={index}
-                      onClick={() => setCurrentCourseIndex(index * 3)}
-                      className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                        Math.floor(currentCourseIndex / 3) === index 
-                          ? 'bg-primary w-6' 
+                      onClick={() => setCurrentCourseIndex(index * (windowWidth < 768 ? 1 : 3))}
+                      className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all duration-300 ${
+                        Math.floor(currentCourseIndex / (windowWidth < 768 ? 1 : 3)) === index 
+                          ? 'bg-primary w-4 md:w-6' 
                           : 'bg-gray-300 hover:bg-gray-400'
                       }`}
                     />
@@ -717,20 +730,20 @@ const Home = () => {
               onMouseEnter={handleInstructorMouseEnter}
               onMouseLeave={handleInstructorMouseLeave}
             >
-              {/* Carousel Navigation Buttons */}
-              {instructors.length > 4 && (
+              {/* Carousel Navigation Buttons - Now visible on mobile */}
+              {instructors.length > 2 && (
                 <>
                   <button 
                     onClick={prevInstructors}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 md:-translate-x-4 z-10 bg-white rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
                   >
-                    <ChevronLeft className="w-6 h-6 text-gray-700" />
+                    <ChevronLeft className="w-5 h-5 text-gray-700" />
                   </button>
                   <button 
                     onClick={nextInstructors}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 md:translate-x-4 z-10 bg-white rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
                   >
-                    <ChevronRight className="w-6 h-6 text-gray-700" />
+                    <ChevronRight className="w-5 h-5 text-gray-700" />
                   </button>
                 </>
               )}
@@ -740,15 +753,15 @@ const Home = () => {
                 <div 
                   ref={carouselRef}
                   className="flex transition-transform duration-500 ease-in-out"
-                  style={{ transform: `translateX(-${currentInstructorIndex * 25}%)` }}
+                  style={{ transform: `translateX(-${currentInstructorIndex * (windowWidth < 640 ? 100 : windowWidth < 768 ? 50 : 25)}%)` }}
                 >
                   {instructors.map((instructor, index) => (
                     <div 
                       key={index} 
-                      className="flex-shrink-0 w-1/4 px-4"
+                      className="flex-shrink-0 w-full sm:w-1/2 md:w-1/4 px-2"
                     >
-                      <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-6 text-center group h-full">
-                        <div className="relative mb-4 mx-auto w-24 h-24">
+                      <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-4 md:p-6 text-center group h-full">
+                        <div className="relative mb-4 mx-auto w-20 h-20 md:w-24 md:h-24">
                           <img 
                             src={instructor.photoUrl} 
                             alt={instructor.name}
@@ -758,21 +771,21 @@ const Home = () => {
                               e.target.src = "https://ui-avatars.com/api/?background=random&color=fff&bold=true&name=" + encodeURIComponent(instructor.name);
                             }}
                           />
-                          <div className="absolute bottom-0 right-0 bg-orange-500 text-white rounded-full w-8 h-8 flex items-center justify-center">
-                            <CheckCircle className="w-4 h-4" />
+                          <div className="absolute bottom-0 right-0 bg-orange-500 text-white rounded-full w-6 h-6 md:w-8 md:h-8 flex items-center justify-center">
+                            <CheckCircle className="w-3 h-3 md:w-4 md:h-4" />
                           </div>
                         </div>
                         
-                        <h3 className="text-xl font-semibold text-foreground mb-1">{instructor.name}</h3>
-                        <p className="text-primary font-medium text-sm mb-3">{instructor.expertise}</p>
+                        <h3 className="text-lg md:text-xl font-semibold text-foreground mb-1">{instructor.name}</h3>
+                        <p className="text-primary font-medium text-xs md:text-sm mb-2 md:mb-3">{instructor.expertise}</p>
                         {instructor.experience && (
                           <p className="text-muted-foreground text-xs mb-2">{instructor.experience}</p>
                         )}
                         <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{instructor.bio}</p>
                         
-                        <div className="flex items-center justify-center text-sm text-muted-foreground">
+                        <div className="flex items-center justify-center text-xs md:text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
-                            <BookOpen className="w-4 h-4" />
+                            <BookOpen className="w-3 h-3 md:w-4 md:h-4" />
                             <span>{instructor.courses} courses</span>
                           </div>
                         </div>
@@ -782,23 +795,22 @@ const Home = () => {
                 </div>
               </div>
               
-              {/* Carousel Indicators */}
-              {instructors.length > 4 && (
-                <div className="flex justify-center mt-8 space-x-2 pb-4">
-                  {Array(Math.ceil(instructors.length / 4)).fill(0).map((_, index) => (
+              {/* Carousel Indicators - Visible on mobile */}
+              {instructors.length > 1 && (
+                <div className="flex justify-center mt-6 space-x-2 pb-4">
+                  {Array(Math.ceil(instructors.length / (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4))).fill(0).map((_, index) => (
                     <button
                       key={index}
-                      onClick={() => setCurrentInstructorIndex(index * 4)}
-                      className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                        Math.floor(currentInstructorIndex / 4) === index 
-                          ? 'bg-primary w-6' 
+                      onClick={() => setCurrentInstructorIndex(index * (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4))}
+                      className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all duration-300 ${
+                        Math.floor(currentInstructorIndex / (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4)) === index 
+                          ? 'bg-primary w-4 md:w-6' 
                           : 'bg-gray-300 hover:bg-gray-400'
                       }`}
                     />
                   ))}
                 </div>
               )}
-
             </div>
           )}
         </div>
@@ -843,20 +855,20 @@ const Home = () => {
                 onMouseEnter={handleAlumniMouseEnter}
                 onMouseLeave={handleAlumniMouseLeave}
               >
-                {/* Carousel Navigation Buttons */}
-                {alumni.length > 3 && (
+                {/* Carousel Navigation Buttons - Now visible on mobile */}
+                {alumni.length > 1 && (
                   <>
                     <button 
                       onClick={prevAlumni}
-                      className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
+                      className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 md:-translate-x-4 z-10 bg-white rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
                     >
-                      <ChevronLeft className="w-6 h-6 text-gray-700" />
+                      <ChevronLeft className="w-5 h-5 text-gray-700" />
                     </button>
                     <button 
                       onClick={nextAlumni}
-                      className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
+                      className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 md:translate-x-4 z-10 bg-white rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
                     >
-                      <ChevronRight className="w-6 h-6 text-gray-700" />
+                      <ChevronRight className="w-5 h-5 text-gray-700" />
                     </button>
                   </>
                 )}
@@ -866,64 +878,62 @@ const Home = () => {
                   <div 
                     ref={alumniCarouselRef}
                     className="flex transition-transform duration-500 ease-in-out"
-                    style={{ transform: `translateX(-${currentAlumniIndex * 33.333}%)` }}
+                    style={{ transform: `translateX(-${currentAlumniIndex * (windowWidth < 768 ? 100 : 33.333)}%)` }}
                   >
                     {alumni.map((alumnus, index) => (
                       <div 
                         key={index} 
-                        className="flex-shrink-0 w-1/3 px-4"
+                        className="flex-shrink-0 w-full md:w-1/3 px-2"
                       >
-                        <div className="bg-white rounded-xl p-6 border border-gray-200 overflow-hidden h-full shadow-sm hover:shadow-md transition-all duration-300 group hover:bg-orange-50">
+                        <div className="bg-white rounded-xl p-4 md:p-6 border border-gray-200 overflow-hidden h-full shadow-sm hover:shadow-md transition-all duration-300 group hover:bg-orange-50">
                           <div className="flex items-center gap-1 mb-4">
                             {[...Array(5)].map((_, i) => (
                               <Star 
                                 key={i} 
-                                className={`w-5 h-5 ${i < alumnus.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 group-hover:text-orange-400 transition-colors duration-200'}`} 
+                                className={`w-4 h-4 md:w-5 md:h-5 ${i < alumnus.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 group-hover:text-orange-400 transition-colors duration-200'}`} 
                               />
                             ))}
                           </div>
                           
-                          <p className="text-muted-foreground mb-6 italic group-hover:text-foreground transition-colors duration-200">"{alumnus.testimonial}"</p>
+                          <p className="text-muted-foreground mb-4 md:mb-6 italic text-sm md:text-base group-hover:text-foreground transition-colors duration-200">"{alumnus.testimonial}"</p>
                           
                           <div className="flex items-center">
                             <img 
                               src={alumnus.photoUrl} 
                               alt={alumnus.name}
-                              className="w-12 h-12 rounded-full object-cover mr-4"
+                              className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover mr-3 md:mr-4"
                               onError={(e) => {
                                 e.target.onerror = null;
                                 e.target.src = "https://ui-avatars.com/api/?background=random&color=fff&bold=true&name=" + encodeURIComponent(alumnus.name);
                               }}
                             />
                             <div>
-                              <h4 className="font-semibold text-foreground group-hover:text-orange-600 transition-colors duration-200">{alumnus.name}</h4>
-                              <p className="text-sm text-muted-foreground group-hover:text-blue-600 transition-colors duration-200">{alumnus.position} at {alumnus.company}</p>
+                              <h4 className="font-semibold text-foreground text-sm md:text-base group-hover:text-orange-600 transition-colors duration-200">{alumnus.name}</h4>
+                              <p className="text-xs md:text-sm text-muted-foreground group-hover:text-blue-600 transition-colors duration-200">{alumnus.position} at {alumnus.company}</p>
                             </div>
                           </div>
                         </div>
-
                       </div>
                     ))}
                   </div>
                 </div>
                 
-                {/* Carousel Indicators */}
-                {alumni.length > 3 && (
-                  <div className="flex justify-center mt-8 space-x-2 pb-4">
-                    {Array(Math.ceil(alumni.length / 3)).fill(0).map((_, index) => (
+                {/* Carousel Indicators - Visible on mobile */}
+                {alumni.length > 1 && (
+                  <div className="flex justify-center mt-6 space-x-2 pb-4">
+                    {Array(Math.ceil(alumni.length / (windowWidth < 768 ? 1 : 3))).fill(0).map((_, index) => (
                       <button
                         key={index}
-                        onClick={() => setCurrentAlumniIndex(index * 3)}
-                        className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                          Math.floor(currentAlumniIndex / 3) === index 
-                            ? 'bg-primary w-6' 
+                        onClick={() => setCurrentAlumniIndex(index * (windowWidth < 768 ? 1 : 3))}
+                        className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all duration-300 ${
+                          Math.floor(currentAlumniIndex / (windowWidth < 768 ? 1 : 3)) === index 
+                            ? 'bg-primary w-4 md:w-6' 
                             : 'bg-gray-300 hover:bg-gray-400'
                         }`}
                       />
                     ))}
                   </div>
                 )}
-
               </div>
             )}
           </div>
