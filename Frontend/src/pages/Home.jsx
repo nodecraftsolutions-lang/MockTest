@@ -37,7 +37,7 @@ const Home = () => {
             title: course.title,
             category: course.category || 'General',
             description: course.description,
-            image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1169&q=80", // Default image
+            image: "/course Image.png", // Use the same image for all courses
             price: course.price || 0,
             rating: 4.5, // Default rating
             students: Math.floor(Math.random() * 10000) + 1000, // Random student count
@@ -295,7 +295,7 @@ const Home = () => {
       title: "Web Development Bootcamp",
       category: "Development",
       description: "Learn HTML, CSS, JavaScript, React, Node.js and more in this comprehensive bootcamp.",
-      image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1169&q=80",
+      image: "/course Image.png", // Use the same image for all courses
       price: 89.99,
       rating: 4.8,
       students: 12543,
@@ -309,7 +309,7 @@ const Home = () => {
       title: "UI/UX Design Masterclass",
       category: "Design",
       description: "Master the principles of user interface and user experience design with hands-on projects.",
-      image: "https://images.unsplash.com/photo-1559028006-448665bd7c7f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+      image: "/course Image.png", // Use the same image for all courses
       price: 79.99,
       rating: 4.9,
       students: 8932,
@@ -323,7 +323,7 @@ const Home = () => {
       title: "Data Science Fundamentals",
       category: "Data Science",
       description: "Learn Python, statistics, machine learning, and data visualization from scratch.",
-      image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+      image: "/course Image.png", // Use the same image for all courses
       price: 99.99,
       rating: 4.7,
       students: 10234,
@@ -337,7 +337,7 @@ const Home = () => {
       title: "Digital Marketing Strategy",
       category: "Marketing",
       description: "Master SEO, social media marketing, content marketing, and paid advertising.",
-      image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1173&q=80",
+      image: "/course Image.png", // Use the same image for all courses
       price: 69.99,
       rating: 4.6,
       students: 7654,
@@ -351,7 +351,7 @@ const Home = () => {
       title: "Mobile App Development",
       category: "Development",
       description: "Build native iOS and Android apps using React Native and Flutter.",
-      image: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+      image: "/course Image.png", // Use the same image for all courses
       price: 94.99,
       rating: 4.8,
       students: 9234,
@@ -365,7 +365,7 @@ const Home = () => {
       title: "Business Analytics",
       category: "Business",
       description: "Learn data-driven decision making, business intelligence, and analytics tools.",
-      image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+      image: "/course Image.png", // Use the same image for all courses
       price: 84.99,
       rating: 4.7,
       students: 6789,
