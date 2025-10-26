@@ -3,12 +3,17 @@ const mongoose = require('mongoose');
 const orderItemSchema = new mongoose.Schema({
   testId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Test',
-    required: true
+    ref: 'Test'
+  },
+  courseId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Course'
   },
   testTitle: {
-    type: String,
-    required: true
+    type: String
+  },
+  courseTitle: {
+    type: String
   },
   price: {
     type: Number,
@@ -148,7 +153,15 @@ const orderSchema = new mongoose.Schema({
       default: 'web'
     },
     campaign: String,
-    referrer: String
+    referrer: String,
+    courseId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Course'
+    },
+    testId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Test'
+    }
   },
   expiresAt: {
     type: Date,
@@ -224,7 +237,7 @@ orderSchema.statics.generateOrderId = function() {
 orderSchema.statics.getStudentOrders = function(studentId, status = null) {
   const query = { studentId };
   if (status) query.paymentStatus = status;
-  return this.find(query).sort({ createdAt: -1 }).populate('items.testId', 'title companyId');
+  return this.find(query).sort({ createdAt: -1 }).populate('items.testId', 'title companyId').populate('items.courseId', 'title');
 };
 
 // Instance method to mark as completed

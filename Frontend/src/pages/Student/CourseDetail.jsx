@@ -22,6 +22,12 @@ const CourseDetail = () => {
   const [loading, setLoading] = useState(true);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [billingDetails, setBillingDetails] = useState({
+    name: user?.name || "",
+    email: user?.email || "",
+    mobile: ""
+  });
 
   useEffect(() => {
     fetchCourse();
@@ -44,13 +50,131 @@ const CourseDetail = () => {
 
   const handleEnroll = async () => {
     try {
-      const res = await api.post(`/courses/${id}/enroll`);
-      if (res.data.success) {
-        showSuccess("Enrolled successfully");
-        setIsEnrolled(true);
+      // For paid courses, show payment modal
+      if (course.isPaid && course.price > 0) {
+        setShowPaymentModal(true);
+      } else {
+        // For free courses, enroll directly
+        const res = await api.post(`/courses/${id}/enroll`);
+        if (res.data.success) {
+          showSuccess("Enrolled successfully");
+          setIsEnrolled(true);
+        }
       }
-    } catch {
-      showError("Failed to enroll");
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || "Failed to enroll";
+      showError(errorMessage);
+    }
+  };
+
+  const handlePayment = async () => {
+    try {
+      console.log('Initiating payment for course:', id);
+      
+      // Validate course ID
+      if (!id) {
+        showError("Invalid course ID");
+        return;
+      }
+
+      // Validate billing details
+      if (!billingDetails.name || !billingDetails.email || !billingDetails.mobile) {
+        showError("Please fill all billing details");
+        return;
+      }
+
+      // Validate mobile number format
+      if (!/^[0-9]{10}$/.test(billingDetails.mobile)) {
+        showError("Please enter a valid 10-digit mobile number");
+        return;
+      }
+
+      // Validate email format
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(billingDetails.email)) {
+        showError("Please enter a valid email address");
+        return;
+      }
+
+      // Show loading state
+      console.log('Creating order with data:', { courseId: id, billingDetails });
+
+      // Create order
+      const orderRes = await api.post("/payments/create-course-order", {
+        courseId: id,
+        billingDetails
+      });
+
+      console.log('Order creation response:', orderRes.data);
+
+      if (orderRes.data.success) {
+        const { razorpayOrder, razorpayKeyId } = orderRes.data.data;
+        console.log('Razorpay order details:', razorpayOrder);
+
+        // Load Razorpay script
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.async = true;
+        document.body.appendChild(script);
+
+        script.onload = () => {
+          const options = {
+            key: razorpayKeyId,
+            amount: razorpayOrder.amount,
+            currency: razorpayOrder.currency,
+            name: "MockTest",
+            description: course.title,
+            order_id: razorpayOrder.id,
+            handler: async function (response) {
+              try {
+                console.log('Payment response:', response);
+                // Verify payment
+                const verifyRes = await api.post("/payments/verify-course-payment", {
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature
+                });
+
+                console.log('Verification response:', verifyRes.data);
+
+                if (verifyRes.data.success) {
+                  showSuccess("Payment successful! You are now enrolled.");
+                  setIsEnrolled(true);
+                  setShowPaymentModal(false);
+                } else {
+                  showError("Payment verification failed: " + (verifyRes.data.message || "Unknown error"));
+                }
+              } catch (verifyError) {
+                console.error("Payment verification error:", verifyError);
+                showError("Payment verification failed. Please contact support.");
+              }
+            },
+            prefill: {
+              name: billingDetails.name,
+              email: billingDetails.email,
+              contact: billingDetails.mobile
+            },
+            theme: {
+              color: "#3B82F6"
+            },
+            modal: {
+              ondismiss: function() {
+                showError("Payment cancelled");
+              }
+            }
+          };
+
+          const rzp = new window.Razorpay(options);
+          rzp.open();
+        };
+
+        script.onerror = () => {
+          showError("Failed to load payment gateway. Please try again.");
+        };
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      const errorMessage = error.response?.data?.message || error.message || "Failed to initiate payment";
+      showError(errorMessage);
     }
   };
 
@@ -251,215 +375,189 @@ const CourseDetail = () => {
         </div>
       </motion.div>
 
-      {/* Main Content */}
+      {/* Content Sections */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Overview Tab */}
         {activeTab === "overview" && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-8"
+            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
           >
-            {/* Course Description */}
-            <div className="bg-white rounded-2xl shadow-lg p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Course Description</h2>
-              <div className="prose prose-lg max-w-none text-gray-600 leading-relaxed">
-                {descriptionLines.map((line, idx) => (
-                  <p key={idx} className="mb-4">{line}</p>
-                ))}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Description */}
+              <div className="bg-white rounded-2xl shadow-sm p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Description</h2>
+                <div className="prose max-w-none text-gray-600 space-y-4">
+                  {descriptionLines.length > 0 ? (
+                    descriptionLines.map((line, index) => (
+                      <p key={index}>{line}</p>
+                    ))
+                  ) : (
+                    <p>{course.description}</p>
+                  )}
+                </div>
               </div>
+
+              {/* Features */}
+              {course.features && course.features.length > 0 && (
+                <div className="bg-white rounded-2xl shadow-sm p-8">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6">What you'll learn</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {course.features.map((feature, index) => (
+                      <div key={index} className="flex items-start space-x-3">
+                        <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-700">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Outcomes */}
+              {course.outcomes && course.outcomes.length > 0 && (
+                <div className="bg-white rounded-2xl shadow-sm p-8">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Course Outcomes</h2>
+                  <div className="space-y-4">
+                    {course.outcomes.map((outcome, index) => (
+                      <div key={index} className="flex items-center space-x-3 p-4 bg-blue-50 rounded-lg">
+                        <Target className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                        <span className="text-gray-700 font-medium">{outcome}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Key Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white rounded-xl p-6 shadow-lg text-center">
-                <Calendar className="w-8 h-8 text-blue-500 mx-auto mb-3" />
-                <h3 className="font-semibold text-gray-900">Start Date</h3>
-                <p className="text-gray-600">
-                  {course.startDate ? new Date(course.startDate).toLocaleDateString() : "Flexible"}
-                </p>
+            {/* Sidebar */}
+            <div className="space-y-6">
+              {/* Course Info */}
+              <div className="bg-white rounded-2xl shadow-sm p-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Course Information</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Level</span>
+                    <span className="font-medium">{enhancedCourse.level}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Duration</span>
+                    <span className="font-medium">{enhancedCourse.duration || 'Self-paced'}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Language</span>
+                    <span className="font-medium">{enhancedCourse.language}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Certificate</span>
+                    <span className="font-medium">{enhancedCourse.certificate ? 'Yes' : 'No'}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Lifetime Access</span>
+                    <span className="font-medium">{enhancedCourse.lifetimeAccess ? 'Yes' : 'No'}</span>
+                  </div>
+                </div>
               </div>
-              <div className="bg-white rounded-xl p-6 shadow-lg text-center">
-                <Clock4 className="w-8 h-8 text-purple-500 mx-auto mb-3" />
-                <h3 className="font-semibold text-gray-900">Duration</h3>
-                <p className="text-gray-600">
-                  {course.duration ? `${course.duration} weeks` : "Self-paced"}
-                </p>
-              </div>
-              <div className="bg-white rounded-xl p-6 shadow-lg text-center">
-                <BadgeCheck className="w-8 h-8 text-green-500 mx-auto mb-3" />
-                <h3 className="font-semibold text-gray-900">Level</h3>
-                <p className="text-gray-600">{enhancedCourse.level}</p>
-              </div>
-              <div className="bg-white rounded-xl p-6 shadow-lg text-center">
-                <Languages className="w-8 h-8 text-orange-500 mx-auto mb-3" />
-                <h3 className="font-semibold text-gray-900">Language</h3>
-                <p className="text-gray-600">{enhancedCourse.language}</p>
+
+              {/* Requirements */}
+              <div className="bg-white rounded-2xl shadow-sm p-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Requirements</h3>
+                <ul className="space-y-2 text-gray-600">
+                  <li className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span>Basic computer knowledge</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span>Internet connection</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span>Willingness to learn</span>
+                  </li>
+                </ul>
               </div>
             </div>
           </motion.div>
         )}
 
         {/* Curriculum Tab */}
-        {activeTab === "curriculum" && course.curriculum?.phases?.length > 0 && (
+        {activeTab === "curriculum" && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
+            className="bg-white rounded-2xl shadow-sm p-8"
           >
-            <div className="bg-white rounded-2xl shadow-lg p-8">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-                  <BookOpen className="w-6 h-6 text-purple-500 mr-3" />
-                  Course Curriculum
-                </h2>
-                <div className="text-sm text-gray-500">
-                  {course.curriculum.phases.length} phases • {course.duration} weeks
-                </div>
-              </div>
-              
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Course Curriculum</h2>
+            {course.curriculum && course.curriculum.phases && course.curriculum.phases.length > 0 ? (
               <div className="space-y-6">
-                {course.curriculum.phases.map((phase, phaseIdx) => (
-                  <motion.div
-                    key={phaseIdx}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: phaseIdx * 0.1 }}
-                    className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300"
-                  >
-                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 border-b">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <div className="bg-purple-500 text-white rounded-lg w-12 h-12 flex items-center justify-center font-bold text-lg">
-                            {phase.phaseNumber}
-                          </div>
-                          <div>
-                            <h3 className="text-xl font-bold text-gray-900">
-                              {phase.title}
-                            </h3>
-                            {phase.goal && (
-                              <p className="text-gray-600 mt-1 flex items-center">
-                                <Target className="w-4 h-4 mr-2" />
-                                {phase.goal}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-gray-400" />
-                      </div>
-                    </div>
-
-                    <div className="p-6">
+                {course.curriculum.phases.map((phase, phaseIndex) => (
+                  <div key={phaseIndex} className="border border-gray-200 rounded-xl overflow-hidden">
+                    <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Phase {phase.phaseNumber}: {phase.title}
+                      </h3>
                       {phase.description && (
-                        <p className="text-gray-700 mb-6 leading-relaxed">{phase.description}</p>
+                        <p className="text-gray-600 mt-1">{phase.description}</p>
                       )}
-
-                      <div className="space-y-4">
-                        {phase.weeks?.map((week, weekIdx) => (
-                          <div key={weekIdx} className="border border-gray-100 rounded-lg p-5 bg-gray-50 hover:bg-white transition-colors">
-                            <div className="flex items-start justify-between mb-4">
-                              <div className="flex items-center space-x-4">
-                                <div className="bg-blue-100 text-blue-800 text-sm font-bold px-3 py-2 rounded-lg">
-                                  Week {week.weekNumber}
-                                </div>
-                                <div>
-                                  <h4 className="font-semibold text-gray-900 text-lg">{week.title}</h4>
-                                  {week.goal && (
-                                    <p className="text-sm text-gray-600 mt-1">
-                                      <span className="font-medium">Goal:</span> {week.goal}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                            
-                            {week.topics?.length > 0 && (
-                              <div>
-                                <h5 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
-                                  <List className="w-4 h-4 mr-2" />
-                                  Topics Covered:
-                                </h5>
-                                <ul className="space-y-3">
-                                  {week.topics.map((topic, topicIdx) => (
-                                    <li key={topicIdx} className="flex items-start group hover:bg-white p-2 rounded-lg transition-colors">
-                                      <CheckCircle className="w-5 h-5 text-green-500 mt-1 mr-3 flex-shrink-0 group-hover:scale-110 transition-transform" />
-                                      <div>
-                                        <span className="font-medium text-gray-900">{topic.title}</span>
-                                        {topic.description && (
-                                          <p className="text-gray-600 text-sm mt-1">{topic.description}</p>
-                                        )}
-                                      </div>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
                     </div>
-                  </motion.div>
+                    <div className="p-6 space-y-4">
+                      {phase.weeks && phase.weeks.map((week, weekIndex) => (
+                        <div key={weekIndex} className="border-l-4 border-blue-500 pl-4 py-2">
+                          <h4 className="font-medium text-gray-900">
+                            Week {week.weekNumber}: {week.title}
+                          </h4>
+                          {week.topics && week.topics.length > 0 && (
+                            <ul className="mt-2 space-y-1">
+                              {week.topics.map((topic, topicIndex) => (
+                                <li key={topicIndex} className="flex items-center text-gray-600 text-sm">
+                                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></div>
+                                  {topic.title}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
-            </div>
+            ) : (
+              <p className="text-gray-500 text-center py-8">No curriculum information available</p>
+            )}
           </motion.div>
         )}
 
         {/* Instructors Tab */}
-        {activeTab === "instructors" && course.instructors?.length > 0 && (
+        {activeTab === "instructors" && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
+            className="bg-white rounded-2xl shadow-sm p-8"
           >
-            <div className="bg-white rounded-2xl shadow-lg p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center">
-                <Users className="w-6 h-6 text-green-500 mr-3" />
-                Meet Your Instructors
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {course.instructors.map((instructor, idx) => (
-                  <motion.div
-                    key={idx}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="border border-gray-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 group"
-                  >
-                    <div className="flex items-start space-x-6">
-                      <div className="relative">
-                        <img
-                          src={instructor.photoUrl || `${defaultAvatar}${encodeURIComponent(instructor.name)}`}
-                          alt={instructor.name}
-                          className="w-20 h-20 rounded-2xl object-cover border-4 border-white shadow-lg group-hover:scale-105 transition-transform duration-300"
-                          onError={e => {
-                            e.target.onerror = null;
-                            e.target.src = `${defaultAvatar}${encodeURIComponent(instructor.name)}`;
-                          }}
-                        />
-                        <div className="absolute -bottom-2 -right-2 bg-green-500 text-white p-1 rounded-full">
-                          <CheckCircle className="w-4 h-4" />
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-gray-900 group-hover:text-green-600 transition-colors">
-                          {instructor.name}
-                        </h3>
-                        {instructor.expertise && (
-                          <p className="text-green-600 font-semibold text-sm mt-1">{instructor.expertise}</p>
-                        )}
-                        {instructor.experience && (
-                          <p className="text-gray-600 text-sm mt-2">{instructor.experience}</p>
-                        )}
-                        {instructor.bio && (
-                          <p className="text-gray-700 mt-3 leading-relaxed text-sm">{instructor.bio}</p>
-                        )}
-                      </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Instructors</h2>
+            {course.instructors && course.instructors.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {course.instructors.map((instructor, index) => (
+                  <div key={index} className="flex items-start space-x-4 p-6 border border-gray-200 rounded-xl">
+                    <img
+                      src={instructor.photoUrl || `${defaultAvatar}${encodeURIComponent(instructor.name)}`}
+                      alt={instructor.name}
+                      className="w-16 h-16 rounded-full object-cover"
+                    />
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900">{instructor.name}</h3>
+                      <p className="text-blue-600 text-sm font-medium mt-1">{instructor.expertise}</p>
+                      <p className="text-gray-600 text-sm mt-2">{instructor.bio}</p>
+                      <p className="text-gray-500 text-xs mt-2">{instructor.experience}</p>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
-            </div>
+            ) : (
+              <p className="text-gray-500 text-center py-8">No instructors information available</p>
+            )}
           </motion.div>
         )}
 
@@ -468,100 +566,114 @@ const CourseDetail = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-8"
+            className="bg-white rounded-2xl shadow-sm p-8"
           >
-            {/* Outcomes & Features Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Outcomes */}
-              {course.outcomes?.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-lg p-8">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                    <Award className="w-6 h-6 text-yellow-500 mr-3" />
-                    What You'll Learn
-                  </h3>
-                  <div className="space-y-4">
-                    {course.outcomes.map((outcome, idx) => (
-                      <motion.div
-                        key={idx}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.1 }}
-                        className="flex items-start space-x-4 p-4 rounded-xl hover:bg-yellow-50 transition-colors group"
-                      >
-                        <div className="bg-yellow-100 p-2 rounded-lg group-hover:scale-110 transition-transform">
-                          <CheckCircle className="w-5 h-5 text-yellow-600" />
-                        </div>
-                        <span className="text-gray-700 text-lg leading-relaxed">{outcome}</span>
-                      </motion.div>
-                    ))}
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Course Outcomes</h2>
+            {course.outcomes && course.outcomes.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {course.outcomes.map((outcome, index) => (
+                  <div key={index} className="flex items-start space-x-4 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+                    <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                      <Target className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Outcome {index + 1}</h3>
+                      <p className="text-gray-600 mt-1">{outcome}</p>
+                    </div>
                   </div>
-                </div>
-              )}
-
-              {/* Features */}
-              {course.features?.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-lg p-8">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                    <Star className="w-6 h-6 text-blue-500 mr-3" />
-                    Course Features
-                  </h3>
-                  <div className="space-y-4">
-                    {course.features.map((feature, idx) => (
-                      <motion.div
-                        key={idx}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.1 }}
-                        className="flex items-start space-x-4 p-4 rounded-xl hover:bg-blue-50 transition-colors group"
-                      >
-                        <div className="bg-blue-100 p-2 rounded-lg group-hover:scale-110 transition-transform">
-                          <CheckCircle className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <span className="text-gray-700 text-lg leading-relaxed">{feature}</span>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Final CTA */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-r from-blue-600 to-purple-700 rounded-2xl p-8 text-center text-white"
-            >
-              <h3 className="text-2xl font-bold mb-4">Ready to Start Your Journey?</h3>
-              <p className="text-blue-100 text-lg mb-6 max-w-2xl mx-auto">
-                Join {enhancedCourse.students}+ students who have already transformed their skills with this course.
-              </p>
-              {!isEnrolled ? (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleEnroll}
-                  className="bg-white text-blue-600 font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2 mx-auto"
-                >
-                  <BookOpen className="w-5 h-5" />
-                  <span>Enroll Now for {course.price > 0 ? `₹${course.price}` : "Free"}</span>
-                </motion.button>
-              ) : (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate(`/student/courses/${id}/learn`)}
-                  className="bg-white text-blue-600 font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2 mx-auto"
-                >
-                  <Play className="w-5 h-5" />
-                  <span>Continue Learning</span>
-                </motion.button>
-              )}
-            </motion.div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-8">No outcomes information available</p>
+            )}
           </motion.div>
         )}
       </div>
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center rounded-t-2xl">
+              <h2 className="text-2xl font-bold text-gray-900">Complete Your Purchase</h2>
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100"
+              >
+                <span className="text-2xl">×</span>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div className="bg-gray-50 rounded-xl p-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-medium text-gray-900">{course.title}</h3>
+                    <p className="text-sm text-gray-600">Course Enrollment</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-gray-900">₹{course.price}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="font-medium text-gray-900">Billing Details</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input
+                      type="text"
+                      value={billingDetails.name}
+                      onChange={(e) => setBillingDetails({...billingDetails, name: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter your full name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      value={billingDetails.email}
+                      onChange={(e) => setBillingDetails({...billingDetails, email: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter your email"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
+                    <input
+                      type="tel"
+                      value={billingDetails.mobile}
+                      onChange={(e) => setBillingDetails({...billingDetails, mobile: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter your 10-digit mobile number"
+                      maxLength="10"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex space-x-3 pt-4">
+                <button
+                  onClick={() => setShowPaymentModal(false)}
+                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePayment}
+                  className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+                >
+                  Pay Now
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};
 
 export default CourseDetail;

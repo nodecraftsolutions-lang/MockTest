@@ -1,18 +1,430 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
+const Razorpay = require('razorpay');
+const crypto = require('crypto');
 const { auth, adminAuth } = require('../middlewares/auth');
 const Test = require('../models/Test');
 const Order = require('../models/Order');
 const Student = require('../models/Student');
+const Course = require('../models/Course');
+const Enrollment = require('../models/Enrollment');
 
 const router = express.Router();
 
-// Mock payment gateway configuration
-const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || 'rzp_test_mock';
-const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'mock_secret';
+// Razorpay configuration
+console.log('Initializing Razorpay with keys:', {
+  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_RXyM7QlecpKVqF',
+  key_secret_present: !!process.env.RAZORPAY_KEY_SECRET
+});
+
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_RXyM7QlecpKVqF',
+  key_secret: process.env.RAZORPAY_KEY_SECRET || '1CPZTFxhgfnRsc7vtKzKO9Ps'
+});
+
+// Test Razorpay connection
+console.log('Testing Razorpay connection...');
+razorpay.orders.all({ count: 1 }).then((result) => {
+  console.log('Razorpay SDK initialized successfully');
+  console.log('Razorpay connection test result:', result ? 'Success' : 'No data');
+}).catch((error) => {
+  console.error('=== RAZORPAY SDK INITIALIZATION ERROR ===');
+  console.error('Razorpay SDK initialization error:', error);
+  console.error('Error details:', {
+    statusCode: error.statusCode,
+    code: error.code,
+    message: error.message
+  });
+  
+  // Check if it's an authentication error
+  if (error.statusCode === 401) {
+    console.error('CRITICAL: RAZORPAY AUTHENTICATION FAILED - Check your API keys in .env file');
+    console.error('Current keys being used:');
+    console.error('  Key ID:', process.env.RAZORPAY_KEY_ID || 'NOT SET');
+    console.error('  Key Secret Present:', !!process.env.RAZORPAY_KEY_SECRET);
+  }
+});
+
+// @route   POST /api/v1/payments/create-course-order
+// @desc    Create payment order for course enrollment
+// @access  Private
+router.post('/create-course-order', auth, [
+  body('courseId')
+    .isMongoId()
+    .withMessage('Valid course ID is required'),
+  body('billingDetails.name')
+    .trim()
+    .notEmpty()
+    .withMessage('Billing name is required'),
+  body('billingDetails.email')
+    .isEmail()
+    .withMessage('Valid billing email is required'),
+  body('billingDetails.mobile')
+    .matches(/^[0-9]{10}$/)
+    .withMessage('Valid 10-digit mobile number is required')
+], async (req, res) => {
+  try {
+    console.log('=== CREATE COURSE ORDER REQUEST ===');
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    console.log('User ID:', req.student.id);
+    
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const { courseId, billingDetails, couponCode } = req.body;
+    console.log('Processing course order:', { courseId, billingDetails, couponCode });
+
+    // Verify course exists and is paid
+    console.log('Looking up course with ID:', courseId);
+    const course = await Course.findById(courseId);
+    console.log('Course lookup result:', courseId, course ? 'Found' : 'Not found');
+    
+    if (!course) {
+      console.log('Course not found error');
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found'
+      });
+    }
+
+    console.log('Course details:', {
+      id: course._id,
+      title: course.title,
+      isPaid: course.isPaid,
+      price: course.price,
+      currency: course.currency
+    });
+
+    // Validate course price
+    if (!course.isPaid || !course.price || course.price <= 0) {
+      console.log('Course price validation failed:', {
+        isPaid: course.isPaid,
+        price: course.price,
+        condition: !course.isPaid || !course.price || course.price <= 0
+      });
+      return res.status(400).json({
+        success: false,
+        message: 'This course is free and does not require payment'
+      });
+    }
+
+    // Ensure price is a valid number
+    if (isNaN(course.price) || typeof course.price !== 'number') {
+      console.log('Invalid course price type:', typeof course.price, course.price);
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid course price'
+      });
+    }
+
+    // Check if student has already purchased this course
+    console.log('Checking existing enrollment for student:', req.student.id, 'course:', courseId);
+    const existingEnrollment = await Enrollment.findOne({
+      studentId: req.student.id,
+      courseId: courseId,
+      type: 'course'
+    });
+    console.log('Existing enrollment check result:', existingEnrollment ? 'Found' : 'Not found');
+
+    if (existingEnrollment) {
+      console.log('Student already enrolled in this course');
+      return res.status(400).json({
+        success: false,
+        message: 'You have already enrolled in this course'
+      });
+    }
+
+    // Calculate total amount (using price as-is without adding GST)
+    // If GST is to be added, it should be included in the course price
+    let subtotal = course.price;
+    
+    // Apply discount if coupon code is provided
+    let discountAmount = 0;
+    let discountPercentage = 0;
+    
+    if (couponCode) {
+      // Mock coupon validation (implement real coupon system)
+      if (couponCode === 'SAVE10') {
+        discountPercentage = 10;
+        discountAmount = Math.round(subtotal * 0.1);
+      } else if (couponCode === 'FIRST20') {
+        discountPercentage = 20;
+        discountAmount = Math.round(subtotal * 0.2);
+      }
+    }
+
+    // Calculate final amount (no automatic GST added)
+    const taxableAmount = subtotal - discountAmount;
+    const totalAmount = taxableAmount; // Removed GST calculation
+
+    // Validate amount for Razorpay (must be integer in paise)
+    if (totalAmount <= 0) {
+      console.log('Invalid payment amount:', totalAmount);
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid payment amount'
+      });
+    }
+
+    const amountInPaise = Math.round(totalAmount * 100);
+    if (isNaN(amountInPaise) || amountInPaise <= 0) {
+      console.log('Invalid amount in paise calculation:', { amountInPaise, totalAmount });
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid payment amount calculation'
+      });
+    }
+    console.log('Amount in paise:', amountInPaise);
+
+    // Create order in Razorpay
+    let receipt = `course_${courseId.substring(0, 10)}_${Date.now().toString().substring(0, 8)}`;
+    // Ensure receipt doesn't exceed 40 characters
+    if (receipt.length > 40) {
+      receipt = receipt.substring(0, 40);
+    }
+    
+    const options = {
+      amount: amountInPaise, // Razorpay expects amount in paise
+      currency: 'INR',
+      receipt: receipt,
+      notes: {
+        courseId: courseId,
+        studentId: req.student.id,
+        courseTitle: course.title
+      }
+    };
+    console.log('Razorpay order options:', JSON.stringify(options, null, 2));
+
+    // Create order in Razorpay with better error handling
+    let razorpayOrder;
+    try {
+      console.log('Creating Razorpay order...');
+      razorpayOrder = await razorpay.orders.create(options);
+      console.log('Razorpay order created successfully:', JSON.stringify(razorpayOrder, null, 2));
+    } catch (razorpayError) {
+      console.error('=== RAZORPAY ORDER CREATION ERROR ===');
+      console.error('Razorpay order creation error:', razorpayError);
+      console.error('Razorpay error details:', {
+        statusCode: razorpayError.statusCode,
+        code: razorpayError.code,
+        message: razorpayError.message,
+        field: razorpayError.field
+      });
+      console.error('Request options that failed:', JSON.stringify(options, null, 2));
+      
+      // Check if it's an authentication error
+      if (razorpayError.statusCode === 401) {
+        console.error('RAZORPAY AUTHENTICATION ERROR - Check your API keys in .env file');
+      }
+      
+      return res.status(400).json({
+        success: false,
+        message: 'Failed to create payment order with Razorpay',
+        error: razorpayError.message || 'Unknown Razorpay error',
+        errorCode: razorpayError.code,
+        errorField: razorpayError.field,
+        statusCode: razorpayError.statusCode
+      });
+    }
+
+    // Create order in our database
+    console.log('Creating local order record...');
+    const order = new Order({
+      orderId: Order.generateOrderId(), // Explicitly generate orderId
+      studentId: req.student.id,
+      items: [{
+        courseId: course._id,
+        courseTitle: course.title,
+        price: course.price,
+        currency: course.currency || 'INR'
+      }],
+      totalAmount,
+      currency: 'INR',
+      paymentMethod: 'razorpay',
+      paymentGatewayOrderId: razorpayOrder.id,
+      billingDetails,
+      discountApplied: couponCode ? {
+        couponCode,
+        discountAmount,
+        discountPercentage
+      } : undefined,
+      taxes: {
+        gst: 0, // No automatic GST calculation
+        totalTax: 0
+      },
+      metadata: {
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+        source: 'web',
+        courseId: courseId
+      }
+    });
+
+    await order.save();
+    console.log('Local order record created:', order._id);
+
+    res.status(201).json({
+      success: true,
+      message: 'Order created successfully',
+      data: {
+        order: {
+          id: order._id,
+          orderId: order.orderId,
+          totalAmount: order.totalAmount,
+          currency: order.currency,
+          items: order.items,
+          discountApplied: order.discountApplied,
+          taxes: order.taxes
+        },
+        razorpayOrder,
+        razorpayKeyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_RXyM7QlecpKVqF'
+      }
+    });
+
+  } catch (error) {
+    console.error('=== UNEXPECTED ERROR IN CREATE COURSE ORDER ===');
+    console.error('Unexpected error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create order',
+      error: error.message
+    });
+  }
+});
+
+// @route   POST /api/v1/payments/verify-course-payment
+// @desc    Verify course payment and complete enrollment
+// @access  Private
+router.post('/verify-course-payment', auth, [
+  body('razorpay_order_id')
+    .notEmpty()
+    .withMessage('Razorpay order ID is required'),
+  body('razorpay_payment_id')
+    .notEmpty()
+    .withMessage('Razorpay payment ID is required'),
+  body('razorpay_signature')
+    .notEmpty()
+    .withMessage('Razorpay signature is required')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+    // Find order
+    const order = await Order.findOne({
+      paymentGatewayOrderId: razorpay_order_id,
+      studentId: req.student.id,
+      paymentStatus: 'pending'
+    }).populate('items.courseId');
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found or already processed'
+      });
+    }
+
+    // Verify signature
+    const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '1CPZTFxhgfnRsc7vtKzKO9Ps');
+    hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);
+    const expectedSignature = hmac.digest('hex');
+
+    if (expectedSignature !== razorpay_signature) {
+      await order.markAsFailed('Invalid payment signature');
+      return res.status(400).json({
+        success: false,
+        message: 'Payment verification failed'
+      });
+    }
+
+    // Mark order as completed
+    await order.markAsCompleted(razorpay_payment_id, {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature
+    });
+
+    // Generate receipt
+    order.receipt = {
+      receiptNumber: `RCP_${order.orderId}`,
+      generatedAt: new Date()
+    };
+    await order.save();
+
+    // Enroll student in course
+    const courseId = order.metadata.courseId;
+    const course = await Course.findById(courseId);
+    if (course && !course.enrolledStudents.includes(req.student.id)) {
+      course.enrolledStudents.push(req.student.id);
+      await course.save();
+    }
+
+    // Create enrollment record
+    // Check if enrollment already exists to avoid duplicate key error
+    let enrollment = await Enrollment.findOne({
+      studentId: req.student.id,
+      courseId: courseId,
+      type: 'course'
+    });
+    
+    if (!enrollment) {
+      enrollment = new Enrollment({
+        studentId: req.student.id,
+        courseId: courseId,
+        type: 'course',
+        status: 'enrolled'
+      });
+      await enrollment.save();
+    } else {
+      // If enrollment already exists, update status if needed
+      if (enrollment.status !== 'enrolled') {
+        enrollment.status = 'enrolled';
+        await enrollment.save();
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Payment verified and enrollment completed successfully',
+      data: {
+        order: {
+          id: order._id,
+          orderId: order.orderId,
+          status: order.paymentStatus,
+          totalAmount: order.totalAmount,
+          items: order.items,
+          receipt: order.receipt
+        },
+        enrollment
+      }
+    });
+
+  } catch (error) {
+    console.error('Verify course payment error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Payment verification failed'
+    });
+  }
+});
 
 // @route   POST /api/v1/payments/create-order
-// @desc    Create payment order
+// @desc    Create payment order for test enrollment
 // @access  Private
 router.post('/create-order', auth, [
   body('testIds')
@@ -109,14 +521,27 @@ router.post('/create-order', auth, [
     const gstAmount = Math.round(taxableAmount * 0.18);
     const totalAmount = taxableAmount + gstAmount;
 
-    // Create order
+    // Create order in Razorpay
+    const options = {
+      amount: totalAmount * 100, // Razorpay expects amount in paise
+      currency: 'INR',
+      receipt: `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      notes: {
+        studentId: req.student.id,
+        testIds: testIds
+      }
+    };
+
+    const razorpayOrder = await razorpay.orders.create(options);
+
+    // Create order in our database
     const order = new Order({
       studentId: req.student.id,
       items,
       totalAmount,
       currency: 'INR',
       paymentMethod: 'razorpay',
-      paymentGatewayOrderId: `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      paymentGatewayOrderId: razorpayOrder.id,
       billingDetails,
       discountApplied: couponCode ? {
         couponCode,
@@ -130,29 +555,12 @@ router.post('/create-order', auth, [
       metadata: {
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
-        source: 'web'
+        source: 'web',
+        testIds: testIds
       }
     });
 
     await order.save();
-
-    // Mock Razorpay order creation response
-    const razorpayOrder = {
-      id: order.paymentGatewayOrderId,
-      entity: 'order',
-      amount: totalAmount * 100, // Razorpay expects amount in paise
-      amount_paid: 0,
-      amount_due: totalAmount * 100,
-      currency: 'INR',
-      receipt: order.orderId,
-      status: 'created',
-      attempts: 0,
-      notes: {
-        orderId: order.orderId,
-        studentId: req.student.id
-      },
-      created_at: Math.floor(Date.now() / 1000)
-    };
 
     res.status(201).json({
       success: true,
@@ -168,7 +576,7 @@ router.post('/create-order', auth, [
           taxes: order.taxes
         },
         razorpayOrder,
-        razorpayKeyId: RAZORPAY_KEY_ID
+        razorpayKeyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_RXyM7QlecpKVqF'
       }
     });
 
@@ -182,7 +590,7 @@ router.post('/create-order', auth, [
 });
 
 // @route   POST /api/v1/payments/verify
-// @desc    Verify payment and complete order
+// @desc    Verify payment and complete test enrollment
 // @access  Private
 router.post('/verify', auth, [
   body('razorpay_order_id')
@@ -212,7 +620,7 @@ router.post('/verify', auth, [
       paymentGatewayOrderId: razorpay_order_id,
       studentId: req.student.id,
       paymentStatus: 'pending'
-    });
+    }).populate('items.testId');
 
     if (!order) {
       return res.status(404).json({
@@ -221,17 +629,12 @@ router.post('/verify', auth, [
       });
     }
 
-    // Mock signature verification (implement real Razorpay signature verification)
-    const crypto = require('crypto');
-    const expectedSignature = crypto
-      .createHmac('sha256', RAZORPAY_KEY_SECRET)
-      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-      .digest('hex');
+    // Verify signature
+    const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '1CPZTFxhgfnRsc7vtKzKO9Ps');
+    hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);
+    const expectedSignature = hmac.digest('hex');
 
-    // For demo purposes, we'll accept any signature
-    const isSignatureValid = true; // expectedSignature === razorpay_signature;
-
-    if (!isSignatureValid) {
+    if (expectedSignature !== razorpay_signature) {
       await order.markAsFailed('Invalid payment signature');
       return res.status(400).json({
         success: false,
@@ -252,6 +655,27 @@ router.post('/verify', auth, [
       generatedAt: new Date()
     };
     await order.save();
+
+    // Enroll student in tests
+    const testIds = order.metadata.testIds;
+    for (const testId of testIds) {
+      // Check if already enrolled
+      const existing = await Enrollment.findOne({
+        studentId: req.student.id,
+        testId: testId,
+        type: "test"
+      });
+
+      if (!existing) {
+        const enrollment = new Enrollment({
+          studentId: req.student.id,
+          testId: testId,
+          type: "test",
+          status: 'enrolled',
+        });
+        await enrollment.save();
+      }
+    }
 
     res.json({
       success: true,
@@ -355,33 +779,44 @@ async function handleOrderPaid(payload) {
   }
 }
 
-// @route   GET /api/v1/payments/orders/:id/receipt
-// @desc    Get order receipt
+// @route   GET /api/v1/payments/orders/:orderId/receipt
+// @desc    Get receipt details for an order
 // @access  Private
-router.get('/orders/:id/receipt', auth, async (req, res) => {
+router.get('/orders/:orderId/receipt', auth, async (req, res) => {
   try {
+    const { orderId } = req.params;
+    
+    // Find order by ID and ensure it belongs to the current student
     const order = await Order.findOne({
-      _id: req.params.id,
-      studentId: req.student.id,
-      paymentStatus: 'completed'
-    }).populate('items.testId', 'title companyId');
+      _id: orderId,
+      studentId: req.student.id
+    }).populate([
+      {
+        path: 'items.testId',
+        select: 'title'
+      },
+      {
+        path: 'items.courseId',
+        select: 'title'
+      }
+    ]);
 
     if (!order) {
       return res.status(404).json({
         success: false,
-        message: 'Receipt not found'
+        message: 'Order not found'
       });
     }
 
+    // Generate receipt data
     const receiptData = order.getReceiptData();
-
+    
     res.json({
       success: true,
       data: {
         receipt: receiptData
       }
     });
-
   } catch (error) {
     console.error('Get receipt error:', error);
     res.status(500).json({

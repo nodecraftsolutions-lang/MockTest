@@ -238,6 +238,14 @@ router.post('/:id/enroll', auth, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Course not found' });
     }
 
+    // Check if course is paid
+    if (course.isPaid && course.price > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'This is a paid course. Please proceed to payment to enroll.' 
+      });
+    }
+
     if (course.enrolledStudents.includes(req.student.id)) {
       return res.status(400).json({ success: false, message: 'Already enrolled' });
     }
@@ -245,7 +253,20 @@ router.post('/:id/enroll', auth, async (req, res) => {
     course.enrolledStudents.push(req.student.id);
     await course.save();
 
-    res.json({ success: true, message: 'Enrolled successfully' });
+    // Create enrollment record
+    const enrollment = new Enrollment({
+      studentId: req.student.id,
+      courseId: course._id,
+      type: 'course',
+      status: 'enrolled'
+    });
+    await enrollment.save();
+
+    res.json({ 
+      success: true, 
+      message: 'Enrolled successfully',
+      data: enrollment
+    });
   } catch (err) {
     console.error("Enroll course error:", err);
     res.status(500).json({ success: false, message: 'Failed to enroll' });
