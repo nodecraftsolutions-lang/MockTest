@@ -289,7 +289,9 @@ orderSchema.methods.getReceiptData = function() {
     transactionId: this.transactionId,
     paymentDate: this.updatedAt,
     taxes: this.taxes,
-    discount: this.discountApplied
+    discount: this.discountApplied,
+    // Include metadata to help frontend identify order type
+    metadata: this.metadata
   };
 };
 

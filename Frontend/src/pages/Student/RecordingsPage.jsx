@@ -4,16 +4,19 @@ import {
   CheckCircle, Calendar, Clock, DollarSign,
   Video, BookOpen, Award, Users, Lock, Unlock, Play,
   X, ChevronLeft, FileText, ExternalLink, Download,
-  Target, List, Star, Eye, Bookmark, Share2
+  Target, List, Star, Eye, Bookmark, Share2,
+  User, Mail, Phone
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../api/axios";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { useToast } from "../../context/ToastContext";
+import { useAuth } from "../../context/AuthContext";
 
 const RecordingsPage = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [course, setCourse] = useState(null);
   const [recordings, setRecordings] = useState([]);
   const [resources, setResources] = useState([]);
@@ -23,6 +26,12 @@ const RecordingsPage = () => {
   const [selectedRecording, setSelectedRecording] = useState(null);
   const [showRecordingsModal, setShowRecordingsModal] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [billingDetails, setBillingDetails] = useState({
+    name: user?.name || "",
+    email: user?.email || "",
+    mobile: ""
+  });
   const { showError, showSuccess } = useToast();
 
   useEffect(() => {
@@ -120,15 +129,133 @@ const RecordingsPage = () => {
 
   const handleUnlock = async () => {
     try {
-      const res = await api.post(`/recordings/unlock/${courseId}`);
-      if (res.data.success) {
-        showSuccess("Recordings unlocked successfully!");
-        setIsUnlocked(true);
-        fetchRecordings();
+      // For paid recordings, show payment modal
+      if (course.price > 0) {
+        setShowPaymentModal(true);
+      } else {
+        // For free recordings, unlock directly
+        const res = await api.post(`/recordings/unlock/${courseId}`);
+        if (res.data.success) {
+          showSuccess("Recordings unlocked successfully!");
+          setIsUnlocked(true);
+          fetchRecordings();
+        }
       }
     } catch (err) {
       console.error(err);
       showError("Failed to unlock recordings");
+    }
+  };
+
+  const handlePayment = async () => {
+    try {
+      console.log('Initiating payment for recordings:', courseId);
+      
+      // Validate course ID
+      if (!courseId) {
+        showError("Invalid course ID");
+        return;
+      }
+
+      // Validate billing details
+      if (!billingDetails.name || !billingDetails.email || !billingDetails.mobile) {
+        showError("Please fill all billing details");
+        return;
+      }
+
+      // Validate mobile number format
+      if (!/^[0-9]{10}$/.test(billingDetails.mobile)) {
+        showError("Please enter a valid 10-digit mobile number");
+        return;
+      }
+
+      // Validate email format
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(billingDetails.email)) {
+        showError("Please enter a valid email address");
+        return;
+      }
+
+      // Show loading state
+      console.log('Creating order with data:', { courseId, billingDetails });
+
+      // Create order
+      const orderRes = await api.post("/payments/create-recording-order", {
+        courseId: courseId,
+        billingDetails
+      });
+
+      console.log('Order creation response:', orderRes.data);
+
+      if (orderRes.data.success) {
+        const { razorpayOrder, razorpayKeyId } = orderRes.data.data;
+        console.log('Razorpay order details:', razorpayOrder);
+
+        // Load Razorpay script
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.async = true;
+        document.body.appendChild(script);
+
+        script.onload = () => {
+          const options = {
+            key: razorpayKeyId,
+            amount: razorpayOrder.amount,
+            currency: razorpayOrder.currency,
+            name: "MockTest",
+            description: course.title,
+            order_id: razorpayOrder.id,
+            handler: async function (response) {
+              try {
+                console.log('Payment response:', response);
+                // Verify payment
+                const verifyRes = await api.post("/payments/verify-recording-payment", {
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature
+                });
+
+                console.log('Verification response:', verifyRes.data);
+
+                if (verifyRes.data.success) {
+                  showSuccess("Payment successful! Recordings unlocked.");
+                  setIsUnlocked(true);
+                  setShowPaymentModal(false);
+                  fetchRecordings();
+                } else {
+                  showError("Payment verification failed: " + (verifyRes.data.message || "Unknown error"));
+                }
+              } catch (verifyError) {
+                console.error("Payment verification error:", verifyError);
+                showError("Payment verification failed. Please contact support.");
+              }
+            },
+            prefill: {
+              name: billingDetails.name,
+              email: billingDetails.email,
+              contact: billingDetails.mobile
+            },
+            theme: {
+              color: "#3B82F6"
+            },
+            modal: {
+              ondismiss: function() {
+                showError("Payment cancelled");
+              }
+            }
+          };
+
+          const rzp = new window.Razorpay(options);
+          rzp.open();
+        };
+
+        script.onerror = () => {
+          showError("Failed to load payment gateway. Please try again.");
+        };
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      const errorMessage = error.response?.data?.message || error.message || "Failed to initiate payment";
+      showError(errorMessage);
     }
   };
 
@@ -268,7 +395,7 @@ const RecordingsPage = () => {
                       className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center space-x-2"
                     >
                       <Unlock className="w-5 h-5" />
-                      <span>Unlock Recordings</span>
+                      <span>{course.price > 0 ? "Buy Recordings" : "Unlock Recordings"}</span>
                     </motion.button>
                   ) : (
                     <motion.button
@@ -761,6 +888,114 @@ const RecordingsPage = () => {
                     )}
                   </div>
                 )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Payment Modal */}
+      <AnimatePresence>
+        {showPaymentModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowPaymentModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-md shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold text-gray-900">Billing Details</h3>
+                  <button
+                    onClick={() => setShowPaymentModal(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Full Name
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="text"
+                        value={billingDetails.name}
+                        onChange={(e) => setBillingDetails({...billingDetails, name: e.target.value})}
+                        className="input-field pl-10"
+                        placeholder="Enter your full name"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="email"
+                        value={billingDetails.email}
+                        onChange={(e) => setBillingDetails({...billingDetails, email: e.target.value})}
+                        className="input-field pl-10"
+                        placeholder="Enter your email"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Mobile Number
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="tel"
+                        value={billingDetails.mobile}
+                        onChange={(e) => setBillingDetails({...billingDetails, mobile: e.target.value})}
+                        className="input-field pl-10"
+                        placeholder="Enter 10-digit mobile number"
+                        maxLength="10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm text-gray-600">Recordings Access</p>
+                        <p className="font-medium text-gray-900">{course.title}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-600">Total Amount</p>
+                        <p className="text-xl font-bold text-gray-900">₹{course.price}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handlePayment}
+                    className="w-full btn-primary py-3"
+                  >
+                    Proceed to Payment
+                  </button>
+
+                  <p className="text-xs text-gray-500 text-center">
+                    By proceeding, you agree to our terms and conditions
+                  </p>
+                </div>
               </div>
             </motion.div>
           </motion.div>

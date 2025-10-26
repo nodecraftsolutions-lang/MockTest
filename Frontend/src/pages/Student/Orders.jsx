@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { 
   ShoppingBag, Download, Eye, Calendar, CreditCard,
   CheckCircle, XCircle, Clock, RefreshCw, BookOpen, FileText,
-  X, MapPin, Mail, Phone, User
+  X, MapPin, Mail, Phone, User, Video
 } from 'lucide-react';
 import api from '../../api/axios';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -67,8 +67,13 @@ const Orders = () => {
     );
   };
 
-  const getOrderType = (items) => {
+  const getOrderType = (items, metadata) => {
     if (items && items.length > 0) {
+      // Check if it's a recording purchase based on metadata
+      if (metadata && metadata.type === 'recording') {
+        return 'Recordings';
+      }
+      
       const hasTest = items.some(item => item.testId);
       const hasCourse = items.some(item => item.courseId);
       
@@ -79,15 +84,17 @@ const Orders = () => {
     return 'Unknown';
   };
 
-  const getOrderIcon = (items) => {
-    const type = getOrderType(items);
+  const getOrderIcon = (items, metadata) => {
+    const type = getOrderType(items, metadata);
     switch (type) {
       case 'Test':
         return <FileText className="w-5 h-5 text-blue-500" />;
       case 'Course':
         return <BookOpen className="w-5 h-5 text-green-500" />;
+      case 'Recordings':
+        return <Video className="w-5 h-5 text-purple-500" />;
       default:
-        return <ShoppingBag className="w-5 h-5 text-purple-500" />;
+        return <ShoppingBag className="w-5 h-5 text-gray-500" />;
     }
   };
 
@@ -217,7 +224,7 @@ const Orders = () => {
           <div key={order._id} className="card">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center space-x-3">
-                {getOrderIcon(order.items)}
+                {getOrderIcon(order.items, order.metadata)}
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
                     Order #{order.orderId}
@@ -233,7 +240,7 @@ const Orders = () => {
                     </div>
                     <div className="flex items-center">
                       <ShoppingBag className="w-4 h-4 mr-1" />
-                      {getOrderType(order.items)}
+                      {getOrderType(order.items, order.metadata)}
                     </div>
                   </div>
                 </div>
@@ -258,13 +265,18 @@ const Orders = () => {
                         {item.testId ? (
                           <FileText className="w-5 h-5 text-primary-600" />
                         ) : (
-                          <BookOpen className="w-5 h-5 text-primary-600" />
+                          getOrderType([item], order.metadata) === 'Recordings' ? (
+                            <Video className="w-5 h-5 text-primary-600" />
+                          ) : (
+                            <BookOpen className="w-5 h-5 text-primary-600" />
+                          )
                         )}
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">{item.testTitle || item.courseTitle}</p>
                         <p className="text-sm text-gray-600">
-                          {item.testId ? 'Mock Test' : 'Course'}
+                          {item.testId ? 'Mock Test' : 
+                           getOrderType([item], order.metadata) === 'Recordings' ? 'Course Recordings' : 'Course'}
                         </p>
                       </div>
                     </div>
@@ -408,6 +420,10 @@ const Orders = () => {
                         <CreditCard className="w-4 h-4 mr-1" />
                         {selectedOrder.paymentMethod}
                       </div>
+                      <div className="flex items-center">
+                        <ShoppingBag className="w-4 h-4 mr-1" />
+                        {getOrderType(selectedOrder.items, selectedOrder.metadata)}
+                      </div>
                     </div>
                   </div>
                   <div className="text-right">
@@ -429,13 +445,18 @@ const Orders = () => {
                             {item.testId ? (
                               <FileText className="w-5 h-5 text-primary-600" />
                             ) : (
-                              <BookOpen className="w-5 h-5 text-primary-600" />
+                              getOrderType([item], selectedOrder.metadata) === 'Recordings' ? (
+                                <Video className="w-5 h-5 text-primary-600" />
+                              ) : (
+                                <BookOpen className="w-5 h-5 text-primary-600" />
+                              )
                             )}
                           </div>
                           <div>
                             <p className="font-medium text-gray-900">{item.testTitle || item.courseTitle}</p>
                             <p className="text-sm text-gray-600">
-                              {item.testId ? 'Mock Test' : 'Course'}
+                              {item.testId ? 'Mock Test' : 
+                               getOrderType([item], selectedOrder.metadata) === 'Recordings' ? 'Course Recordings' : 'Course'}
                             </p>
                           </div>
                         </div>
@@ -553,6 +574,9 @@ const Orders = () => {
             </Link>
             <Link to="/student/courses" className="btn-primary">
               Browse Courses
+            </Link>
+            <Link to="/student/recordings" className="btn-primary">
+              Browse Recordings
             </Link>
           </div>
         </div>
