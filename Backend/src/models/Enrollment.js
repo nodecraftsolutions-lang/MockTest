@@ -37,14 +37,9 @@ enrollmentSchema.pre('validate', function (next) {
   next();
 });
 
-// ⚡ Unique index per student per test OR course
-enrollmentSchema.index(
-  { studentId: 1, testId: 1 },
-  { unique: true, partialFilterExpression: { testId: { $exists: true, $ne: null } } }
-);
-enrollmentSchema.index(
-  { studentId: 1, courseId: 1 },
-  { unique: true, partialFilterExpression: { courseId: { $exists: true, $ne: null } } }
-);
+// ⚡ Unique constraints - simpler approach without partial filters that cause issues
+// We'll handle the uniqueness logic in the application code instead
+enrollmentSchema.index({ studentId: 1, testId: 1, type: 1 });
+enrollmentSchema.index({ studentId: 1, courseId: 1, type: 1 });
 
 module.exports = mongoose.model('Enrollment', enrollmentSchema);

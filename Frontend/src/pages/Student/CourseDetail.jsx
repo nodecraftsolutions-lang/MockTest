@@ -24,15 +24,23 @@ const CourseDetail = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [billingDetails, setBillingDetails] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
+    name: "",
+    email: "",
     mobile: ""
   });
 
   useEffect(() => {
     fetchCourse();
+    // Initialize billing details with user info
+    if (user) {
+      setBillingDetails({
+        name: user.name || "",
+        email: user.email || "",
+        mobile: user.mobile || ""
+      });
+    }
     window.scrollTo(0, 0);
-  }, [id]);
+  }, [id, user]);
 
   const fetchCourse = async () => {
     try {

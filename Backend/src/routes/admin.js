@@ -22,7 +22,12 @@ router.get('/dashboard', adminAuth, async (req, res) => {
       totalTests,
       totalAttempts,
       totalOrders,
-      revenueData
+      revenueData,
+      // Additional data for enhanced dashboard
+      totalCourses,
+      totalRecordings,
+      recentCourses,
+      topPerformingTests
     ] = await Promise.all([
       Student.countDocuments({ role: 'student' }),
       Student.countDocuments({ role: 'student', isActive: true }),
@@ -33,6 +38,40 @@ router.get('/dashboard', adminAuth, async (req, res) => {
       Order.aggregate([
         { $match: { paymentStatus: 'completed' } },
         { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+      ]),
+      // Additional data for enhanced dashboard
+      require('../models/Course').countDocuments({ isActive: true }),
+      require('../models/Recording').countDocuments(),
+      require('../models/Course').find({ isActive: true })
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .select('title enrolledStudents createdAt'),
+      Attempt.aggregate([
+        {
+          $group: {
+            _id: '$testId',
+            avgScore: { $avg: '$score' },
+            attemptCount: { $sum: 1 }
+          }
+        },
+        { $sort: { avgScore: -1 } },
+        { $limit: 5 },
+        {
+          $lookup: {
+            from: 'tests',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'testInfo'
+          }
+        },
+        { $unwind: '$testInfo' },
+        {
+          $project: {
+            title: '$testInfo.title',
+            avgScore: 1,
+            attemptCount: 1
+          }
+        }
       ])
     ]);
 
@@ -73,6 +112,27 @@ router.get('/dashboard', adminAuth, async (req, res) => {
       { $sort: { '_id.year': 1, '_id.month': 1 } }
     ]);
 
+    // Enhanced revenue data with time-based breakdown
+    const monthlyRevenue = await Order.aggregate([
+      {
+        $match: {
+          paymentStatus: 'completed',
+          createdAt: { $gte: new Date(Date.now() - 12 * 30 * 24 * 60 * 60 * 1000) }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' }
+          },
+          revenue: { $sum: '$totalAmount' },
+          orderCount: { $sum: 1 }
+        }
+      },
+      { $sort: { '_id.year': 1, '_id.month': 1 } }
+    ]);
+
     res.json({
       success: true,
       data: {
@@ -81,6 +141,8 @@ router.get('/dashboard', adminAuth, async (req, res) => {
           activeStudents,
           totalCompanies,
           totalTests,
+          totalCourses,
+          totalRecordings,
           totalAttempts,
           totalOrders,
           totalRevenue: revenueData[0]?.total || 0
@@ -88,9 +150,14 @@ router.get('/dashboard', adminAuth, async (req, res) => {
         recentActivities: {
           students: recentStudents,
           attempts: recentAttempts,
-          orders: recentOrders
+          orders: recentOrders,
+          courses: recentCourses
         },
-        monthlyStats
+        analytics: {
+          monthlyStats,
+          monthlyRevenue,
+          topPerformingTests
+        }
       }
     });
 
@@ -513,6 +580,196 @@ router.get('/results/export', adminAuth, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to export results'
+    });
+  }
+});
+
+// @route   GET /api/v1/admin/orders
+// @desc    Get all orders with filters (Admin only)
+// @access  Private/Admin
+router.get('/orders', adminAuth, async (req, res) => {
+  try {
+    const { 
+      page = 1, 
+      limit = 20, 
+      status,
+      fromDate,
+      toDate,
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = req.query;
+
+    const query = {};
+    
+    if (status && status !== 'all') {
+      query.paymentStatus = status;
+    }
+
+    if (fromDate || toDate) {
+      query.createdAt = {};
+      if (fromDate) {
+        query.createdAt.$gte = new Date(fromDate);
+      }
+      if (toDate) {
+        query.createdAt.$lte = new Date(toDate);
+      }
+    }
+
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const orders = await Order.find(query)
+      .populate('studentId', 'name email')
+      .sort(sortOptions)
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await Order.countDocuments(query);
+
+    res.json({
+      success: true,
+      data: {
+        orders,
+        pagination: {
+          current: parseInt(page),
+          pages: Math.ceil(total / limit),
+          total
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Get orders error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get orders'
+    });
+  }
+});
+
+// @route   GET /api/v1/admin/orders/:id
+// @desc    Get specific order details (Admin only)
+// @access  Private/Admin
+router.get('/orders/:id', adminAuth, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id)
+      .populate('studentId', 'name email')
+      .populate({
+        path: 'items.testId',
+        select: 'title price'
+      })
+      .populate({
+        path: 'items.courseId',
+        select: 'title price'
+      });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        order
+      }
+    });
+
+  } catch (error) {
+    console.error('Get order error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get order'
+    });
+  }
+});
+
+// @route   GET /api/v1/admin/orders/export
+// @desc    Export orders as CSV (Admin only)
+// @access  Private/Admin
+router.get('/orders/export', adminAuth, async (req, res) => {
+  try {
+    const { 
+      status,
+      fromDate,
+      toDate,
+      format = 'csv'
+    } = req.query;
+
+    const query = {};
+    
+    if (status && status !== 'all') {
+      query.paymentStatus = status;
+    }
+
+    if (fromDate || toDate) {
+      query.createdAt = {};
+      if (fromDate) {
+        query.createdAt.$gte = new Date(fromDate);
+      }
+      if (toDate) {
+        query.createdAt.$lte = new Date(toDate);
+      }
+    }
+
+    const orders = await Order.find(query)
+      .populate('studentId', 'name email')
+      .sort({ createdAt: -1 });
+
+    if (format === 'json') {
+      return res.json({
+        success: true,
+        data: orders
+      });
+    }
+
+    // For CSV format
+    if (orders.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No data found for export'
+      });
+    }
+
+    // Create CSV headers
+    const headers = [
+      'Order ID',
+      'Student Name',
+      'Student Email',
+      'Amount',
+      'Status',
+      'Payment Gateway Order ID',
+      'Transaction ID',
+      'Created At'
+    ].join(',');
+
+    // Create CSV rows
+    const rows = orders.map(order => {
+      return [
+        order.orderId || 'N/A',
+        order.studentId?.name || 'N/A',
+        order.studentId?.email || 'N/A',
+        order.totalAmount || 0,
+        order.paymentStatus || 'N/A',
+        order.paymentGatewayOrderId || 'N/A',
+        order.transactionId || 'N/A',
+        order.createdAt ? new Date(order.createdAt).toISOString() : 'N/A'
+      ].join(',');
+    });
+
+    const csvContent = [headers, ...rows].join('\n');
+    
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="orders-${new Date().toISOString().split('T')[0]}.csv"`);
+    res.status(200).send(csvContent);
+
+  } catch (error) {
+    console.error('Export orders error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to export orders'
     });
   }
 });

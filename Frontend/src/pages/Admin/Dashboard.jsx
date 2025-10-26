@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { 
   Users, Building, BookOpen, DollarSign, TrendingUp, 
   Activity, Award, BarChart3, Calendar, Eye, RefreshCw,
-  TrendingUp as TrendingUpIcon, UserCheck, FileText
+  TrendingUp as TrendingUpIcon, UserCheck, FileText, Video, GraduationCap
 } from 'lucide-react';
 import api from '../../api/axios';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -42,7 +42,7 @@ const AdminDashboard = () => {
     return <LoadingSpinner size="large" />;
   }
 
-  const { overview, recentActivities, monthlyStats } = dashboardData || {};
+  const { overview, recentActivities, analytics } = dashboardData || {};
 
   const statCards = [
     {
@@ -71,6 +71,14 @@ const AdminDashboard = () => {
       link: '/admin/tests'
     },
     {
+      title: 'Total Courses',
+      value: overview?.totalCourses || 0,
+      icon: GraduationCap,
+      color: 'from-indigo-500 to-indigo-600',
+      change: '+15%',
+      link: '/admin/course/list'
+    },
+    {
       title: 'Total Revenue',
       value: `₹${overview?.totalRevenue?.toLocaleString() || 0}`,
       icon: DollarSign,
@@ -93,8 +101,23 @@ const AdminDashboard = () => {
       color: 'from-pink-500 to-pink-600',
       change: '+10%',
       link: '/admin/orders'
+    },
+    {
+      title: 'Total Recordings',
+      value: overview?.totalRecordings || 0,
+      icon: Video,
+      color: 'from-teal-500 to-teal-600',
+      change: '+7%',
+      link: '/admin/recordings/upload'
     }
   ];
+
+  // Format monthly revenue data for chart
+  const revenueChartData = analytics?.monthlyRevenue?.map(item => ({
+    month: `${item._id.year}-${item._id.month.toString().padStart(2, '0')}`,
+    revenue: item.revenue,
+    orders: item.orderCount
+  })) || [];
 
   return (
     <div className="space-y-6">
@@ -117,7 +140,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -148,6 +171,79 @@ const AdminDashboard = () => {
             </Link>
           );
         })}
+      </div>
+
+      {/* Charts and Analytics */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Revenue Chart */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Trend</h3>
+          {revenueChartData.length > 0 ? (
+            <div className="space-y-4">
+              {revenueChartData.map((item, index) => (
+                <div key={index} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <Calendar className="w-5 h-5 text-gray-600" />
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {new Date(item.month).toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'long' 
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-8">
+                    <div className="text-center">
+                      <p className="text-lg font-semibold text-gray-900">₹{item.revenue?.toLocaleString() || 0}</p>
+                      <p className="text-sm text-gray-600">Revenue</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-lg font-semibold text-gray-900">{item.orders || 0}</p>
+                      <p className="text-sm text-gray-600">Orders</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-600">No revenue data available</p>
+            </div>
+          )}
+        </div>
+
+        {/* Top Performing Tests */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Performing Tests</h3>
+          {analytics?.topPerformingTests && analytics.topPerformingTests.length > 0 ? (
+            <div className="space-y-3">
+              {analytics.topPerformingTests.map((test, index) => (
+                <div key={index} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                      <span className="text-indigo-600 font-bold text-sm">{index + 1}</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{test.title}</p>
+                      <p className="text-sm text-gray-600">{test.attemptCount} attempts</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-gray-900">{Math.round(test.avgScore || 0)}%</p>
+                    <p className="text-sm text-gray-600">Avg Score</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-600">No test performance data available</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Recent Activities */}
@@ -243,9 +339,9 @@ const AdminDashboard = () => {
           </div>
         </div>
         
-        {monthlyStats && monthlyStats.length > 0 ? (
+        {analytics?.monthlyStats && analytics.monthlyStats.length > 0 ? (
           <div className="space-y-4">
-            {monthlyStats.map((stat, index) => (
+            {analytics.monthlyStats.map((stat, index) => (
               <div key={index} className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-lg transition-colors">
                 <div className="flex items-center space-x-3">
                   <Calendar className="w-5 h-5 text-gray-600" />

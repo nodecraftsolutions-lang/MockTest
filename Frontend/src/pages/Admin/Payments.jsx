@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { 
   DollarSign, Search, Filter, Eye, RefreshCw,
-  Download, CreditCard, Calendar, TrendingUp, AlertTriangle
+  Download, CreditCard, Calendar, TrendingUp, AlertTriangle,
+  Video, BookOpen, GraduationCap
 } from 'lucide-react';
 import api from '../../api/axios';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -112,6 +113,28 @@ const ManagePayments = () => {
     failedOrders: filteredOrders.filter(o => o.paymentStatus === 'failed').length
   };
 
+  // Function to determine order type and icon
+  const getOrderType = (items) => {
+    if (!items || items.length === 0) return { type: 'Unknown', icon: <BookOpen className="w-4 h-4" /> };
+    
+    const hasTests = items.some(item => item.testId);
+    const hasCourses = items.some(item => item.courseId);
+    
+    if (hasTests && !hasCourses) {
+      return { type: 'Mock Tests', icon: <BookOpen className="w-4 h-4" /> };
+    } else if (hasCourses && !hasTests) {
+      // Check if it's a recording or course
+      if (items.some(item => item.courseId && item.metadata?.type === 'recording')) {
+        return { type: 'Recordings', icon: <Video className="w-4 h-4" /> };
+      }
+      return { type: 'Courses', icon: <GraduationCap className="w-4 h-4" /> };
+    } else if (hasTests && hasCourses) {
+      return { type: 'Mixed', icon: <BookOpen className="w-4 h-4" /> };
+    }
+    
+    return { type: 'Unknown', icon: <BookOpen className="w-4 h-4" /> };
+  };
+
   if (loading) {
     return <LoadingSpinner size="large" />;
   }
@@ -147,7 +170,7 @@ const ManagePayments = () => {
           <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
             <DollarSign className="w-6 h-6 text-green-600" />
           </div>
-          <p className="text-2xl font-bold text-gray-900">₹{stats.totalRevenue}</p>
+          <p className="text-2xl font-bold text-gray-900">₹{stats.totalRevenue.toLocaleString()}</p>
           <p className="text-sm text-gray-600">Total Revenue</p>
         </div>
         
@@ -225,6 +248,9 @@ const ManagePayments = () => {
                   Student
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Items
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Amount
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -242,109 +268,128 @@ const ManagePayments = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredOrders.map((order) => (
-                <tr key={order._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
-                        #{order.orderId}
+              {filteredOrders.map((order) => {
+                const orderType = getOrderType(order.items);
+                return (
+                  <tr key={order._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          #{order.orderId}
+                        </div>
+                        <div className="flex items-center text-sm text-gray-500 mt-1">
+                          {orderType.icon}
+                          <span className="ml-1">{orderType.type}</span>
+                        </div>
+                        {order.transactionId && (
+                          <div className="text-xs text-gray-400 mt-1">
+                            TXN: {order.transactionId.substring(0, 10)}...
+                          </div>
+                        )}
                       </div>
-                      <div className="text-sm text-gray-500">
-                        {order.items?.length} item(s)
+                    </td>
+                    
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {order.studentId?.name || 'Unknown'}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {order.studentId?.email || 'N/A'}
+                        </div>
                       </div>
-                      {order.transactionId && (
-                        <div className="text-xs text-gray-400">
-                          TXN: {order.transactionId}
+                    </td>
+                    
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {order.items?.length || 0} item(s)
+                      </div>
+                      {order.items && order.items.length > 0 && (
+                        <div className="text-xs text-gray-500">
+                          {order.items[0].testTitle || order.items[0].courseTitle || 'N/A'}
+                          {order.items.length > 1 && ` +${order.items.length - 1} more`}
                         </div>
                       )}
-                    </div>
-                  </td>
-                  
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
+                    </td>
+                    
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        {order.studentId?.name || 'Unknown'}
+                        ₹{order.totalAmount?.toLocaleString() || 0}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {order.studentId?.email || 'N/A'}
+                        {order.currency}
                       </div>
-                    </div>
-                  </td>
-                  
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      ₹{order.totalAmount}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {order.currency}
-                    </div>
-                  </td>
-                  
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center text-sm text-gray-900">
-                      <CreditCard className="w-4 h-4 mr-1" />
-                      {order.paymentMethod}
-                    </div>
-                  </td>
-                  
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Calendar className="w-4 h-4 mr-1" />
-                      <div>
-                        <div>{new Date(order.createdAt).toLocaleDateString()}</div>
-                        <div className="text-xs text-gray-500">
-                          {new Date(order.createdAt).toLocaleTimeString()}
+                    </td>
+                    
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center text-sm text-gray-900">
+                        <CreditCard className="w-4 h-4 mr-1" />
+                        {order.paymentMethod}
+                      </div>
+                    </td>
+                    
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Calendar className="w-4 h-4 mr-1" />
+                        <div>
+                          <div>{new Date(order.createdAt).toLocaleDateString()}</div>
+                          <div className="text-xs text-gray-500">
+                            {new Date(order.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </td>
-                  
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      order.paymentStatus === 'completed' ? 'bg-green-100 text-green-800' :
-                      order.paymentStatus === 'failed' ? 'bg-red-100 text-red-800' :
-                      order.paymentStatus === 'refunded' ? 'bg-purple-100 text-purple-800' :
-                      order.paymentStatus === 'processing' ? 'bg-blue-100 text-blue-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {order.paymentStatus}
-                    </span>
-                  </td>
-                  
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => viewOrderDetails(order)}
-                        className="text-primary-600 hover:text-primary-900"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      
-                      {order.paymentStatus === 'completed' && (
+                    </td>
+                    
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        order.paymentStatus === 'completed' ? 'bg-green-100 text-green-800' :
+                        order.paymentStatus === 'failed' ? 'bg-red-100 text-red-800' :
+                        order.paymentStatus === 'refunded' ? 'bg-purple-100 text-purple-800' :
+                        order.paymentStatus === 'processing' ? 'bg-blue-100 text-blue-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {order.paymentStatus}
+                      </span>
+                    </td>
+                    
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => viewOrderDetails(order)}
+                          className="text-primary-600 hover:text-primary-900"
+                          title="View Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        
+                        {order.paymentStatus === 'completed' && (
+                          <button
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setRefundData({ amount: order.totalAmount.toString(), reason: '' });
+                              setShowRefundModal(true);
+                            }}
+                            className="text-orange-600 hover:text-orange-900"
+                            title="Process Refund"
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                          </button>
+                        )}
+                        
                         <button
                           onClick={() => {
-                            setSelectedOrder(order);
-                            setRefundData({ amount: order.totalAmount.toString(), reason: '' });
-                            setShowRefundModal(true);
+                            window.open(`/api/v1/payments/orders/${order._id}/receipt`, '_blank');
                           }}
-                          className="text-orange-600 hover:text-orange-900"
+                          className="text-green-600 hover:text-green-900"
+                          title="Download Receipt"
                         >
-                          <RefreshCw className="w-4 h-4" />
+                          <Download className="w-4 h-4" />
                         </button>
-                      )}
-                      
-                      <button
-                        onClick={() => {
-                          window.open(`/api/v1/payments/orders/${order._id}/receipt`, '_blank');
-                        }}
-                        className="text-green-600 hover:text-green-900"
-                      >
-                        <Download className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -363,7 +408,7 @@ const ManagePayments = () => {
                   setShowDetailsModal(false);
                   setSelectedOrder(null);
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 text-2xl"
               >
                 ×
               </button>
@@ -385,13 +430,15 @@ const ManagePayments = () => {
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-500">Payment Method</label>
-                      <p className="text-gray-900">{selectedOrder.paymentMethod}</p>
+                      <p className="text-gray-900 capitalize">{selectedOrder.paymentMethod}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-500">Status</label>
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                         selectedOrder.paymentStatus === 'completed' ? 'bg-green-100 text-green-800' :
                         selectedOrder.paymentStatus === 'failed' ? 'bg-red-100 text-red-800' :
+                        selectedOrder.paymentStatus === 'refunded' ? 'bg-purple-100 text-purple-800' :
+                        selectedOrder.paymentStatus === 'processing' ? 'bg-blue-100 text-blue-800' :
                         'bg-yellow-100 text-yellow-800'
                       }`}>
                         {selectedOrder.paymentStatus}
@@ -401,6 +448,12 @@ const ManagePayments = () => {
                       <label className="text-sm font-medium text-gray-500">Created</label>
                       <p className="text-gray-900">
                         {new Date(selectedOrder.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Last Updated</label>
+                      <p className="text-gray-900">
+                        {new Date(selectedOrder.updatedAt).toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -421,6 +474,19 @@ const ManagePayments = () => {
                       <label className="text-sm font-medium text-gray-500">Mobile</label>
                       <p className="text-gray-900">{selectedOrder.billingDetails?.mobile}</p>
                     </div>
+                    {selectedOrder.billingDetails?.address && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Address</label>
+                        <p className="text-gray-900">
+                          {selectedOrder.billingDetails.address.line1}
+                          {selectedOrder.billingDetails.address.line2 && `, ${selectedOrder.billingDetails.address.line2}`}
+                          <br />
+                          {selectedOrder.billingDetails.address.city}, {selectedOrder.billingDetails.address.state} {selectedOrder.billingDetails.address.pincode}
+                          <br />
+                          {selectedOrder.billingDetails.address.country}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -430,17 +496,36 @@ const ManagePayments = () => {
                 <div className="card">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Items</h3>
                   <div className="space-y-3">
-                    {selectedOrder.items?.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div>
-                          <p className="font-medium text-gray-900">{item.testTitle}</p>
-                          <p className="text-sm text-gray-600">Mock Test</p>
+                    {selectedOrder.items?.map((item, index) => {
+                      const isTest = item.testId;
+                      const isCourse = item.courseId;
+                      const isRecording = isCourse && item.metadata?.type === 'recording';
+                      
+                      return (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center">
+                            {isTest ? (
+                              <BookOpen className="w-5 h-5 text-blue-500 mr-2" />
+                            ) : isRecording ? (
+                              <Video className="w-5 h-5 text-purple-500 mr-2" />
+                            ) : (
+                              <GraduationCap className="w-5 h-5 text-green-500 mr-2" />
+                            )}
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {item.testTitle || item.courseTitle}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {isTest ? 'Mock Test' : isRecording ? 'Recording' : 'Course'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium text-gray-900">₹{item.price?.toLocaleString()}</p>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-medium text-gray-900">₹{item.price}</p>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -454,23 +539,23 @@ const ManagePayments = () => {
                       </span>
                     </div>
                     
-                    {selectedOrder.discountApplied && (
+                    {selectedOrder.discountApplied && selectedOrder.discountApplied.discountAmount > 0 && (
                       <div className="flex justify-between text-green-600">
                         <span>Discount ({selectedOrder.discountApplied.couponCode})</span>
-                        <span>-₹{selectedOrder.discountApplied.discountAmount}</span>
+                        <span>-₹{selectedOrder.discountApplied.discountAmount?.toLocaleString()}</span>
                       </div>
                     )}
                     
-                    {selectedOrder.taxes && (
+                    {selectedOrder.taxes && selectedOrder.taxes.totalTax > 0 && (
                       <div className="flex justify-between">
                         <span className="text-gray-600">Tax</span>
-                        <span className="text-gray-900">₹{selectedOrder.taxes.totalTax}</span>
+                        <span className="text-gray-900">₹{selectedOrder.taxes.totalTax?.toLocaleString()}</span>
                       </div>
                     )}
                     
-                    <div className="flex justify-between font-medium text-lg border-t pt-2">
+                    <div className="flex justify-between font-medium text-lg border-t pt-2 mt-2">
                       <span>Total</span>
-                      <span>₹{selectedOrder.totalAmount}</span>
+                      <span>₹{selectedOrder.totalAmount?.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -481,7 +566,7 @@ const ManagePayments = () => {
                     <div className="space-y-3">
                       <div>
                         <label className="text-sm font-medium text-gray-500">Refund Amount</label>
-                        <p className="text-gray-900">₹{selectedOrder.refund.refundAmount}</p>
+                        <p className="text-gray-900">₹{selectedOrder.refund.refundAmount?.toLocaleString()}</p>
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-500">Reason</label>
@@ -552,7 +637,7 @@ const ManagePayments = () => {
                   setShowRefundModal(false);
                   setRefundData({ amount: '', reason: '' });
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 text-2xl"
               >
                 ×
               </button>
@@ -573,6 +658,9 @@ const ManagePayments = () => {
                   className="input-field"
                   placeholder="Enter refund amount"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Maximum refundable amount: ₹{selectedOrder?.totalAmount?.toLocaleString()}
+                </p>
               </div>
 
               <div>

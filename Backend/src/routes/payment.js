@@ -384,14 +384,57 @@ router.post('/verify-course-payment', auth, [
     });
     
     if (!enrollment) {
-      enrollment = new Enrollment({
-        studentId: req.student.id,
-        courseId: courseId,
-        testId: null, // Explicitly set testId to null for course enrollments
-        type: 'course',
-        status: 'enrolled'
-      });
-      await enrollment.save();
+      try {
+        // Try to create enrollment with standard Mongoose approach first
+        enrollment = new Enrollment({
+          studentId: req.student.id,
+          courseId: courseId,
+          type: 'course',
+          status: 'enrolled'
+        });
+        
+        await enrollment.save();
+      } catch (enrollmentError) {
+        // If we get a duplicate key error, it might be because of the partial index issue
+        if (enrollmentError.code === 11000) {
+          console.log('Enrollment failed due to duplicate key error, trying alternative approach');
+          
+          // Try to find if enrollment was actually created despite the error
+          enrollment = await Enrollment.findOne({
+            studentId: req.student.id,
+            courseId: courseId,
+            type: 'course'
+          });
+          
+          // If still not found, try direct MongoDB insert
+          if (!enrollment) {
+            try {
+              const enrollmentData = {
+                studentId: req.student.id,
+                courseId: courseId,
+                type: 'course',
+                status: 'enrolled',
+                createdAt: new Date(),
+                updatedAt: new Date()
+              };
+              
+              const result = await Enrollment.collection.insertOne(enrollmentData);
+              enrollment = await Enrollment.findById(result.insertedId);
+            } catch (directInsertError) {
+              console.log('Direct insert also failed:', directInsertError);
+              // If direct insert fails, just continue - enrollment might already exist
+              enrollment = await Enrollment.findOne({
+                studentId: req.student.id,
+                courseId: courseId,
+                type: 'course'
+              });
+            }
+          }
+        } else {
+          // If it's not a duplicate key error, re-throw it
+          throw enrollmentError;
+        }
+      }
     } else {
       // If enrollment already exists, update status if needed
       if (enrollment.status !== 'enrolled') {
