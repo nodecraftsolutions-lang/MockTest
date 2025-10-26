@@ -275,6 +275,7 @@ router.put('/profile',
         admin.password = newPassword;
       }
 
+      // Save the admin profile
       await admin.save();
 
       // Return updated admin without password

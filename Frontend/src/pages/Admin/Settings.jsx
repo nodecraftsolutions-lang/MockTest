@@ -15,13 +15,21 @@ const AdminSettings = () => {
   const [adminProfile, setAdminProfile] = useState({
     name: '',
     email: '',
-    currentPassword: '',
+    currentPassword: '',  // This will always be empty
     newPassword: '',
     confirmPassword: ''
   });
   const { showSuccess, showError } = useToast();
 
   useEffect(() => {
+    // Ensure password fields are always empty on component mount
+    setAdminProfile(prev => ({
+      ...prev,
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    }));
+    
     fetchAdminProfile();
   }, []);
 
@@ -33,6 +41,7 @@ const AdminSettings = () => {
           ...prev,
           name: response.data.data.name,
           email: response.data.data.email
+          // Note: We don't set currentPassword, newPassword, or confirmPassword here
         }));
       }
       setLoading(false);
@@ -55,19 +64,14 @@ const AdminSettings = () => {
       }
 
       // If changing password, validate password fields
-      if (adminProfile.newPassword || adminProfile.confirmPassword || adminProfile.currentPassword) {
-        if (!adminProfile.currentPassword) {
-          showError('Please enter your current password');
-          setSaving(false);
-          return;
-        }
-      
-        if (adminProfile.newPassword && adminProfile.newPassword.length < 6) {
+      const isPasswordChange = adminProfile.currentPassword && adminProfile.newPassword;
+      if (isPasswordChange) {
+        if (adminProfile.newPassword.length < 6) {
           showError('New password must be at least 6 characters long');
           setSaving(false);
           return;
         }
-      
+        
         if (adminProfile.newPassword !== adminProfile.confirmPassword) {
           showError('New password and confirm password do not match');
           setSaving(false);
@@ -81,13 +85,13 @@ const AdminSettings = () => {
       if (adminProfile.email) updateData.email = adminProfile.email;
       
       // Only include password fields if they are being changed
-      if (adminProfile.currentPassword && adminProfile.newPassword) {
+      if (isPasswordChange) {
         updateData.currentPassword = adminProfile.currentPassword;
         updateData.newPassword = adminProfile.newPassword;
       }
 
       // If no changes, show message
-      if (Object.keys(updateData).length === 0) {
+      if (Object.keys(updateData).length === 0 && !isPasswordChange) {
         showSuccess('No changes to save');
         setSaving(false);
         return;
@@ -98,13 +102,15 @@ const AdminSettings = () => {
       if (response.data.success) {
         showSuccess('Profile updated successfully');
         
-        // Clear password fields after successful update
-        setAdminProfile(prev => ({
-          ...prev,
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: ''
-        }));
+        // Only clear password fields after successful password update
+        if (isPasswordChange) {
+          setAdminProfile(prev => ({
+            ...prev,
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: ''
+          }));
+        }
       } else {
         showError(response.data.message || 'Failed to update profile');
       }
@@ -197,6 +203,9 @@ const AdminSettings = () => {
                     onChange={(e) => updateProfile('currentPassword', e.target.value)}
                     className="input-field pr-10"
                     placeholder="Enter current password"
+                    autoComplete="new-password"
+                    data-lpignore="true"
+                    data-form-type="other"
                   />
                   <button
                     type="button"
@@ -223,6 +232,9 @@ const AdminSettings = () => {
                     onChange={(e) => updateProfile('newPassword', e.target.value)}
                     className="input-field pr-10"
                     placeholder="Enter new password"
+                    autoComplete="new-password"
+                    data-lpignore="true"
+                    data-form-type="other"
                   />
                   <button
                     type="button"
@@ -252,6 +264,9 @@ const AdminSettings = () => {
                     onChange={(e) => updateProfile('confirmPassword', e.target.value)}
                     className="input-field pr-10"
                     placeholder="Confirm new password"
+                    autoComplete="new-password"
+                    data-lpignore="true"
+                    data-form-type="other"
                   />
                   <button
                     type="button"
