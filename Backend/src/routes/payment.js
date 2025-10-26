@@ -769,53 +769,90 @@ router.post('/verify-recording-payment', auth, [
 });
 
 // @route   POST /api/v1/payments/create-order
-// @desc    Create payment order for test enrollment
+// @desc    Create payment order for tests
 // @access  Private
-router.post('/create-order', auth, [
-  body('testIds')
-    .isArray({ min: 1 })
-    .withMessage('At least one test ID is required'),
-  body('testIds.*')
-    .isMongoId()
-    .withMessage('Valid test IDs are required'),
-  body('billingDetails.name')
-    .trim()
-    .notEmpty()
-    .withMessage('Billing name is required'),
-  body('billingDetails.email')
-    .isEmail()
-    .withMessage('Valid billing email is required'),
-  body('billingDetails.mobile')
-    .matches(/^[0-9]{10}$/)
-    .withMessage('Valid 10-digit mobile number is required')
-], async (req, res) => {
+router.post('/create-order', auth, async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
+    console.log('=== CREATE TEST ORDER REQUEST ===');
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    console.log('User ID:', req.student.id);
+    
+    const { testIds, billingDetails, couponCode } = req.body;
+    console.log('Processing test order:', { testIds, billingDetails, couponCode });
+    
+    // Log the exact structure of testIds
+    console.log('testIds structure:');
+    if (Array.isArray(testIds)) {
+      testIds.forEach((id, index) => {
+        console.log(`  [${index}]:`, id, typeof id);
+        if (typeof id === 'object') {
+          console.log(`    Object keys:`, Object.keys(id));
+        }
+      });
+    } else {
+      console.log('testIds is not an array:', testIds, typeof testIds);
+    }
+
+    // Validate billing details
+    if (!billingDetails || !billingDetails.name || !billingDetails.email || !billingDetails.mobile) {
+      console.log('Missing billing details');
       return res.status(400).json({
         success: false,
-        message: 'Validation failed',
-        errors: errors.array()
+        message: 'Billing details are required'
       });
     }
 
-    const { testIds, billingDetails, couponCode } = req.body;
-
-    // Verify all tests exist and are paid tests
-    const tests = await Test.find({ 
-      _id: { $in: testIds }, 
-      type: 'paid', 
-      isActive: true 
-    }).populate('companyId', 'name');
-
-    if (tests.length !== testIds.length) {
+    // Validate test IDs
+    if (!testIds || !Array.isArray(testIds) || testIds.length === 0) {
+      console.log('Invalid or missing test IDs:', testIds);
       return res.status(400).json({
         success: false,
-        message: 'Some tests are not found or not available for purchase'
+        message: 'Valid test IDs are required'
+      });
+    }
+
+    // Ensure all testIds are strings
+    const stringTestIds = testIds.map(id => {
+      if (typeof id === 'object' && id !== null) {
+        // If it's an object with _id property, use that
+        if (id._id) {
+          return id._id.toString ? id._id.toString() : String(id._id);
+        }
+        // If it's an ObjectId, convert to string
+        if (id.toString && id.toString !== Object.prototype.toString) {
+          return id.toString();
+        }
+        // If it's a generic object, try to stringify it
+        return String(id);
+      }
+      // If it's already a string or number, convert to string
+      return String(id);
+    });
+    
+    console.log('Converted stringTestIds:', stringTestIds);
+
+    // Find tests
+    const tests = await Test.find({
+      _id: { $in: stringTestIds },
+      type: 'paid'
+    });
+
+    console.log('Found tests:', tests.map(t => ({ 
+      id: t._id, 
+      title: t.title, 
+      price: t.price 
+    })));
+
+    if (tests.length !== stringTestIds.length) {
+      console.log('Some tests not found or not paid tests');
+      return res.status(400).json({
+        success: false,
+        message: 'Some tests not found or not available for purchase'
       });
     }
 
     // Check if student has already purchased any of these tests
+    console.log('Checking existing purchases for student:', req.student.id);
     const existingOrders = await Order.find({
       studentId: req.student.id,
       'items.testId': { $in: testIds },
@@ -829,6 +866,7 @@ router.post('/create-order', auth, [
       const alreadyPurchased = testIds.filter(id => purchasedTestIds.includes(id));
       
       if (alreadyPurchased.length > 0) {
+        console.log('Student already purchased some tests:', alreadyPurchased);
         return res.status(400).json({
           success: false,
           message: 'You have already purchased some of these tests'
@@ -845,6 +883,7 @@ router.post('/create-order', auth, [
     }));
 
     const subtotal = items.reduce((sum, item) => sum + item.price, 0);
+    console.log('Subtotal:', subtotal);
     
     // Apply discount if coupon code is provided
     let discountAmount = 0;
@@ -860,15 +899,36 @@ router.post('/create-order', auth, [
         discountAmount = Math.round(subtotal * 0.2);
       }
     }
+    console.log('Discount applied:', { discountAmount, discountPercentage });
 
     // Calculate taxes (18% GST for India)
     const taxableAmount = subtotal - discountAmount;
     const gstAmount = Math.round(taxableAmount * 0.18);
     const totalAmount = taxableAmount + gstAmount;
+    console.log('Amount calculation:', { subtotal, discountAmount, taxableAmount, gstAmount, totalAmount });
+
+    // Validate amount for Razorpay (must be integer in paise)
+    if (totalAmount <= 0) {
+      console.log('Invalid payment amount:', totalAmount);
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid payment amount'
+      });
+    }
+
+    const amountInPaise = Math.round(totalAmount * 100);
+    if (isNaN(amountInPaise) || amountInPaise <= 0) {
+      console.log('Invalid amount in paise calculation:', { amountInPaise, totalAmount });
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid payment amount calculation'
+      });
+    }
+    console.log('Amount in paise:', amountInPaise);
 
     // Create order in Razorpay
     const options = {
-      amount: totalAmount * 100, // Razorpay expects amount in paise
+      amount: amountInPaise, // Razorpay expects amount in paise
       currency: 'INR',
       receipt: `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       notes: {
@@ -876,11 +936,47 @@ router.post('/create-order', auth, [
         testIds: testIds
       }
     };
+    console.log('Razorpay order options:', JSON.stringify(options, null, 2));
 
-    const razorpayOrder = await razorpay.orders.create(options);
+    // Create order in Razorpay with better error handling
+    let razorpayOrder;
+    try {
+      console.log('Creating Razorpay order...');
+      razorpayOrder = await razorpay.orders.create(options);
+      console.log('Razorpay order created successfully:', JSON.stringify(razorpayOrder, null, 2));
+    } catch (razorpayError) {
+      console.error('=== RAZORPAY ORDER CREATION ERROR ===');
+      console.error('Razorpay order creation error:', razorpayError);
+      console.error('Razorpay error details:', {
+        statusCode: razorpayError.statusCode,
+        code: razorpayError.code,
+        message: razorpayError.message,
+        field: razorpayError.field
+      });
+      console.error('Request options that failed:', JSON.stringify(options, null, 2));
+      
+      // Check if it's an authentication error
+      if (razorpayError.statusCode === 401) {
+        console.error('RAZORPAY AUTHENTICATION ERROR - Check your API keys in .env file');
+      }
+      
+      return res.status(400).json({
+        success: false,
+        message: 'Failed to create payment order with Razorpay',
+        error: razorpayError.message || 'Unknown Razorpay error',
+        errorCode: razorpayError.code,
+        errorField: razorpayError.field,
+        statusCode: razorpayError.statusCode
+      });
+    }
 
     // Create order in our database
+    console.log('Creating local order record...');
+    console.log('Original testIds from request:', testIds);
+    console.log('Processed stringTestIds:', stringTestIds);
+    
     const order = new Order({
+      orderId: Order.generateOrderId(), // Explicitly generate orderId
       studentId: req.student.id,
       items,
       totalAmount,
@@ -901,11 +997,14 @@ router.post('/create-order', auth, [
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
         source: 'web',
-        testIds: testIds
+        testIds: stringTestIds // Use the processed string IDs
       }
     });
+    
+    console.log('Order metadata testIds:', order.metadata.testIds);
 
     await order.save();
+    console.log('Local order record created:', order._id);
 
     res.status(201).json({
       success: true,
@@ -926,10 +1025,12 @@ router.post('/create-order', auth, [
     });
 
   } catch (error) {
-    console.error('Create order error:', error);
+    console.error('=== UNEXPECTED ERROR IN CREATE TEST ORDER ===');
+    console.error('Unexpected error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to create order'
+      message: 'Failed to create order',
+      error: error.message
     });
   }
 });
@@ -949,8 +1050,13 @@ router.post('/verify', auth, [
     .withMessage('Razorpay signature is required')
 ], async (req, res) => {
   try {
+    console.log('=== VERIFY TEST PAYMENT REQUEST ===');
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    console.log('User ID:', req.student.id);
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
       return res.status(400).json({
         success: false,
         message: 'Validation failed',
@@ -959,6 +1065,7 @@ router.post('/verify', auth, [
     }
 
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    console.log('Verifying payment:', { razorpay_order_id, razorpay_payment_id });
 
     // Find order
     const order = await Order.findOne({
@@ -968,11 +1075,25 @@ router.post('/verify', auth, [
     }).populate('items.testId');
 
     if (!order) {
+      console.log('Order not found or already processed');
       return res.status(404).json({
         success: false,
         message: 'Order not found or already processed'
       });
     }
+
+    console.log('Found order:', {
+      id: order._id,
+      orderId: order.orderId,
+      paymentStatus: order.paymentStatus,
+      studentId: order.studentId,
+      items: order.items.map(item => ({
+        testId: item.testId,
+        testTitle: item.testTitle,
+        price: item.price
+      })),
+      metadata: order.metadata
+    });
 
     // Verify signature
     const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '1CPZTFxhgfnRsc7vtKzKO9Ps');
@@ -980,6 +1101,7 @@ router.post('/verify', auth, [
     const expectedSignature = hmac.digest('hex');
 
     if (expectedSignature !== razorpay_signature) {
+      console.log('Invalid payment signature');
       await order.markAsFailed('Invalid payment signature');
       return res.status(400).json({
         success: false,
@@ -993,6 +1115,7 @@ router.post('/verify', auth, [
       razorpay_payment_id,
       razorpay_signature
     });
+    console.log('Order marked as completed');
 
     // Generate receipt
     order.receipt = {
@@ -1002,25 +1125,128 @@ router.post('/verify', auth, [
     await order.save();
 
     // Enroll student in tests
-    const testIds = order.metadata.testIds;
-    for (const testId of testIds) {
-      // Check if already enrolled
-      const existing = await Enrollment.findOne({
-        studentId: req.student.id,
-        testId: testId,
-        type: "test"
-      });
-
-      if (!existing) {
-        const enrollment = new Enrollment({
-          studentId: req.student.id,
-          testId: testId,
-          courseId: null, // Explicitly set courseId to null for test enrollments
-          type: "test",
-          status: 'enrolled',
+    try {
+      console.log('=== STARTING ENROLLMENT PROCESS ===');
+      console.log('Student ID:', req.student.id);
+      console.log('Order metadata:', order.metadata);
+      console.log('Order items:', order.items);
+      
+      // Safely extract testIds from metadata
+      let testIds = [];
+      if (order.metadata && Array.isArray(order.metadata.testIds)) {
+        testIds = order.metadata.testIds.map(id => {
+          console.log('Processing metadata testId:', id, typeof id);
+          // If it's an object with _id property, use that
+          if (id && typeof id === 'object' && id._id) {
+            return id._id.toString ? id._id.toString() : id._id;
+          }
+          // If it's already an ObjectId or string, convert to string
+          return id.toString ? id.toString() : id;
         });
-        await enrollment.save();
+      } else if (order.metadata && typeof order.metadata.testIds === 'string') {
+        // If it's a single test ID as string, convert to array
+        testIds = [order.metadata.testIds];
+      } else if (order.metadata && order.metadata.testIds) {
+        // If it's an object or other type, try to convert
+        const id = order.metadata.testIds;
+        if (id && typeof id === 'object' && id._id) {
+          testIds = [id._id.toString ? id._id.toString() : id._id];
+        } else {
+          testIds = [id.toString ? id.toString() : id];
+        }
       }
+      
+      console.log('Extracted testIds from metadata:', testIds);
+      
+      // Also extract test IDs from order items as fallback
+      if ((!testIds || testIds.length === 0) && order.items && Array.isArray(order.items)) {
+        testIds = order.items
+          .filter(item => item.testId)
+          .map(item => {
+            console.log('Processing item testId:', item.testId, typeof item.testId);
+            // If it's an object with _id property, use that
+            if (item.testId && typeof item.testId === 'object' && item.testId._id) {
+              return item.testId._id.toString ? item.testId._id.toString() : item.testId._id;
+            }
+            // If it's already an ObjectId or string, convert to string
+            return item.testId.toString ? item.testId.toString() : item.testId;
+          });
+        console.log('Fallback testIds from items:', testIds);
+      }
+      
+      console.log('Final testIds to process:', testIds);
+      
+      // Process each test ID
+      let enrollmentCount = 0;
+      for (const testId of testIds) {
+        try {
+          // Skip if testId is null, undefined, or empty
+          if (!testId || testId === 'null' || testId === 'undefined') {
+            console.log('Skipping invalid testId:', testId);
+            continue;
+          }
+          
+          // Normalize testId (ensure it's a string)
+          const normalizedTestId = typeof testId === 'object' && testId.toString ? testId.toString() : testId;
+          console.log('Processing test enrollment for:', normalizedTestId);
+          
+          // Check if already enrolled
+          const existing = await Enrollment.findOne({
+            studentId: req.student.id,
+            testId: normalizedTestId,
+            type: "test"
+          });
+          
+          console.log('Existing enrollment check result:', existing ? 'Found' : 'Not found');
+
+          if (!existing) {
+            console.log('Creating new enrollment for test:', normalizedTestId);
+            const enrollment = new Enrollment({
+              studentId: req.student.id,
+              testId: normalizedTestId, // This should be just the ID string
+              courseId: null, // Explicitly set courseId to null for test enrollments
+              type: "test",
+              status: 'enrolled',
+            });
+            await enrollment.save();
+            console.log('Enrollment created successfully:', {
+              id: enrollment._id,
+              studentId: enrollment.studentId,
+              testId: enrollment.testId,
+              type: enrollment.type,
+              status: enrollment.status
+            });
+            enrollmentCount++;
+          } else {
+            console.log('Student already enrolled in test:', normalizedTestId);
+            enrollmentCount++;
+          }
+        } catch (enrollmentError) {
+          console.error('Error processing enrollment for testId:', testId, enrollmentError);
+          // Continue with other enrollments even if one fails
+        }
+      }
+      console.log('Total enrollments processed:', enrollmentCount);
+      
+      // Verify that enrollments were created
+      if (testIds.length > 0) {
+        const verificationEnrollments = await Enrollment.find({
+          studentId: req.student.id,
+          testId: { $in: testIds },
+          type: "test"
+        });
+        console.log('Verification - Found enrollments after creation:', verificationEnrollments.map(e => ({
+          id: e._id,
+          testId: e.testId,
+          status: e.status
+        })));
+      }
+      
+      // Add a small delay to ensure database consistency
+      await new Promise(resolve => setTimeout(resolve, 100));
+    } catch (enrollmentProcessError) {
+      console.error('Error in enrollment process:', enrollmentProcessError);
+      // Don't fail the entire payment verification if enrollment fails
     }
 
     res.json({
@@ -1039,6 +1265,7 @@ router.post('/verify', auth, [
     });
 
   } catch (error) {
+    console.error('=== VERIFY PAYMENT ERROR ===');
     console.error('Verify payment error:', error);
     res.status(500).json({
       success: false,

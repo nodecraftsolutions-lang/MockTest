@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Play, Clock, FileText, Users, ShoppingCart, Lock, Check } from 'lucide-react';
+import { Play, Clock, FileText, Users, ShoppingCart, Lock, Check, User, Mail, Phone } from 'lucide-react';
 import api from '../../api/axios';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useToast } from '../../context/ToastContext';
@@ -13,6 +13,13 @@ const PaidTests = () => {
   const [loading, setLoading] = useState(true);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [cart, setCart] = useState([]);
+  const [showBillingModal, setShowBillingModal] = useState(false);
+  const [billingDetails, setBillingDetails] = useState({
+    name: '',
+    email: '',
+    mobile: ''
+  });
+  const [pendingTestIds, setPendingTestIds] = useState([]);
   const { user } = useAuth();
   const { showError, showSuccess } = useToast();
   const navigate = useNavigate();
@@ -21,7 +28,16 @@ const PaidTests = () => {
     fetchCompanies();
     fetchPaidTests();
     fetchPurchasedTests();
-  }, []);
+    
+    // Initialize billing details with user info
+    if (user) {
+      setBillingDetails({
+        name: user.name || '',
+        email: user.email || '',
+        mobile: user.mobile || ''
+      });
+    }
+  }, [user]);
 
   const fetchCompanies = async () => {
     try {
@@ -73,54 +89,95 @@ const PaidTests = () => {
   };
 
   const handlePurchase = async (testIds) => {
+    // Show billing modal for user to enter details
+    setPendingTestIds(testIds);
+    setShowBillingModal(true);
+  };
+
+  const handleBillingSubmit = async () => {
+    // Validate billing details
+    if (!billingDetails.name || !billingDetails.email || !billingDetails.mobile) {
+      showError("Please fill all billing details");
+      return;
+    }
+
+    if (!/^[0-9]{10}$/.test(billingDetails.mobile)) {
+      showError("Please enter a valid 10-digit mobile number");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(billingDetails.email)) {
+      showError("Please enter a valid email address");
+      return;
+    }
+
     try {
       const res = await api.post('/payments/create-order', {
-        testIds,
-        billingDetails: {
-          name: user?.name || 'Student',
-          email: user?.email || 'student@example.com',
-          mobile: user?.mobile || '0000000000',
-        },
+        testIds: pendingTestIds,
+        billingDetails
       });
 
       if (res.data.success) {
         const { razorpayOrder, razorpayKeyId } = res.data.data;
 
-        const options = {
-          key: razorpayKeyId,
-          amount: razorpayOrder.amount,
-          currency: razorpayOrder.currency,
-          name: 'MockTest Pro',
-          description: 'Test Purchase',
-          order_id: razorpayOrder.id,
-          handler: async (response) => {
-            try {
-              const verifyRes = await api.post('/payments/verify', {
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              });
-              if (verifyRes.data.success) {
-                showSuccess('Payment successful! Tests unlocked.');
-                setCart([]);
-                fetchPurchasedTests();
+        // Load Razorpay script
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.async = true;
+        document.body.appendChild(script);
+
+        script.onload = () => {
+          const options = {
+            key: razorpayKeyId,
+            amount: razorpayOrder.amount,
+            currency: razorpayOrder.currency,
+            name: 'MockTest Pro',
+            description: 'Test Purchase',
+            order_id: razorpayOrder.id,
+            handler: async (response) => {
+              try {
+                const verifyRes = await api.post('/payments/verify', {
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                });
+                if (verifyRes.data.success) {
+                  showSuccess('Payment successful! Tests unlocked.');
+                  setCart([]);
+                  setShowBillingModal(false);
+                  setPendingTestIds([]);
+                  fetchPurchasedTests();
+                } else {
+                  showError('Payment verification failed: ' + (verifyRes.data.message || 'Unknown error'));
+                }
+              } catch (verifyError) {
+                console.error('Payment verification error:', verifyError);
+                showError('Payment verification failed. Please contact support.');
               }
-            } catch {
-              showError('Payment verification failed');
+            },
+            prefill: {
+              name: billingDetails.name,
+              email: billingDetails.email,
+              contact: billingDetails.mobile,
+            },
+            modal: {
+              ondismiss: function() {
+                showError("Payment cancelled");
+              }
             }
-          },
-          prefill: {
-            name: user?.name || 'Student',
-            email: user?.email || 'student@example.com',
-            contact: user?.mobile || '0000000000',
-          },
+          };
+
+          const rzp = new window.Razorpay(options);
+          rzp.open();
         };
 
-        const rzp = new window.Razorpay(options);
-        rzp.open();
+        script.onerror = () => {
+          showError("Failed to load payment gateway. Please try again.");
+        };
       }
     } catch (err) {
-      showError(err.response?.data?.message || 'Failed to create order');
+      const errorMessage = err.response?.data?.message || 'Failed to create order';
+      showError(errorMessage);
     }
   };
 
@@ -324,6 +381,102 @@ const PaidTests = () => {
             );
           })}
       </div>
+
+      {/* Billing Details Modal */}
+      {showBillingModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-gray-900">Billing Details</h3>
+                <button
+                  onClick={() => setShowBillingModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Full Name
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      value={billingDetails.name}
+                      onChange={(e) => setBillingDetails({...billingDetails, name: e.target.value})}
+                      className="input-field pl-10"
+                      placeholder="Enter your full name"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="email"
+                      value={billingDetails.email}
+                      onChange={(e) => setBillingDetails({...billingDetails, email: e.target.value})}
+                      className="input-field pl-10"
+                      placeholder="Enter your email"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Mobile Number
+                  </label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="tel"
+                      value={billingDetails.mobile}
+                      onChange={(e) => setBillingDetails({...billingDetails, mobile: e.target.value})}
+                      className="input-field pl-10"
+                      placeholder="Enter 10-digit mobile number"
+                      maxLength="10"
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-sm text-gray-600">Tests to Purchase</p>
+                      <p className="font-medium text-gray-900">{pendingTestIds.length} test(s)</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-600">Total Amount</p>
+                      <p className="text-xl font-bold text-gray-900">₹{cartTotal}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleBillingSubmit}
+                  className="w-full btn-primary py-3"
+                >
+                  Proceed to Payment
+                </button>
+
+                <p className="text-xs text-gray-500 text-center">
+                  By proceeding, you agree to our terms and conditions
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {tests.length === 0 && (
         <div className="text-center py-12">

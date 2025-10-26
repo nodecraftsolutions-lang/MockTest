@@ -70,19 +70,39 @@ router.post('/company/:companyId', auth, async (req, res) => {
 router.get('/company/:companyId/status', auth, async (req, res) => {
   try {
     const { companyId } = req.params;
+    console.log('=== CHECKING ENROLLMENT STATUS ===');
+    console.log('Student ID:', req.student.id);
+    console.log('Company ID:', companyId);
 
-    const testIds = await Test.find({ companyId, type: 'paid' }).distinct('_id');
+    // Find all paid tests for this company
+    const tests = await Test.find({ companyId, type: 'paid' });
+    console.log('Found paid tests:', tests.map(t => ({ id: t._id, title: t.title })));
+    
+    const testIds = tests.map(t => t._id);
+    console.log('Extracted test IDs:', testIds);
 
-    const existing = await Enrollment.findOne({
+    // Check if student is enrolled in any of these tests
+    const enrollments = await Enrollment.find({
       studentId: req.student.id,
       testId: { $in: testIds },
-      type: "test",   // ✅ ensure type match
-      status: 'enrolled',
+      type: "test"
     });
+    
+    console.log('Found enrollments:', enrollments.map(e => ({ 
+      id: e._id, 
+      testId: e.testId, 
+      studentId: e.studentId,
+      type: e.type,
+      status: e.status
+    })));
+
+    // Check if any enrollment has status 'enrolled'
+    const isEnrolled = enrollments.some(e => e.status === 'enrolled');
+    console.log('Is enrolled (final result):', isEnrolled);
 
     res.json({
       success: true,
-      data: { isEnrolled: !!existing },
+      data: { isEnrolled },
     });
   } catch (error) {
     console.error('Enrollment status error:', error);
