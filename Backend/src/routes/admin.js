@@ -309,7 +309,7 @@ router.put('/profile',
 // @route   GET /api/v1/admin/students
 // @desc    Get all students with filters
 // @access  Private/Admin
-router.get('/students', adminAuth, async (req, res) => {
+router.get('/students', async (req, res) => {
   try {
     const { 
       page = 1, 
