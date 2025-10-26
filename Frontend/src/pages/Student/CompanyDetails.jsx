@@ -104,10 +104,14 @@ const CompanyDetails = () => {
       
       // Create payment order
       console.log('Sending payment order request with testIds:', pendingTestIds);
+      console.log('Test IDs type and structure:', pendingTestIds.map(id => ({ id, type: typeof id })));
+      
       const res = await api.post('/payments/create-order', {
         testIds: pendingTestIds,
         billingDetails
       });
+      
+      console.log('Payment order response:', res.data);
 
       if (res.data.success) {
         const { razorpayOrder, razorpayKeyId } = res.data.data;
@@ -123,7 +127,7 @@ const CompanyDetails = () => {
             key: razorpayKeyId,
             amount: razorpayOrder.amount,
             currency: razorpayOrder.currency,
-            name: 'MockTest Pro',
+            name: company?.name || 'MockTest Pro',
             description: `Unlock ${company?.name} Paid Tests`,
             order_id: razorpayOrder.id,
             handler: async (response) => {

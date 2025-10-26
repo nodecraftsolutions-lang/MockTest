@@ -99,6 +99,16 @@ router.get('/company/:companyId/status', auth, async (req, res) => {
     // Check if any enrollment has status 'enrolled'
     const isEnrolled = enrollments.some(e => e.status === 'enrolled');
     console.log('Is enrolled (final result):', isEnrolled);
+    
+    // Also check if there are any enrollments with different status
+    const otherStatusEnrollments = enrollments.filter(e => e.status !== 'enrolled');
+    if (otherStatusEnrollments.length > 0) {
+      console.log('Found enrollments with other statuses:', otherStatusEnrollments.map(e => ({
+        id: e._id,
+        testId: e.testId,
+        status: e.status
+      })));
+    }
 
     res.json({
       success: true,

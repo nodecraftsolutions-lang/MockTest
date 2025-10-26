@@ -201,7 +201,7 @@ const RecordingsPage = () => {
             key: razorpayKeyId,
             amount: razorpayOrder.amount,
             currency: razorpayOrder.currency,
-            name: "MockTest",
+            name: "PrepZon",
             description: course.title,
             order_id: razorpayOrder.id,
             handler: async function (response) {
@@ -214,13 +214,10 @@ const RecordingsPage = () => {
                   razorpay_signature: response.razorpay_signature
                 });
 
-                console.log('Verification response:', verifyRes.data);
-
                 if (verifyRes.data.success) {
                   showSuccess("Payment successful! Recordings unlocked.");
                   setIsUnlocked(true);
                   setShowPaymentModal(false);
-                  fetchRecordings();
                 } else {
                   showError("Payment verification failed: " + (verifyRes.data.message || "Unknown error"));
                 }

@@ -131,7 +131,7 @@ const PaidTests = () => {
             key: razorpayKeyId,
             amount: razorpayOrder.amount,
             currency: razorpayOrder.currency,
-            name: 'MockTest Pro',
+            name: 'PrepZon',
             description: 'Test Purchase',
             order_id: razorpayOrder.id,
             handler: async (response) => {

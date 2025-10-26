@@ -149,7 +149,7 @@ const Orders = () => {
       </head>
       <body>
         <div class="header">
-          <h1>MockTest Pro</h1>
+          <h1>PrepZon</h1>
           <h2>Payment Receipt</h2>
         </div>
         <div class="details">

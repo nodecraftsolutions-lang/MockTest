@@ -121,7 +121,7 @@ const CourseDetail = () => {
             key: razorpayKeyId,
             amount: razorpayOrder.amount,
             currency: razorpayOrder.currency,
-            name: "MockTest",
+            name: "PrepZon",
             description: course.title,
             order_id: razorpayOrder.id,
             handler: async function (response) {

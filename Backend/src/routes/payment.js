@@ -1053,6 +1053,7 @@ router.post('/verify', auth, [
     console.log('=== VERIFY TEST PAYMENT REQUEST ===');
     console.log('Request body:', JSON.stringify(req.body, null, 2));
     console.log('User ID:', req.student.id);
+    console.log('Headers:', JSON.stringify(req.headers, null, 2));
     
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -1076,6 +1077,15 @@ router.post('/verify', auth, [
 
     if (!order) {
       console.log('Order not found or already processed');
+      console.log('Searching for order with paymentGatewayOrderId:', razorpay_order_id);
+      console.log('Student ID:', req.student.id);
+      
+      // Let's also search for any order with this gateway ID to see what we find
+      const anyOrder = await Order.findOne({
+        paymentGatewayOrderId: razorpay_order_id
+      });
+      console.log('Any order with this gateway ID:', anyOrder);
+      
       return res.status(404).json({
         success: false,
         message: 'Order not found or already processed'
@@ -1128,8 +1138,8 @@ router.post('/verify', auth, [
     try {
       console.log('=== STARTING ENROLLMENT PROCESS ===');
       console.log('Student ID:', req.student.id);
-      console.log('Order metadata:', order.metadata);
-      console.log('Order items:', order.items);
+      console.log('Order metadata:', JSON.stringify(order.metadata, null, 2));
+      console.log('Order items:', JSON.stringify(order.items, null, 2));
       
       // Safely extract testIds from metadata
       let testIds = [];
@@ -1138,21 +1148,31 @@ router.post('/verify', auth, [
           console.log('Processing metadata testId:', id, typeof id);
           // If it's an object with _id property, use that
           if (id && typeof id === 'object' && id._id) {
-            return id._id.toString ? id._id.toString() : id._id;
+            const result = id._id.toString ? id._id.toString() : id._id;
+            console.log('Extracted ID from object:', result);
+            return result;
           }
           // If it's already an ObjectId or string, convert to string
-          return id.toString ? id.toString() : id;
+          const result = id.toString ? id.toString() : String(id);
+          console.log('Converted to string:', result);
+          return result;
         });
       } else if (order.metadata && typeof order.metadata.testIds === 'string') {
         // If it's a single test ID as string, convert to array
         testIds = [order.metadata.testIds];
+        console.log('Single test ID string:', testIds);
       } else if (order.metadata && order.metadata.testIds) {
         // If it's an object or other type, try to convert
         const id = order.metadata.testIds;
+        console.log('Processing single metadata testId:', id, typeof id);
         if (id && typeof id === 'object' && id._id) {
-          testIds = [id._id.toString ? id._id.toString() : id._id];
+          const result = id._id.toString ? id._id.toString() : id._id;
+          testIds = [result];
+          console.log('Extracted ID from single object:', result);
         } else {
-          testIds = [id.toString ? id.toString() : id];
+          const result = id.toString ? id.toString() : String(id);
+          testIds = [result];
+          console.log('Converted single to string:', result);
         }
       }
       
@@ -1166,15 +1186,25 @@ router.post('/verify', auth, [
             console.log('Processing item testId:', item.testId, typeof item.testId);
             // If it's an object with _id property, use that
             if (item.testId && typeof item.testId === 'object' && item.testId._id) {
-              return item.testId._id.toString ? item.testId._id.toString() : item.testId._id;
+              const result = item.testId._id.toString ? item.testId._id.toString() : item.testId._id;
+              console.log('Extracted ID from item object:', result);
+              return result;
             }
             // If it's already an ObjectId or string, convert to string
-            return item.testId.toString ? item.testId.toString() : item.testId;
+            const result = item.testId.toString ? item.testId.toString() : String(item.testId);
+            console.log('Converted item to string:', result);
+            return result;
           });
         console.log('Fallback testIds from items:', testIds);
       }
       
       console.log('Final testIds to process:', testIds);
+      
+      // Validate that we have test IDs
+      if (!testIds || testIds.length === 0) {
+        console.log('WARNING: No test IDs found to process!');
+        throw new Error('No test IDs found to process');
+      }
       
       // Process each test ID
       let enrollmentCount = 0;
@@ -1190,6 +1220,12 @@ router.post('/verify', auth, [
           const normalizedTestId = typeof testId === 'object' && testId.toString ? testId.toString() : testId;
           console.log('Processing test enrollment for:', normalizedTestId);
           
+          // Validate the test ID format
+          if (!normalizedTestId || normalizedTestId.length < 10) {
+            console.log('Skipping invalid testId format:', normalizedTestId);
+            continue;
+          }
+          
           // Check if already enrolled
           const existing = await Enrollment.findOne({
             studentId: req.student.id,
@@ -1201,13 +1237,48 @@ router.post('/verify', auth, [
 
           if (!existing) {
             console.log('Creating new enrollment for test:', normalizedTestId);
+            
+            // First, let's check what enrollments already exist for this student
+            const allStudentEnrollments = await Enrollment.find({
+              studentId: req.student.id
+            });
+            console.log('All existing enrollments for student:', allStudentEnrollments.map(e => ({
+              id: e._id,
+              testId: e.testId,
+              courseId: e.courseId,
+              type: e.type,
+              status: e.status
+            })));
+            
+            // Check if already enrolled using the correct index (studentId + testId)
+            const existingTestEnrollment = await Enrollment.findOne({
+              studentId: req.student.id,
+              testId: normalizedTestId
+            });
+            
+            if (existingTestEnrollment) {
+              console.log('Student already enrolled in test (found via testId check):', normalizedTestId);
+              enrollmentCount++;
+              continue;
+            }
+            
             const enrollment = new Enrollment({
               studentId: req.student.id,
               testId: normalizedTestId, // This should be just the ID string
-              courseId: null, // Explicitly set courseId to null for test enrollments
+              // Explicitly exclude courseId field instead of setting to null
               type: "test",
               status: 'enrolled',
             });
+            
+            // Log the enrollment before saving
+            console.log('About to save enrollment:', {
+              studentId: enrollment.studentId,
+              testId: enrollment.testId,
+              courseId: enrollment.courseId,
+              type: enrollment.type,
+              status: enrollment.status
+            });
+            
             await enrollment.save();
             console.log('Enrollment created successfully:', {
               id: enrollment._id,
@@ -1221,6 +1292,7 @@ router.post('/verify', auth, [
             console.log('Student already enrolled in test:', normalizedTestId);
             enrollmentCount++;
           }
+
         } catch (enrollmentError) {
           console.error('Error processing enrollment for testId:', testId, enrollmentError);
           // Continue with other enrollments even if one fails
@@ -1230,6 +1302,7 @@ router.post('/verify', auth, [
       
       // Verify that enrollments were created
       if (testIds.length > 0) {
+        console.log('Verifying enrollments for testIds:', testIds);
         const verificationEnrollments = await Enrollment.find({
           studentId: req.student.id,
           testId: { $in: testIds },
@@ -1246,6 +1319,7 @@ router.post('/verify', auth, [
       await new Promise(resolve => setTimeout(resolve, 100));
     } catch (enrollmentProcessError) {
       console.error('Error in enrollment process:', enrollmentProcessError);
+      console.error('Error stack:', enrollmentProcessError.stack);
       // Don't fail the entire payment verification if enrollment fails
     }
 
