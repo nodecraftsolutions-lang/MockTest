@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import api from "../../api/axios";
+import axios from "axios";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { useToast } from "../../context/ToastContext";
 import { useAuth } from "../../context/AuthContext";
@@ -56,17 +57,38 @@ const CourseDetail = () => {
     }
   };
 
+  // Function to send enrollment email
+  const sendEnrollmentEmail = async (userName, userEmail, courseTitle) => {
+    try {
+      await axios.post("https://prep-zone-mailserver.vercel.app/api/mail/enroll", {
+        name: userName,
+        email: userEmail,
+        courseTitle: courseTitle
+      });
+      console.log("📧 Enrollment email sent successfully");
+    } catch (mailError) {
+      console.error("❌ Error sending enrollment email:", mailError);
+    }
+  };
+
   const handleEnroll = async () => {
     try {
-      // For paid courses, show payment modal
+      // ✅ For paid courses, open payment modal
       if (course.isPaid && course.price > 0) {
         setShowPaymentModal(true);
       } else {
-        // For free courses, enroll directly
+        // ✅ For free courses, enroll directly
         const res = await api.post(`/courses/${id}/enroll`);
         if (res.data.success) {
           showSuccess("Enrolled successfully");
           setIsEnrolled(true);
+
+          // ✅ Send enrollment email
+          await sendEnrollmentEmail(
+            user?.name || "User", 
+            user?.email || "no-reply@example.com", 
+            course?.title || "Unknown Course"
+          );
         }
       }
     } catch (error) {
@@ -148,6 +170,13 @@ const CourseDetail = () => {
                   showSuccess("Payment successful! You are now enrolled.");
                   setIsEnrolled(true);
                   setShowPaymentModal(false);
+                  
+                  // ✅ Send enrollment email after successful payment
+                  await sendEnrollmentEmail(
+                    billingDetails.name || user?.name || "User", 
+                    billingDetails.email || user?.email || "no-reply@example.com", 
+                    course?.title || "Unknown Course"
+                  );
                 } else {
                   showError("Payment verification failed: " + (verifyRes.data.message || "Unknown error"));
                 }
