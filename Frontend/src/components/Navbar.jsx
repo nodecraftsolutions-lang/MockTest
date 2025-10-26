@@ -13,6 +13,17 @@ const Navbar = ({ isPublic = false }) => {
     logout();
     navigate('/');
   };
+  const handleCourses = () => {
+    if (isAuthenticated) {
+      // If user is logged in, go to student mock tests page
+      navigate('/student/courses/');
+    } else {
+      // If user is not logged in, redirect to auth page
+      // Store the redirect path in localStorage
+      localStorage.setItem('redirectAfterLogin', '/student/courses/');
+      navigate('/auth');
+    }
+  };
 
   const handleViewTests = () => {
     if (isAuthenticated) {
@@ -28,9 +39,10 @@ const Navbar = ({ isPublic = false }) => {
 
   const publicNavItems = [
     { name: 'Home', path: '/' },
+    { name: 'Courses', action: handleCourses },
     { name: 'Mock Tests', action: handleViewTests },
     { name: 'About', path: '/about' },
-    { name: 'Contact', path: '/contact' }
+    { name: 'Contact Us', path: '/contact' }
   ];
 
   return (
@@ -43,14 +55,14 @@ const Navbar = ({ isPublic = false }) => {
               <img
                 src="/Final Logo.png"
                 alt="MockTest Pro Logo"
-                className="h-8 w-auto"
+                className="h-14 w-50"
               />
             </Link>
           </div>
 
           {/* Public Navigation - Desktop */}
           {isPublic && (
-            <nav className="hidden md:flex md:space-x-1">
+            <nav className="hidden md:flex md:space-x-1 ml-auto mr-10">
               {publicNavItems.map(item => (
                 item.path ? (
                   <Link

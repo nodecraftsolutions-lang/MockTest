@@ -27,6 +27,8 @@ import Home from './pages/Home';
 import MockTests from './pages/MockTests';
 import About from './pages/About';
 import Auth from './pages/Auth';
+import Terms from './pages/Terms';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 // Student Pages
 import StudentDashboard from './pages/Student/Dashboard';
@@ -79,7 +81,12 @@ function App() {
               <Route path="about" element={<About />} />
               <Route path="auth" element={<Auth />} />
               <Route path="color-test" element={<ColorTest />} />
+              <Route path="terms" element={<Terms />} />
+              <Route path="privacy-policy" element={<PrivacyPolicy />} />
             </Route>
+            
+            {/* Standalone Public Pages */}
+            {/* <Route path="/terms" element={<Terms />} /> */}
 
             {/* Student Dashboard Routes */}
             <Route

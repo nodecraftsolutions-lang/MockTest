@@ -178,7 +178,7 @@ const Home = () => {
         clearInterval(courseIntervalRef.current);
       }
     };
-  }, [courses.length]);
+  }, [courses.length, windowWidth]);
 
   // Pause autoplay on hover for instructors
   const handleInstructorMouseEnter = () => {
@@ -456,8 +456,8 @@ const Home = () => {
       answer: "Absolutely! Our platform is fully responsive and works on all devices. We also have dedicated mobile apps for iOS and Android for an optimized learning experience on the go."
     },
     {
-      question: "What if I'm not satisfied with a course?",
-      answer: "We offer a 30-day money-back guarantee for all courses. If you're not satisfied with your purchase, simply contact our support team within 30 days for a full refund."
+      question: "Already Trained Elsewhere?",
+      answer: "You can still join Prepzon to test your knowledge with our mock tests. Identify your weak areas, get explanations, and keep improving until you’re fully job-ready."
     },
     {
       question: "How long do I have access to course materials?",
@@ -494,12 +494,12 @@ const Home = () => {
               <main className="mt-0 mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
                 <div className="sm:text-center lg:text-left">
                   <h1 className="text-3xl tracking-tight font-extrabold text-foreground sm:text-4xl md:text-5xl lg:text-6xl">
-                    <span className="block">Up Your Skills</span>
-                    <span className="block">To Advance Your</span>
-                    <span className="block text-primary">Career Path</span>
+                    <span className="block">Welcome to Prepzon</span>
+                    <span className="block">-Your Gateway from</span>
+                    <span className="block text-primary">Campus to Corporate</span>
                   </h1>
-                  <p className="mt-3 text-base text-muted-foreground sm:mt-4 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
-                    Discover a world of knowledge and opportunities. Learn from industry experts, gain practical skills, and accelerate your professional growth with our comprehensive online courses.
+                  <p className="mt-3 text-base text-muted-foreground sm:mt-4 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0 lg:text-left">
+                     Prepzon is India's next-gen EdTech platform built to transform fresh graduates into job-ready professionals. We provide everything a student needs to confidently crack top MNC recruitment exams and interviews — all in one place.
                   </p>
                   <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
                     <div className="rounded-md shadow">
@@ -534,6 +534,8 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      
 
       {/* Courses Section */}
       <section id="courses" className="py-20 bg-gradient-to-br from-background to-secondary/20">
@@ -813,6 +815,107 @@ const Home = () => {
               )}
             </div>
           )}
+        </div>
+      </section>
+      {/* Why Choose Prepzon Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
+              🎓Why Choose <span className="text-orange-500">PrepZon</span>
+            </h2>
+            
+            <div className="w-24 h-1 bg-gradient-to-r from-primary to-orange-500 mx-auto mt-6 rounded-full"></div>
+          </div>
+          
+          <div className="max-w-6xl mx-auto">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[
+                { text: "One course to crack multiple MNC exams", icon: "🎯" },
+                { text: "Access course material for 1 full year", icon: "📅" },
+                { text: "Free & paid mock tests for self-evaluation", icon: "📝" },
+                { text: "Resume preparation & interview guidance after course completion", icon: "📄" },
+                { text: "Open discussion forum to clarify doubts and connect with trainers", icon: "💬" },
+                { text: "Daily notifications for class reminders, new courses, and updates", icon: "🔔" },
+                { text: "24/7 support for students via chat, WhatsApp, or email", icon: "🎧" },
+                { text: "Flexible learning options – Live or Recorded classes", icon: "📺" },
+                { text: "End-to-end placement support and job readiness guidance", icon: "💼" }
+              ].map((item, index) => (
+                <div key={index} className="group relative bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-200 p-6 hover:border-primary/30 hover:-translate-y-2">
+                  <div className="absolute -top-5 -left-5 w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-orange-500 flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    {item.icon}
+                  </div>
+                  <div className="pt-6">
+                    <p className="text-lg text-foreground font-medium leading-relaxed">{item.text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="text-center mt-16">
+            <Link 
+              to="/auth"
+              className="inline-block bg-gradient-to-r from-primary to-orange-500 text-blue-900 font-bold py-4 px-10 rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-lg"
+            >
+              Start Your Journey Today
+            </Link>
+          </div>
+        </div>
+      </section>
+      {/* Core Offerings Section */}
+      <section className="py-20 bg-gradient-to-br from-primary/5 via-white to-secondary/10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
+              🚀 Our Core <span className="text-orange-500">Offerings</span>
+            </h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-primary to-orange-500 mx-auto mt-6 rounded-full"></div>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {/* Live Interactive Classes */}
+            <div className="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-all duration-300 border border-gray-200 hover:border-primary/30 group hover:-translate-y-2">
+              <div className="flex items-start mb-6">
+                <div className="bg-gradient-to-br from-primary to-orange-500 text-orange-500 p-3 rounded-xl mr-5 group-hover:scale-110 transition-transform duration-300">
+                  <div className="font-bold text-4xl">1</div>
+                </div>
+                <h3 className="text-2xl font-bold text-foreground mt-1">Live Interactive Classes</h3>
+              </div>
+              <p className="text-muted-foreground leading-relaxed">
+                Join our Campus2Corporate training program with daily Zoom sessions led by industry experts. Get practical knowledge, corporate exposure, and live doubt-solving sessions every day.
+              </p>
+              
+            </div>
+            
+            {/* Recorded Sessions + Study Notes */}
+            <div className="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-all duration-300 border border-gray-200 hover:border-primary/30 group hover:-translate-y-2">
+              <div className="flex items-start mb-6">
+                <div className="bg-gradient-to-br from-primary to-orange-500 text-orange-500 p-3 rounded-xl mr-5 group-hover:scale-110 transition-transform duration-300">
+                  <div className="font-bold text-4xl">2</div>
+                </div>
+                <h3 className="text-2xl font-bold text-foreground mt-1">Recorded Sessions + Study Notes</h3>
+              </div>
+              <p className="text-muted-foreground leading-relaxed">
+                Missed a class? No worries! Access all recorded sessions, notes, and study materials anytime — valid for 1 year after enrollment.
+              </p>
+              
+            </div>
+            
+            {/* Mock Tests (Free & Paid) */}
+            <div className="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-all duration-300 border border-gray-200 hover:border-primary/30 group hover:-translate-y-2">
+              <div className="flex items-start mb-6">
+                <div className="bg-gradient-to-br from-primary to-orange-500 text-orange-500 p-3 rounded-xl mr-5 group-hover:scale-110 transition-transform duration-300">
+                  <div className="font-bold text-4xl">3</div>
+                </div>
+                <h3 className="text-2xl font-bold text-foreground mt-1">Mock Tests (Free & Paid)</h3>
+              </div>
+              <p className="text-muted-foreground leading-relaxed">
+                Test your skills with real-exam-style mock tests for TCS, Infosys, Wipro, Accenture, Capgemini, Cognizant, and more. Get instant results with answers and detailed explanations.
+              </p>
+              
+            </div>
+          </div>
         </div>
       </section>
 
