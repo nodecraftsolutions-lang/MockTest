@@ -63,10 +63,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (userData) => {
+const register = async (userData) => {
   try {
-    // Do NOT remove confirmPassword!
-    // Ensure mobile is properly formatted (10 digits)
+    // ✅ Validate mobile number (10 digits)
     if (userData.mobile && !/^\d{10}$/.test(userData.mobile)) {
       return {
         success: false,
@@ -77,7 +76,7 @@ export const AuthProvider = ({ children }) => {
     console.log("Sending registration data:", userData);
     const response = await api.post("/auth/register", userData);
 
-    // If backend returns token on registration, auto-login:
+    // ✅ If backend returns token, auto-login
     if (response.data.data?.token) {
       const { token, refreshToken, student } = response.data.data;
       Cookies.set("token", token, { expires: 7 });
@@ -86,8 +85,20 @@ export const AuthProvider = ({ children }) => {
       }
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
       setUser(student);
+
+      // ✅ Trigger mail API after successful registration
+      try {
+        await axios.post("https://prep-zone-mailserver.vercel.app/api/mail/register", {
+          name: student?.name || userData.name,
+          email: student?.email || userData.email,
+        });
+        console.log("📧 Registration email sent successfully");
+      } catch (mailError) {
+        console.error("❌ Error sending registration email:", mailError);
+      }
     }
-    return { success: response.data.success, message: response.data.message, data: response.data.data };
+
+    return { success: response.data.success, message: response.data.message };
   } catch (error) {
     console.error("Registration error:", error);
     return {
@@ -96,6 +107,7 @@ export const AuthProvider = ({ children }) => {
     };
   }
 };
+
 
   const logout = () => {
     api.post("/auth/logout").catch(() => {});
