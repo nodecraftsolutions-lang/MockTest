@@ -420,33 +420,6 @@ const Sidebar = ({ type = "student", onStateChange }) => {
               
               <div className="relative group mb-2">
                 <DropdownButton 
-                  icon={Building} 
-                  label="MockTest" 
-                  menu="mocktest" 
-                  hasChildren={true}
-                />
-                
-                <DropdownContent menu="mocktest">
-                  <MockTestSubItem 
-                    to="/admin/mocktest" 
-                    icon={Building} 
-                    label="Company & Test Management" 
-                  />
-                  <MockTestSubItem 
-                    to="/admin/mocktest/question-generate" 
-                    icon={ListStartIcon} 
-                    label="Generate Test Questions" 
-                  />
-                  <MockTestSubItem 
-                    to="/admin/mocktest/question-bank-upload" 
-                    icon={Upload} 
-                    label="Question Bank Upload" 
-                  />
-                </DropdownContent>
-              </div>
-              
-              <div className="relative group mb-2">
-                <DropdownButton 
                   icon={BookOpen} 
                   label="Course Management" 
                   menu="course" 
@@ -493,7 +466,34 @@ const Sidebar = ({ type = "student", onStateChange }) => {
                   />
                 </DropdownContent>
               </div>
-
+              
+              <div className="relative group mb-2">
+                <DropdownButton 
+                  icon={Building} 
+                  label="MockTest" 
+                  menu="mocktest" 
+                  hasChildren={true}
+                />
+                
+                <DropdownContent menu="mocktest">
+                  <MockTestSubItem 
+                    to="/admin/mocktest" 
+                    icon={Building} 
+                    label="Company & Test Management" 
+                  />
+                  <MockTestSubItem 
+                    to="/admin/mocktest/question-generate" 
+                    icon={ListStartIcon} 
+                    label="Generate Test Questions" 
+                  />
+                  <MockTestSubItem 
+                    to="/admin/mocktest/question-bank-upload" 
+                    icon={Upload} 
+                    label="Question Bank Upload" 
+                  />
+                </DropdownContent>
+              </div>
+              
               <div className="mb-1">
                 <NavItem 
                   to="/admin/students" 
