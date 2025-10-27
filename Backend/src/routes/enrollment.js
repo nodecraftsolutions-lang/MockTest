@@ -361,6 +361,116 @@ router.get('/admin/purchased-tests', adminAuth, async (req, res) => {
   }
 });
 
+// @route   GET /api/v1/enrollments/admin/purchased-tests/export
+// @desc    Export purchased tests as CSV (Admin only)
+// @access  Admin
+router.get('/admin/purchased-tests/export', adminAuth, async (req, res) => {
+  try {
+    const { search, format = 'csv' } = req.query;
+    
+    // Build query for paid test orders
+    let query = {
+      $and: [
+        { 'items.testId': { $exists: true, $ne: null } },
+        { 'paymentStatus': 'completed' }
+      ]
+    };
+    
+    if (search) {
+      // Search by student name or email
+      const studentIds = await Student.find({
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } }
+        ]
+      }).distinct('_id');
+      
+      query.$or = [
+        { studentId: { $in: studentIds } }
+      ];
+    }
+    
+    // Get all orders without pagination for export
+    const orders = await Order.find(query)
+      .populate('studentId', 'name email mobile')
+      .populate({
+        path: 'items.testId',
+        select: 'title price companyId',
+        populate: {
+          path: 'companyId',
+          select: 'name'
+        }
+      })
+      .sort({ createdAt: -1 });
+    
+    if (format === 'json') {
+      return res.json({
+        success: true,
+        data: orders
+      });
+    }
+    
+    // For CSV format
+    if (orders.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No data found for export'
+      });
+    }
+    
+    // Create CSV headers
+    const headers = [
+      'Student Name',
+      'Student Email',
+      'Student Mobile',
+      'Test Title',
+      'Company',
+      'Price (₹)',
+      'Payment Status',
+      'Order ID',
+      'Payment Gateway Order ID',
+      'Transaction ID',
+      'Purchase Date'
+    ].join(',');
+    
+    // Create CSV rows
+    const rows = [];
+    
+    orders.forEach(order => {
+      // Create a row for each test item in the order
+      order.items.forEach(item => {
+        if (item.testId) {
+          rows.push([
+            order.studentId?.name || 'N/A',
+            order.studentId?.email || 'N/A',
+            order.studentId?.mobile || 'N/A',
+            item.testId.title || 'N/A',
+            item.testId.companyId?.name || 'N/A',
+            item.price || 0,
+            order.paymentStatus || 'N/A',
+            order._id.toString() || 'N/A',
+            order.paymentGatewayOrderId || 'N/A',
+            order.transactionId || 'N/A',
+            order.createdAt ? new Date(order.createdAt).toISOString() : 'N/A'
+          ].join(','));
+        }
+      });
+    });
+    
+    const csvContent = [headers, ...rows].join('\n');
+    
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="purchased-tests-${new Date().toISOString().split('T')[0]}.csv"`);
+    res.status(200).send(csvContent);
+  } catch (error) {
+    console.error('Export purchased tests error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to export purchased tests'
+    });
+  }
+});
+
 // @route   GET /api/v1/enrollments/admin/courses-with-recordings
 // @desc    Get all course enrollments and recording unlocks with student details (Admin only)
 // @access  Admin

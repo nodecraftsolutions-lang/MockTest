@@ -153,15 +153,14 @@ const Terms = () => {
                     <h3 className="text-xl font-semibold text-gray-900">Refund Policy</h3>
                   </div>
                   <p className="text-gray-700 mb-4">
-                    Prepzon offers a 7-day money-back guarantee on all course purchases. Refunds are processed within 7-10 business 
-                    days after the refund request is approved.
+                    No refunds will be provided for courses that have already been accessed.
                   </p>
                   <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
                     <h4 className="font-semibold text-gray-900 mb-2">Refund Conditions:</h4>
                     <ul className="list-disc pl-6 text-gray-700">
-                      <li>Course must be requested within 7 days of purchase</li>
-                      <li>No more than 20% of course content should be consumed</li>
-                      <li>Valid reason for refund must be provided</li>
+                      <li>No refunds on courses once enrolled.</li>
+                      <li>No refunds on recordings once purchased.</li>
+                      <li>No refunds on Paid Tests once accessed</li>
                     </ul>
                   </div>
                 </div>
