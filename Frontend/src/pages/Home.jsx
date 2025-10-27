@@ -461,7 +461,7 @@ const Home = () => {
     },
     {
       question: "How long do I have access to course materials?",
-      answer: "Once you purchase a course, you get lifetime access to all course materials, including any future updates. You can learn at your own pace and revisit the content whenever you need."
+      answer: "Access upto 12 months from the date of purchase."
     },
     {
       question: "Do you offer corporate plans?",

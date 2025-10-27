@@ -297,7 +297,7 @@ const CourseDetail = () => {
                     {course.price > 0 ? `₹${course.price}` : "Free"}
                   </div>
                   <div className="text-blue-200 text-sm">
-                    One-time payment • Lifetime access
+                    Enroll to access 
                   </div>
                 </div>
 
@@ -326,15 +326,15 @@ const CourseDetail = () => {
                 <div className="space-y-3 text-sm text-blue-200">
                   <div className="flex items-center space-x-3">
                     <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span>Full lifetime access</span>
+                    <span>Access to Live Sessions</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span>Certificate of completion</span>
+                    <span>Live Mentor Support</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span>Downloadable resources</span>
+                    <span>Discussion Forums</span>
                   </div>
                 </div>
 
@@ -445,11 +445,11 @@ const CourseDetail = () => {
                     <span className="font-medium">{enhancedCourse.language}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Certificate</span>
+                    <span className="text-gray-600">Mentor Support</span>
                     <span className="font-medium">{enhancedCourse.certificate ? 'Yes' : 'No'}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Lifetime Access</span>
+                    <span className="text-gray-600">Discussion Forums</span>
                     <span className="font-medium">{enhancedCourse.lifetimeAccess ? 'Yes' : 'No'}</span>
                   </div>
                 </div>

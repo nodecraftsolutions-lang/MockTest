@@ -43,11 +43,11 @@ const Footer = () => {
   const handleStudyMaterials = () => {
     if (isAuthenticated) {
       // If user is logged in, go to student dashboard
-      navigate('/student');
+      navigate('/student/all-recordings');
     } else {
       // If user is not logged in, redirect to auth page
       // Store the redirect path in localStorage
-      localStorage.setItem('redirectAfterLogin', '/student');
+      localStorage.setItem('redirectAfterLogin', '/student/all-recordings');
       navigate('/auth');
     }
   };

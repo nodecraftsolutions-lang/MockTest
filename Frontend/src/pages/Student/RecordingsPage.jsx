@@ -336,7 +336,7 @@ const RecordingsPage = () => {
                   <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
                     {course.title}
                   </h1>
-                  <p className="text-xl text-blue-100 leading-relaxed">
+                  <p className="text-sm text-blue-100 leading-relaxed">
                     {descriptionLines[0] || course.description}
                   </p>
                 </motion.div>
@@ -352,10 +352,7 @@ const RecordingsPage = () => {
                     <Star className="w-5 h-5 text-yellow-400 fill-current" />
                     <span>{course.rating} Rating</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Users className="w-5 h-5" />
-                    <span>{course.students}+ Students</span>
-                  </div>
+                  
                   <div className="flex items-center space-x-2">
                     <Clock className="w-5 h-5" />
                     <span>{course.level}</span>
@@ -380,7 +377,7 @@ const RecordingsPage = () => {
                       {course.price > 0 ? `₹${course.price}` : "Free"}
                     </div>
                     <div className="text-blue-200 text-sm">
-                      One-time payment • Lifetime access
+                      Unlock to access recordings
                     </div>
                   </div>
 
@@ -412,7 +409,7 @@ const RecordingsPage = () => {
                   <div className="space-y-3 text-sm text-blue-200">
                     <div className="flex items-center space-x-3">
                       <CheckCircle className="w-4 h-4 text-green-400" />
-                      <span>Full lifetime access</span>
+                      <span>Access upto one year</span>
                     </div>
                     <div className="flex items-center space-x-3">
                       <CheckCircle className="w-4 h-4 text-green-400" />
@@ -420,7 +417,7 @@ const RecordingsPage = () => {
                     </div>
                     <div className="flex items-center space-x-3">
                       <CheckCircle className="w-4 h-4 text-green-400" />
-                      <span>Certificate of completion</span>
+                      <span>Detailed Curriculum</span>
                     </div>
                   </div>
                 </div>
