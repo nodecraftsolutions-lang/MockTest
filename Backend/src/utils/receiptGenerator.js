@@ -18,12 +18,30 @@ const generateReceiptPDF = (receiptData) => {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
-      // Header
-      doc.fontSize(20).text('PAYMENT RECEIPT', { align: 'center' });
+      // Header with Logo
+      const logoPath = path.join(__dirname, '../../Frontend/public/Final Logo.png');
+      
+      // Check if logo file exists
+      if (fs.existsSync(logoPath)) {
+        try {
+          // Add logo to the top of the receipt
+          doc.image(logoPath, 50, 45, { width: 100 });
+          // Position the text to the right of the logo
+          doc.fontSize(20).text('PAYMENT RECEIPT', 160, 50);
+        } catch (imageError) {
+          console.error('Error loading logo image:', imageError);
+          // Fallback to text-only header if logo fails to load
+          doc.fontSize(20).text('PAYMENT RECEIPT', { align: 'center' });
+        }
+      } else {
+        console.log('Logo file not found at:', logoPath);
+        // Fallback to text-only header if logo doesn't exist
+        doc.fontSize(20).text('PAYMENT RECEIPT', { align: 'center' });
+      }
       doc.moveDown();
 
       // Company Info
-      doc.fontSize(12).text('MockTest Pro', { align: 'center' });
+      doc.fontSize(12).text('PrepZon - An EdTech Platform', { align: 'center' });
       doc.fontSize(10).text('Education Platform', { align: 'center' });
       doc.moveDown(2);
 
