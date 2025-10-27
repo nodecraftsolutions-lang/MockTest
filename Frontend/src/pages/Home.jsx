@@ -502,12 +502,9 @@ const Home = () => {
                     <span className="font-semibold text-foreground">PrepZon</span> is a next-generation <span className="font-semibold text-foreground">EdTech platform</span> built to bridge the gap between <span className="font-semibold text-foreground">college learning and corporate readiness.</span>
                   </p>
                   <p className="mt-2 text-xs text-muted-foreground sm:mt-3 sm:text-sm sm:max-w-xl sm:mx-auto md:mt-4 md:text-base lg:mx-0 lg:text-left">
-                    We provide a complete suite of <span className="font-semibold text-foreground">Live Interactive Training, Recorded Sessions, and Real-Time Mock Tests covering both Top IT Company Placements and Competitive Exams.</span>
-                  </p>
-                  <p className="mt-2 text-xs text-muted-foreground sm:mt-3 sm:text-sm sm:max-w-xl sm:mx-auto md:mt-4 md:text-base lg:mx-0 lg:text-left">
                     Our mock tests and live courses are designed to help students crack:
                   </p>
-                  <ul className="mt-2 text-xs text-muted-foreground sm:text-sm lg:mx-0 space-y-1">
+                  <ul className="mt-2 text-sm text-muted-foreground sm:text-base lg:mx-0 space-y-1">
                     <li className="flex">
                       <span className="flex-shrink-0 mr-2">•</span>
                       <span><span className="font-semibold text-foreground">Top IT Company recruitment exams</span> - TCS, Infosys, Wipro, Accenture, Capgemini, Cognizant, and more.</span>

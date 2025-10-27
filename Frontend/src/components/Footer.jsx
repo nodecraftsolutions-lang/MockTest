@@ -194,13 +194,13 @@ const Footer = () => {
             </div>
             <div className="flex items-center">
               <MapPin className="w-5 h-5 text-orange-500 mr-3" />
-              <span className="text-blue-800">Prepzon EdTech Pvt. Ltd., Bangalore, Karnataka, India</span>
+              <span className="text-black">Prepzon EdTech, Bangalore, Karnataka, India</span>
             </div>
           </div>
         </div>
 
         {/* Copyright */}
-        <div className="border-t border-gray-200 mt-8 pt-8 text-center text-blue-800">
+        <div className="border-t border-gray-200 mt-8 pt-8 text-center text-black">
           <p>&copy; {currentYear} PrepZon. All rights reserved.</p>
         </div>
       </div>
