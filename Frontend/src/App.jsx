@@ -60,6 +60,7 @@ import ManageStudents from './pages/Admin/Students';
 import ManageAlumni from './pages/Admin/Alumni';
 import AdminResults from './pages/Admin/Results';
 import ManagePayments from './pages/Admin/Payments';
+import PaidTestsAnalytics from './pages/Admin/PaidTestsAnalytics'; // Add this import
 import AdminSettings from './pages/Admin/Settings';
 import Enrollments from './pages/Admin/Enrollments/Enrollments';
 import NotFound3D from './pages/NotFound3D'
@@ -172,6 +173,7 @@ function App() {
               <Route path="alumni" element={<ManageAlumni />} />
               <Route path="results" element={<AdminResults />} />
               <Route path="payments" element={<ManagePayments />} />
+              <Route path="paid-tests-analytics" element={<PaidTestsAnalytics />} /> {/* Add this route */}
               <Route path="enrollments" element={<Enrollments />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>

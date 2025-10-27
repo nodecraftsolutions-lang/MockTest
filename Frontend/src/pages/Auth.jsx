@@ -30,7 +30,7 @@ const Auth = () => {
       if (redirectUrl.includes('/student/courses/')) {
         setRedirectMessage('Unlock your learning journey—sign up or log in to PREPZON and explore our live courses now!');
       } else if (redirectUrl.includes('/student/all-recordings')) {
-        setRedirectMessage('Access recorded sessions anytime—just sign up or log in to PREPZON at a low cost');
+        setRedirectMessage('Access recorded sessions anytime—just sign up or log in to PREPZON.');
       } else if (redirectUrl.includes('/student/mock-tests')) {
         setRedirectMessage('Sign up or log in to PREPZON to test your skills with our mock exams—designed to match real company patterns and boost your confidence.');
       }

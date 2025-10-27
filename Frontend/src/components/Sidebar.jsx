@@ -28,7 +28,8 @@ import {
   Play,
   List,
   FileCheck,
-  MessageSquare
+  MessageSquare,
+  TrendingUp
 } from "lucide-react";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
@@ -524,6 +525,17 @@ const Sidebar = ({ type = "student", onStateChange }) => {
                   showLabel={!isCollapsed}
                 />
               </div>
+              
+              {/* Add the new Paid Tests Analytics page */}
+              <div className="mb-1">
+                <NavItem 
+                  to="/admin/paid-tests-analytics" 
+                  icon={TrendingUp} 
+                  label="Paid Tests Analytics" 
+                  showLabel={!isCollapsed}
+                />
+              </div>
+              
               <div className="mb-1">
                 <NavItem 
                   to="/admin/enrollments" 

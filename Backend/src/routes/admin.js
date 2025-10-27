@@ -1684,4 +1684,147 @@ router.get('/enrollments/student/:studentId', adminAuth, async (req, res) => {
   }
 });
 
+// @route   GET /api/v1/admin/analytics/paid-tests-by-company
+// @desc    Get statistics for paid tests purchased by company (Admin only)
+// @access  Private/Admin
+router.get('/analytics/paid-tests-by-company', adminAuth, async (req, res) => {
+  try {
+    // Aggregate orders to get paid test purchases by company
+    const companyStats = await Order.aggregate([
+      // Match only completed orders
+      { $match: { paymentStatus: 'completed' } },
+      // Unwind the items array to process each item separately
+      { $unwind: '$items' },
+      // Match only items that are paid tests
+      { $match: { 'items.testId': { $exists: true, $ne: null } } },
+      // Populate test details to get company information
+      {
+        $lookup: {
+          from: 'tests',
+          localField: 'items.testId',
+          foreignField: '_id',
+          as: 'testDetails'
+        }
+      },
+      { $unwind: '$testDetails' },
+      // Match only paid tests
+      { $match: { 'testDetails.type': 'paid' } },
+      // Populate company details
+      {
+        $lookup: {
+          from: 'companies',
+          localField: 'testDetails.companyId',
+          foreignField: '_id',
+          as: 'companyDetails'
+        }
+      },
+      { $unwind: '$companyDetails' },
+      // Group by company
+      {
+        $group: {
+          _id: '$testDetails.companyId',
+          companyName: { $first: '$companyDetails.name' },
+          companyLogo: { $first: '$companyDetails.logoUrl' },
+          totalPurchases: { $sum: 1 },
+          totalRevenue: { $sum: '$items.price' },
+          tests: {
+            $addToSet: {
+              testId: '$testDetails._id',
+              testTitle: '$testDetails.title',
+              price: '$items.price'
+            }
+          }
+        }
+      },
+      // Sort by total purchases descending
+      { $sort: { totalPurchases: -1 } }
+    ]);
+
+    // Get user purchase details
+    const userPurchases = await Order.aggregate([
+      // Match only completed orders with test items
+      { 
+        $match: { 
+          paymentStatus: 'completed',
+          'items.testId': { $exists: true, $ne: null }
+        } 
+      },
+      // Unwind the items array
+      { $unwind: '$items' },
+      // Match only test items
+      { $match: { 'items.testId': { $exists: true, $ne: null } } },
+      // Populate test details
+      {
+        $lookup: {
+          from: 'tests',
+          localField: 'items.testId',
+          foreignField: '_id',
+          as: 'testDetails'
+        }
+      },
+      { $unwind: '$testDetails' },
+      // Match only paid tests
+      { $match: { 'testDetails.type': 'paid' } },
+      // Populate company details
+      {
+        $lookup: {
+          from: 'companies',
+          localField: 'testDetails.companyId',
+          foreignField: '_id',
+          as: 'companyDetails'
+        }
+      },
+      { $unwind: '$companyDetails' },
+      // Populate student details
+      {
+        $lookup: {
+          from: 'students',
+          localField: 'studentId',
+          foreignField: '_id',
+          as: 'studentDetails'
+        }
+      },
+      { $unwind: '$studentDetails' },
+      // Project the required fields
+      {
+        $project: {
+          orderId: '$orderId',
+          studentName: '$studentDetails.name',
+          studentEmail: '$studentDetails.email',
+          testName: '$testDetails.title',
+          companyName: '$companyDetails.name',
+          price: '$items.price',
+          purchaseDate: '$createdAt'
+        }
+      },
+      // Sort by purchase date descending
+      { $sort: { purchaseDate: -1 } }
+    ]);
+
+    // Calculate overall statistics
+    const overallStats = {
+      totalCompanies: companyStats.length,
+      totalPurchases: companyStats.reduce((sum, company) => sum + company.totalPurchases, 0),
+      totalRevenue: companyStats.reduce((sum, company) => sum + company.totalRevenue, 0),
+      totalUsers: [...new Set(userPurchases.map(purchase => purchase.studentEmail))].length
+    };
+
+    res.json({
+      success: true,
+      data: {
+        companyStats,
+        userPurchases,
+        overallStats
+      }
+    });
+
+  } catch (error) {
+    console.error('Get paid tests by company error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get paid tests by company statistics'
+    });
+  }
+});
+
 module.exports = router;

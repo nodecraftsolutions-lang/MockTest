@@ -55,7 +55,7 @@ const Navbar = ({ isPublic = false }) => {
 
   const publicNavItems = [
     { name: 'Home', path: '/' },
-    { name: 'Courses', action: handleCourses },
+    { name: 'Live Courses', action: handleCourses },
     { name: 'Recordings', action: handleAllRecordings  },
     { name: 'Mock Tests', action: handleViewTests },
     { name: 'About', path: '/about' },
