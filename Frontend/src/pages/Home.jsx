@@ -511,7 +511,7 @@ const Home = () => {
                     </li>
                     <li className="flex">
                       <span className="flex-shrink-0 mr-2">•</span>
-                      <span><span className="font-semibold text-orange-500">Government Job exams</span> - SBI PO, IBPS PO, RRB, SSC, and others.</span>
+                      <span><span className="font-semibold text-orange-500">Government Job exams</span> - UPSC, SBI PO, IBPS PO, RRB, SSC, and others.</span>
                     </li>
                     <li className="flex">
                       <span className="flex-shrink-0 mr-2">•</span>
