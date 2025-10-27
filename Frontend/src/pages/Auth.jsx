@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, AlertCircle, Users, Video, MessageCircle, BookOpen } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -17,9 +17,52 @@ const Auth = () => {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [redirectMessage, setRedirectMessage] = useState('');
   const { login, register } = useAuth();
   const { showSuccess, showError } = useToast();
   const navigate = useNavigate();
+
+  // Function to update message based on redirect URL
+  const updateRedirectMessage = () => {
+    const redirectUrl = localStorage.getItem('redirectAfterLogin');
+    if (redirectUrl) {
+      // Set message based on the redirect URL
+      if (redirectUrl.includes('/student/courses/')) {
+        setRedirectMessage('Unlock your learning journey—sign up or log in to PREPZON and explore our live courses now!');
+      } else if (redirectUrl.includes('/student/all-recordings')) {
+        setRedirectMessage('Access recorded sessions anytime—just sign up or log in to PREPZON at a low cost');
+      } else if (redirectUrl.includes('/student/mock-tests')) {
+        setRedirectMessage('Sign up or log in to PREPZON to test your skills with our mock exams—designed to match real company patterns and boost your confidence.');
+      }
+    } else {
+      setRedirectMessage('');
+    }
+  };
+
+  // Check for redirect message when component mounts
+  useEffect(() => {
+    updateRedirectMessage();
+    
+    // Listen for storage changes (works for other tabs)
+    const handleStorageChange = (e) => {
+      if (e.key === 'redirectAfterLogin') {
+        updateRedirectMessage();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Poll for changes in the same tab (every 500ms)
+    const interval = setInterval(() => {
+      updateRedirectMessage();
+    }, 500);
+    
+    // Cleanup listeners
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
 
   const validatePassword = (password) => {
     const errors = [];
@@ -110,6 +153,8 @@ const Auth = () => {
         
         if (result.success) {
           showSuccess('Login successful!');
+          // Clear the redirect message
+          setRedirectMessage('');
           // Check if there's a redirect URL stored in localStorage
           const redirectUrl = localStorage.getItem('redirectAfterLogin');
           if (redirectUrl) {
@@ -136,6 +181,8 @@ const Auth = () => {
 
         if (result.success) {
           showSuccess('Registration successful!');
+          // Clear the redirect message
+          setRedirectMessage('');
           if (result.autoLogin) {
             // Check if there's a redirect URL stored in localStorage
             const redirectUrl = localStorage.getItem('redirectAfterLogin');
@@ -238,6 +285,24 @@ const Auth = () => {
               </button>
             </p>
           </div>
+          
+          {/* Display redirect message */}
+          {redirectMessage && (
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-r-lg p-4 mb-6 shadow-sm">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-blue-700 font-medium">
+                    {redirectMessage}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
