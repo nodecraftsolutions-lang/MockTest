@@ -514,15 +514,13 @@ const Orders = () => {
           <h3 className="text-lg font-medium text-gray-900 mb-2">No Orders Yet</h3>
           <p className="text-gray-600 mb-4">You haven't made any purchases yet</p>
           <div className="flex justify-center space-x-4">
-            <Link to="/student/paid-tests" className="btn-primary">
+            <Link to="/student/mock-tests" className="btn-primary">
               Browse Paid Tests
             </Link>
             <Link to="/student/courses" className="btn-primary">
               Browse Courses
             </Link>
-            <Link to="/student/recordings" className="btn-primary">
-              Browse Recordings
-            </Link>
+            
           </div>
         </div>
       )}
