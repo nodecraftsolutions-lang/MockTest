@@ -63,7 +63,16 @@ const Navbar = ({ isPublic = false }) => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-3">
+            <Link 
+              to="/" 
+              className="flex items-center space-x-3"
+              onClick={() => {
+                // If we're already on the home page, scroll to top
+                if (window.location.pathname === '/') {
+                  window.scrollTo(0, 0);
+                }
+              }}
+            >
               <img
                 src="/Final Logo.png"
                 alt="MockTest Pro Logo"
@@ -81,6 +90,12 @@ const Navbar = ({ isPublic = false }) => {
                     key={item.name}
                     to={item.path}
                     className="px-4 py-2 text-sm font-medium text-gray-700 rounded-lg hover:text-primary-600 hover:bg-primary-50 transition-all duration-200"
+                    onClick={() => {
+                      // If this is the home link and we're already on the home page, scroll to top
+                      if (item.path === '/' && window.location.pathname === '/') {
+                        window.scrollTo(0, 0);
+                      }
+                    }}
                   >
                     {item.name}
                   </Link>
@@ -178,7 +193,13 @@ const Navbar = ({ isPublic = false }) => {
                     key={item.name}
                     to={item.path}
                     className="block px-4 py-3 text-base font-medium text-gray-700 rounded-lg hover:text-primary-600 hover:bg-primary-50 transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      // If this is the home link and we're already on the home page, scroll to top
+                      if (item.path === '/' && window.location.pathname === '/') {
+                        window.scrollTo(0, 0);
+                      }
+                    }}
                   >
                     {item.name}
                   </Link>
