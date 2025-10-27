@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import PublicLayout from './layouts/PublicLayout';
 import DashboardLayout from './layouts/DashboardLayout';
 import AdminLayout from './layouts/AdminLayout';
+import ScrollToTop from './components/ScrollToTop';
 
 //mock test bages
 import CompanyTestManagement from './pages/Admin/MockTest/CompanyTestManagement'
@@ -74,6 +75,7 @@ function App() {
     <AuthProvider>
       <ToastProvider>
         <Router>
+          <ScrollToTop />
           <Routes>
             {/* Public Routes */}
             <Route path="*" element={<NotFound3D/>}/>
