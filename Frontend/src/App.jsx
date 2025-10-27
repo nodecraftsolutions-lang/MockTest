@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import { ResponsiveProvider } from './context/ResponsiveContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicLayout from './layouts/PublicLayout';
 import DashboardLayout from './layouts/DashboardLayout';
@@ -74,9 +75,10 @@ function App() {
   return (
     <AuthProvider>
       <ToastProvider>
-        <Router>
-          <ScrollToTop />
-          <Routes>
+        <ResponsiveProvider>
+          <Router>
+            <ScrollToTop />
+            <Routes>
             {/* Public Routes */}
             <Route path="*" element={<NotFound3D/>}/>
             <Route path="/" element={<PublicLayout />}>
@@ -175,6 +177,7 @@ function App() {
             </Route>
           </Routes>
         </Router>
+      </ResponsiveProvider>
       </ToastProvider>
     </AuthProvider>
   );

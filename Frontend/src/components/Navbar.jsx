@@ -2,17 +2,21 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, User, LogOut, Settings, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useResponsive } from '../hooks/useResponsive';
+import ResponsiveWrapper from './ResponsiveWrapper';
 
 const Navbar = ({ isPublic = false }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { isMobile, isTablet } = useResponsive();
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
+  
   const handleCourses = () => {
     if (isAuthenticated) {
       // If user is logged in, go to student mock tests page
@@ -36,6 +40,7 @@ const Navbar = ({ isPublic = false }) => {
       navigate('/auth');
     }
   };
+  
   const handleAllRecordings = () => {
     if (isAuthenticated) {
       // If user is logged in, go to student mock tests page

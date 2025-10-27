@@ -247,7 +247,7 @@ const StudentDashboard = () => {
       description: "Access enrolled courses",
       icon: GraduationCap,
       color: "text-purple-600 bg-purple-50 hover:bg-purple-100",
-      to: "/student/courses"
+      to: "/student/my-courses"
     }
   ];
 
@@ -279,63 +279,8 @@ const StudentDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Mobile menu button */}
-      <div className="md:hidden p-4 bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10">
-        <div className="flex justify-between items-center">
-          <h1 className="text-lg font-semibold text-gray-900">Dashboard</h1>
-          <button 
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-lg text-gray-700 hover:bg-gray-100"
-          >
-            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
-        </div>
-      </div>
 
-      {/* Mobile menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-white shadow-xl absolute z-20 w-full">
-          <div className="px-4 py-3 space-y-1 border-b border-gray-200">
-            <Link 
-              to="/student/mock-tests" 
-              className="block px-4 py-3 rounded-lg text-base font-medium text-gray-700 hover:bg-blue-50"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Free Tests
-            </Link>
-            <Link 
-              to="/student/mock-tests" 
-              className="block px-4 py-3 rounded-lg text-base font-medium text-gray-700 hover:bg-blue-50"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Paid Tests
-            </Link>
-            <Link 
-              to="/student/results" 
-              className="block px-4 py-3 rounded-lg text-base font-medium text-gray-700 hover:bg-blue-50"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Results
-            </Link>
-            <Link 
-              to="/student/courses" 
-              className="block px-4 py-3 rounded-lg text-base font-medium text-gray-700 hover:bg-blue-50"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Courses
-            </Link>
-            <button 
-              onClick={() => {
-                handleLogout();
-                setMobileMenuOpen(false);
-              }}
-              className="block w-full text-left px-4 py-3 rounded-lg text-base font-medium text-gray-700 hover:bg-blue-50"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      )}
+      
 
       <div className="p-4 md:p-6 max-w-7xl mx-auto">
         {/* Header */}

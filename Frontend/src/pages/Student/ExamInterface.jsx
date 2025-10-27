@@ -479,38 +479,159 @@ const ExamInterface = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       {/* Header */}
-      <div className="bg-white/90 shadow-lg border-b px-8 py-5 sticky top-0 z-30 rounded-b-2xl">
-        <div className="flex justify-between items-center">
+      <div className="bg-white/90 shadow-lg border-b px-4 sm:px-8 py-4 sm:py-5 sticky top-0 z-30 rounded-b-2xl">
+        <div className="flex flex-wrap justify-between items-center gap-2">
           <div>
-            <h1 className="text-2xl font-extrabold text-primary-700 flex items-center gap-2">
-              <BookOpen className="w-6 h-6 text-primary-600" />
+            <h1 className="text-xl sm:text-2xl font-extrabold text-primary-700 flex items-center gap-2">
+              <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600" />
               {isMockTest ? 'Mock Test' : 'Test'}
             </h1>
-            <p className="text-sm text-gray-600">
+            <p className="text-xs sm:text-sm text-gray-600">
               Question {currentIndex + 1} of {questions.length} • Section: <span className="font-semibold">{currentQ?.section}</span>
             </p>
           </div>
-          <div className="flex items-center space-x-6">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-6">
             {autoSaving && (
-              <div className="flex items-center text-blue-600 text-sm">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+              <div className="flex items-center text-blue-600 text-xs sm:text-sm">
+                <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-blue-600 mr-1 sm:mr-2"></div>
                 Auto-saving...
               </div>
             )}
-            <div className="flex items-center space-x-2 text-red-600 font-semibold bg-red-50 px-4 py-2 rounded-full shadow">
-              <Clock className="w-5 h-5" />
-              <span className="text-lg">{formatTime(timeLeft)}</span>
+            <div className="flex items-center space-x-2 text-red-600 font-semibold bg-red-50 px-3 sm:px-4 py-1 sm:py-2 rounded-full shadow">
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="text-sm sm:text-lg">{formatTime(timeLeft)}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex max-w-7xl mx-auto py-8 px-2 md:px-6 gap-8">
+      <div className="flex flex-col lg:flex-row max-w-7xl mx-auto py-4 sm:py-8 px-2 sm:px-6 gap-4 sm:gap-8">
         {/* Main Content */}
         <div className="flex-1">
-          {/* Section Navigation */}
-          <div className="mb-6">
-            <div className="flex flex-wrap gap-3">
+          {/* Mobile Question Navigator - Show on mobile and tablet */}
+          <div className="lg:hidden mb-4 sm:mb-6 bg-white rounded-xl shadow p-4">
+            <h3 className="text-base sm:text-lg font-bold text-primary-700 mb-3 flex items-center">
+              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary-600" />
+              Question Navigator
+            </h3>
+            
+            {/* Mobile Summary */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 text-xs sm:text-sm">
+              <div className="text-center p-2 sm:p-3 bg-green-50 rounded-lg">
+                <div className="font-semibold text-green-800">{answeredCount}</div>
+                <div className="text-green-600">Answered</div>
+              </div>
+              <div className="text-center p-2 sm:p-3 bg-yellow-50 rounded-lg">
+                <div className="font-semibold text-yellow-800">{reviewCount}</div>
+                <div className="text-yellow-600">Review</div>
+              </div>
+              <div className="text-center p-2 sm:p-3 bg-gray-50 rounded-lg">
+                <div className="font-semibold text-gray-800">{questions.length - answeredCount}</div>
+                <div className="text-gray-600">Unanswered</div>
+              </div>
+            </div>
+            
+            {/* Mobile Section Navigation */}
+            <div className="mb-4">
+              <div className="flex flex-wrap gap-2 mb-3">
+                {uniqueSections.map((sectionName) => {
+                  const stats = getSectionStats(sectionName);
+                  const isCurrentSection = currentQ?.section === sectionName;
+                  return (
+                    <button
+                      key={sectionName}
+                      onClick={() => jumpToSection(sectionName)}
+                      className={`px-3 py-1 sm:px-4 sm:py-2 rounded-full border text-xs sm:text-sm font-semibold shadow transition-all
+                        ${isCurrentSection
+                          ? 'border-primary-500 bg-primary-100 text-primary-700 scale-105'
+                          : 'border-gray-200 bg-white text-gray-700 hover:bg-primary-50 hover:border-primary-200'
+                        }`}
+                    >
+                      {sectionName} <span className="ml-1 sm:ml-2 text-xs text-gray-500">({stats.answered}/{stats.total})</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            
+            {/* Mobile Question Grid */}
+            <div className="space-y-4">
+              {uniqueSections.map((sectionName) => {
+                const stats = getSectionStats(sectionName);
+                const sectionQuestions = getSectionQuestions(sectionName);
+                const startIndex = questions.findIndex(q => q.section === sectionName);
+                return (
+                  <div key={sectionName} className="border border-gray-200 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium text-gray-900 text-sm">{sectionName}</h4>
+                      <span className="text-xs text-gray-600">{stats.answered}/{stats.total}</span>
+                    </div>
+                    <div className="grid grid-cols-5 gap-1">
+                      {sectionQuestions.map((q, idx) => {
+                        const globalIndex = startIndex + idx;
+                        const status = getQuestionStatus(q._id);
+                        return (
+                          <button
+                            key={q._id}
+                            onClick={() => setCurrentIndex(globalIndex)}
+                            className={`relative w-7 h-7 sm:w-8 sm:h-8 rounded text-xs font-bold transition-all
+                              ${currentIndex === globalIndex
+                                ? "bg-primary-600 text-white scale-110"
+                                : status === 'answered'
+                                ? "bg-green-100 text-green-800 hover:bg-green-200"
+                                : status === 'review'
+                                ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                              }`}
+                          >
+                            {idx + 1}
+                            {status === 'review' && (
+                              <Flag className="absolute -top-1 -right-1 w-2 h-2 text-yellow-600" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Mobile Legend */}
+            <div className="flex flex-wrap gap-2 mt-4 text-xs">
+              <div className="flex items-center space-x-1">
+                <div className="w-3 h-3 bg-green-100 rounded"></div>
+                <span className="text-gray-600">Answered</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <div className="w-3 h-3 bg-yellow-100 rounded relative">
+                  <Flag className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 text-yellow-600" />
+                </div>
+                <span className="text-gray-600">Review</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <div className="w-3 h-3 bg-gray-100 rounded"></div>
+                <span className="text-gray-600">Not Answered</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <div className="w-3 h-3 bg-primary-600 rounded"></div>
+                <span className="text-gray-600">Current</span>
+              </div>
+            </div>
+            
+            {/* Submit Test Button for Mobile */}
+            <button
+              onClick={() => setShowSubmitModal(true)}
+              className="w-full btn-primary py-2.5 sm:py-3 text-base sm:text-lg font-bold shadow-lg mt-4"
+              disabled={submitting}
+            >
+              Submit Test
+            </button>
+          </div>
+
+          {/* Section Navigation - Always visible */}
+          <div className="mb-4 sm:mb-6">
+            <div className="flex flex-wrap gap-2 sm:gap-3">
               {uniqueSections.map((sectionName) => {
                 const stats = getSectionStats(sectionName);
                 const isCurrentSection = currentQ?.section === sectionName;
@@ -518,13 +639,13 @@ const ExamInterface = () => {
                   <button
                     key={sectionName}
                     onClick={() => jumpToSection(sectionName)}
-                    className={`px-5 py-2 rounded-full border font-semibold shadow transition-all
+                    className={`px-3 py-1.5 sm:px-5 sm:py-2 rounded-full border text-xs sm:text-sm font-semibold shadow transition-all
                       ${isCurrentSection
                         ? 'border-primary-500 bg-primary-100 text-primary-700 scale-105'
                         : 'border-gray-200 bg-white text-gray-700 hover:bg-primary-50 hover:border-primary-200'
                       }`}
                   >
-                    {sectionName} <span className="ml-2 text-xs text-gray-500">({stats.answered}/{stats.total})</span>
+                    {sectionName} <span className="ml-1 sm:ml-2 text-xs text-gray-500">({stats.answered}/{stats.total})</span>
                   </button>
                 );
               })}
@@ -532,49 +653,49 @@ const ExamInterface = () => {
           </div>
 
           {/* Question Card */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 animate-fade-in">
-            <div className="flex justify-between items-start mb-4">
+          <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-8 mb-6 animate-fade-in">
+            <div className="flex flex-wrap justify-between items-start gap-2 mb-4">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900">
                   Question {currentIndex + 1}
                 </h2>
-                <div className="flex items-center space-x-4 mt-1">
+                <div className="flex flex-wrap items-center gap-2 mt-1">
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     {currentQ?.section}
                   </span>
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                     {currentQ?.difficulty}
                   </span>
-                  <span className="text-sm text-gray-600">{currentQ?.marks} marks</span>
+                  <span className="text-xs text-gray-600">{currentQ?.marks} marks</span>
                   {currentQ?.negativeMarks > 0 && (
-                    <span className="text-sm text-red-600">-{currentQ.negativeMarks} for wrong answer</span>
+                    <span className="text-xs text-red-600">-{currentQ.negativeMarks} for wrong answer</span>
                   )}
                 </div>
               </div>
               <button
                 onClick={() => toggleMarkForReview(currentQ._id)}
-                className={`flex items-center px-3 py-1 rounded-full text-sm font-medium shadow transition
+                className={`flex items-center px-2 py-1 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm font-medium shadow transition
                   ${markedForReview[currentQ._id]
                     ? 'bg-yellow-100 text-yellow-800'
                     : 'bg-gray-100 text-gray-600 hover:bg-yellow-50'
                   }`}
               >
-                <Flag className="w-4 h-4 mr-1" />
-                {markedForReview[currentQ._id] ? 'Marked for Review' : 'Mark for Review'}
+                <Flag className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                {markedForReview[currentQ._id] ? 'Marked' : 'Mark'}
               </button>
             </div>
 
-            <p className="text-gray-900 mb-6 leading-relaxed text-lg font-medium">
+            <p className="text-gray-900 mb-4 sm:mb-6 leading-relaxed text-base sm:text-lg font-medium">
               {currentQ.questionText}
             </p>
 
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {currentQ.options.map((opt, i) => (
                 <label
                   key={i}
-                  className={`flex items-center p-4 border rounded-xl cursor-pointer transition-all shadow-sm
+                  className={`flex items-center p-3 sm:p-4 border rounded-xl cursor-pointer transition-all shadow-sm
                     ${answers[currentQ._id] === opt.text
-                      ? "border-primary-500 bg-primary-50 scale-105"
+                      ? "border-primary-500 bg-primary-50 scale-[1.02]"
                       : "border-gray-200 hover:border-primary-300 hover:bg-primary-50/30"
                     }`}
                 >
@@ -583,10 +704,10 @@ const ExamInterface = () => {
                     name={`q-${currentQ._id}`}
                     checked={answers[currentQ._id] === opt.text}
                     onChange={() => handleAnswer(currentQ._id, opt)}
-                    className="mr-3 accent-primary-600"
+                    className="mr-2 sm:mr-3 accent-primary-600 w-4 h-4"
                   />
-                  <span className="text-gray-800 flex-1">
-                    <span className="font-semibold mr-2">{String.fromCharCode(65 + i)}.</span>
+                  <span className="text-gray-800 text-sm sm:text-base flex-1">
+                    <span className="font-semibold mr-1 sm:mr-2">{String.fromCharCode(65 + i)}.</span>
                     {opt.text}
                   </span>
                 </label>
@@ -595,16 +716,16 @@ const ExamInterface = () => {
           </div>
 
           {/* Navigation */}
-          <div className="flex justify-between items-center gap-4">
+          <div className="flex flex-wrap justify-between items-center gap-3 sm:gap-4">
             <button
               onClick={() => setCurrentIndex((i) => Math.max(i - 1, 0))}
               disabled={currentIndex === 0}
-              className="btn-secondary flex items-center disabled:opacity-50"
+              className="btn-secondary flex items-center disabled:opacity-50 text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-2"
             >
-              <ChevronLeft className="w-4 h-4 mr-2" />
+              <ChevronLeft className="w-4 h-4 mr-1 sm:mr-2" />
               Previous
             </button>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-2 sm:gap-3">
               <button
                 onClick={() => {
                   if (answers[currentQ._id]) {
@@ -615,9 +736,9 @@ const ExamInterface = () => {
                     });
                   }
                 }}
-                className="btn-secondary"
+                className="btn-secondary text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-2"
               >
-                Clear Answer
+                Clear
               </button>
               <button
                 onClick={() => {
@@ -625,35 +746,35 @@ const ExamInterface = () => {
                   setCurrentIndex((i) => Math.min(i + 1, questions.length - 1));
                 }}
                 disabled={currentIndex === questions.length - 1}
-                className="btn-primary flex items-center"
+                className="btn-primary flex items-center text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-2"
               >
                 Save & Next
-                <ChevronRight className="w-4 h-4 ml-2" />
+                <ChevronRight className="w-4 h-4 ml-1 sm:ml-2" />
               </button>
             </div>
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="w-[320px] min-w-[260px] bg-white/90 border-l rounded-2xl shadow-xl p-6 sticky top-24 self-start animate-fade-in">
-          <h3 className="text-lg font-bold text-primary-700 mb-4">Question Navigator</h3>
+        {/* Sidebar - Hidden on mobile, visible on desktop */}
+        <div className="hidden lg:block w-[320px] min-w-[260px] bg-white/90 border-l rounded-2xl shadow-xl p-4 sm:p-6 sticky top-24 self-start animate-fade-in">
+          <h3 className="text-base sm:text-lg font-bold text-primary-700 mb-3 sm:mb-4">Question Navigator</h3>
           {/* Summary */}
-          <div className="grid grid-cols-3 gap-3 mb-6 text-sm">
-            <div className="text-center p-3 bg-green-50 rounded-lg">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-6 text-xs sm:text-sm">
+            <div className="text-center p-2 sm:p-3 bg-green-50 rounded-lg">
               <div className="font-semibold text-green-800">{answeredCount}</div>
               <div className="text-green-600">Answered</div>
             </div>
-            <div className="text-center p-3 bg-yellow-50 rounded-lg">
+            <div className="text-center p-2 sm:p-3 bg-yellow-50 rounded-lg">
               <div className="font-semibold text-yellow-800">{reviewCount}</div>
               <div className="text-yellow-600">Review</div>
             </div>
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="text-center p-2 sm:p-3 bg-gray-50 rounded-lg">
               <div className="font-semibold text-gray-800">{questions.length - answeredCount}</div>
               <div className="text-gray-600">Unanswered</div>
             </div>
           </div>
           {/* Section-wise Progress */}
-          <div className="space-y-4 mb-6">
+          <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
             {uniqueSections.map((sectionName) => {
               const stats = getSectionStats(sectionName);
               const sectionQuestions = getSectionQuestions(sectionName);
@@ -672,7 +793,7 @@ const ExamInterface = () => {
                         <button
                           key={q._id}
                           onClick={() => setCurrentIndex(globalIndex)}
-                          className={`relative w-8 h-8 rounded text-xs font-bold transition-all
+                          className={`relative w-7 h-7 sm:w-8 sm:h-8 rounded text-xs font-bold transition-all
                             ${currentIndex === globalIndex
                               ? "bg-primary-600 text-white scale-110"
                               : status === 'answered'
@@ -695,7 +816,7 @@ const ExamInterface = () => {
             })}
           </div>
           {/* Legend */}
-          <div className="space-y-2 text-xs mb-6">
+          <div className="space-y-2 text-xs mb-4 sm:mb-6">
             <div className="flex items-center space-x-2">
               <div className="w-4 h-4 bg-green-100 rounded"></div>
               <span className="text-gray-600">Answered</span>
@@ -718,7 +839,7 @@ const ExamInterface = () => {
           {/* Submit Button */}
           <button
             onClick={() => setShowSubmitModal(true)}
-            className="w-full btn-primary py-3 text-lg font-bold shadow-lg"
+            className="w-full btn-primary py-2 sm:py-3 text-base sm:text-lg font-bold shadow-lg"
             disabled={submitting}
           >
             Submit Test
@@ -728,29 +849,29 @@ const ExamInterface = () => {
 
       {/* Submit Confirmation Modal */}
       {showSubmitModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-8 w-full max-w-2xl shadow-xl animate-fade-in">
-            <div className="flex items-center mb-4">
-              <AlertTriangle className="w-6 h-6 text-yellow-500 mr-3" />
-              <h3 className="text-xl font-bold text-gray-900">Submit Test?</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-4 sm:p-8 w-full max-w-2xl shadow-xl animate-fade-in max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center mb-3 sm:mb-4">
+              <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500 mr-2 sm:mr-3" />
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900">Submit Test?</h3>
             </div>
-            <div className="mb-6">
-              <p className="text-gray-600 mb-4">
+            <div className="mb-4 sm:mb-6">
+              <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
                 Are you sure you want to submit your {isMockTest ? 'mock test' : 'test'}? You cannot change your answers after submission.
               </p>
               {/* Warning about one attempt */}
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
                 <div className="flex items-start">
-                  <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 mr-2 flex-shrink-0" />
-                  <p className="text-red-700 text-sm">
+                  <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 mt-0.5 mr-2 flex-shrink-0" />
+                  <p className="text-red-700 text-xs sm:text-sm">
                     <strong>Important:</strong> This {isMockTest ? 'mock test' : 'test'} allows only one attempt. Once submitted, you won't be able to retake it.
                   </p>
                 </div>
               </div>
               {/* Overall Summary */}
-              <div className="bg-gray-50 rounded-lg p-4 space-y-3 mb-4">
-                <h4 className="font-medium text-gray-900">Overall Summary</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="bg-gray-50 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3 mb-3 sm:mb-4">
+                <h4 className="font-medium text-gray-900 text-sm sm:text-base">Overall Summary</h4>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
                   <div className="flex justify-between">
                     <span>Total Questions:</span>
                     <span className="font-medium">{questions.length}</span>
@@ -770,13 +891,13 @@ const ExamInterface = () => {
                 </div>
               </div>
               {/* Section-wise Summary */}
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h4 className="font-medium text-gray-900 mb-3">Section-wise Summary</h4>
-                <div className="space-y-2">
+              <div className="bg-blue-50 rounded-lg p-3 sm:p-4">
+                <h4 className="font-medium text-gray-900 mb-2 sm:mb-3 text-sm sm:text-base">Section-wise Summary</h4>
+                <div className="space-y-1.5 sm:space-y-2">
                   {uniqueSections.map((sectionName) => {
                     const stats = getSectionStats(sectionName);
                     return (
-                      <div key={sectionName} className="flex items-center justify-between text-sm">
+                      <div key={sectionName} className="flex items-center justify-between text-xs sm:text-sm">
                         <span className="font-medium">{sectionName}</span>
                         <span className="text-gray-600">
                           {stats.answered}/{stats.total} answered
@@ -787,22 +908,22 @@ const ExamInterface = () => {
                   })}
                 </div>
               </div>
-              <div className="flex justify-between items-center text-sm text-gray-600 mt-4">
+              <div className="flex justify-between items-center text-xs sm:text-sm text-gray-600 mt-3 sm:mt-4">
                 <span>Time Remaining:</span>
                 <span className="font-medium text-blue-600">{formatTime(timeLeft)}</span>
               </div>
             </div>
-            <div className="flex space-x-3">
+            <div className="flex flex-wrap gap-2 sm:gap-3">
               <button
                 onClick={() => setShowSubmitModal(false)}
-                className="flex-1 btn-secondary"
+                className="flex-1 btn-secondary text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-2"
                 disabled={submitting}
               >
                 Continue Test
               </button>
               <button
                 onClick={handleSubmit}
-                className="flex-1 btn-primary"
+                className="flex-1 btn-primary text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-2"
                 disabled={submitting}
               >
                 {submitting ? 'Submitting...' : 'Submit Test'}
