@@ -507,15 +507,15 @@ const Home = () => {
                   <ul className="mt-2 text-sm text-muted-foreground sm:text-base lg:mx-0 space-y-1">
                     <li className="flex">
                       <span className="flex-shrink-0 mr-2">•</span>
-                      <span><span className="font-semibold text-foreground">Top IT Company recruitment exams</span> - TCS, Infosys, Wipro, Accenture, Capgemini, Cognizant, and more.</span>
+                      <span><span className="font-semibold text-orange-500">Top IT Company recruitment exams</span> - TCS, Infosys, Wipro, Accenture, Capgemini, Cognizant, and more.</span>
                     </li>
                     <li className="flex">
                       <span className="flex-shrink-0 mr-2">•</span>
-                      <span><span className="font-semibold text-foreground">Government Job exams</span> - SBI PO, IBPS PO, RRB, SSC, and others.</span>
+                      <span><span className="font-semibold text-orange-500">Government Job exams</span> - SBI PO, IBPS PO, RRB, SSC, and others.</span>
                     </li>
                     <li className="flex">
                       <span className="flex-shrink-0 mr-2">•</span>
-                      <span><span className="font-semibold text-foreground">Entrance exams for higher studies</span> - CAT, GATE, GRE, and similar aptitude-based tests.</span>
+                      <span><span className="font-semibold text-orange-500">Entrance exams for higher studies</span> - CAT, GATE, GRE, and similar aptitude-based tests.</span>
                     </li>
                   </ul>
                   <div className="mt-4 sm:mt-6 sm:flex sm:justify-center lg:justify-start">
