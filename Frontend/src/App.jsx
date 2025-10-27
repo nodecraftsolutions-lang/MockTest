@@ -48,6 +48,7 @@ import CompanyDetails from './pages/Student/CompanyDetails'; // ✅ import
 import CourseLearn from './pages/Student/CourseLearn'; // ✅ import
 import Recordings from './pages/Student/Recordings';
 import RecordingsPage from './pages/Student/RecordingsPage';
+import AllRecordings from './pages/Student/AllRecordings';
 // Admin Pages
 import AdminDashboard from './pages/Admin/Dashboard';
 import ManageCompanies from './pages/Admin/Companies';
@@ -120,6 +121,7 @@ function App() {
               {/* Recordings */ }
               <Route path="/student/recordings" element={<Recordings />} />
               <Route path="/student/recordings/:courseId" element={<RecordingsPage />} />
+              <Route path="/student/all-recordings" element={<AllRecordings />} />
 
               {/* ✅ Other Pages */}
               <Route path="orders" element={<Orders />} />

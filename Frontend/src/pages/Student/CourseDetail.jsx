@@ -256,7 +256,7 @@ const CourseDetail = () => {
                 <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
                   {course.title}
                 </h1>
-                <p className="text-xl text-blue-100 leading-relaxed max-w-3xl">
+                <p className="text-sm text-blue-100 leading-relaxed max-w-3xl">
                   {descriptionLines[0] || course.description}
                 </p>
               </motion.div>
@@ -272,10 +272,7 @@ const CourseDetail = () => {
                   <Star className="w-4 h-4 text-yellow-400 fill-current" />
                   <span>{enhancedCourse.rating} Rating</span>
                 </div>
-                <div className="flex items-center space-x-2 bg-white/10 px-3 py-2 rounded-lg">
-                  <Users className="w-4 h-4" />
-                  <span>{enhancedCourse.students}+ Students</span>
-                </div>
+                
                 <div className="flex items-center space-x-2 bg-white/10 px-3 py-2 rounded-lg">
                   <BarChart3 className="w-4 h-4" />
                   <span>{enhancedCourse.level}</span>
@@ -341,16 +338,7 @@ const CourseDetail = () => {
                   </div>
                 </div>
 
-                <div className="flex space-x-4 pt-4 border-t border-white/20">
-                  <button className="flex-1 flex items-center justify-center space-x-2 text-blue-200 hover:text-white transition-colors">
-                    <Bookmark className="w-4 h-4" />
-                    <span className="text-sm">Save</span>
-                  </button>
-                  <button className="flex-1 flex items-center justify-center space-x-2 text-blue-200 hover:text-white transition-colors">
-                    <Share2 className="w-4 h-4" />
-                    <span className="text-sm">Share</span>
-                  </button>
-                </div>
+                
               </div>
             </motion.div>
           </div>

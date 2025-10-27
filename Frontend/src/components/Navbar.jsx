@@ -36,10 +36,22 @@ const Navbar = ({ isPublic = false }) => {
       navigate('/auth');
     }
   };
+  const handleAllRecordings = () => {
+    if (isAuthenticated) {
+      // If user is logged in, go to student mock tests page
+      navigate('/student/all-recordings');
+    } else {
+      // If user is not logged in, redirect to auth page
+      // Store the redirect path in localStorage
+      localStorage.setItem('redirectAfterLogin', '/student/all-recordings');
+      navigate('/auth');
+    }
+  };
 
   const publicNavItems = [
     { name: 'Home', path: '/' },
     { name: 'Courses', action: handleCourses },
+    { name: 'Recordings', action: handleAllRecordings  },
     { name: 'Mock Tests', action: handleViewTests },
     { name: 'About', path: '/about' },
     { name: 'Contact Us', path: '/contact' }

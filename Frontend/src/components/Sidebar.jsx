@@ -362,6 +362,12 @@ const Sidebar = ({ type = "student", onStateChange }) => {
                       View All Recordings
                     </Link>
                   )}
+                  <Link
+                    to="/student/all-recordings"
+                    className="block px-3 py-2 text-sm text-primary-600 hover:bg-primary-50 rounded-lg font-medium transition-colors mt-1"
+                  >
+                    All Recordings
+                  </Link>
                 </DropdownContent>
               </div>
 
