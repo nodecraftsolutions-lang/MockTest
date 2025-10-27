@@ -493,27 +493,47 @@ const Home = () => {
             <div className="relative z-10 pb-4 bg-background sm:pb-8 md:pb-10 lg:max-w-2xl lg:w-full lg:pb-12 xl:pb-16">
               <main className="mt-0 mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
                 <div className="sm:text-center lg:text-left">
-                  <h1 className="text-3xl tracking-tight font-extrabold text-foreground sm:text-4xl md:text-5xl lg:text-6xl">
+                  <h1 className="text-3xl tracking-tight font-extrabold text-foreground sm:text-3xl md:text-4xl lg:text-6xl">
                     <span className="block">Welcome to Prepzon</span>
                     <span className="block">-Your Gateway from</span>
                     <span className="block text-primary">Campus to Corporate</span>
                   </h1>
-                  <p className="mt-3 text-base text-muted-foreground sm:mt-4 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0 lg:text-left">
-                     Prepzon is India's next-gen EdTech platform built to transform fresh graduates into job-ready professionals. We provide everything a student needs to confidently crack top MNC recruitment exams and interviews — all in one place.
+                  <p className="mt-2 text-xs text-muted-foreground sm:mt-3 sm:text-sm sm:max-w-xl sm:mx-auto md:mt-4 md:text-base lg:mx-0 lg:text-left">
+                    <span className="font-semibold text-foreground">PrepZon</span> is a next-generation <span className="font-semibold text-foreground">EdTech platform</span> built to bridge the gap between <span className="font-semibold text-foreground">college learning and corporate readiness.</span>
                   </p>
-                  <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
+                  <p className="mt-2 text-xs text-muted-foreground sm:mt-3 sm:text-sm sm:max-w-xl sm:mx-auto md:mt-4 md:text-base lg:mx-0 lg:text-left">
+                    We provide a complete suite of <span className="font-semibold text-foreground">Live Interactive Training, Recorded Sessions, and Real-Time Mock Tests covering both Top IT Company Placements and Competitive Exams.</span>
+                  </p>
+                  <p className="mt-2 text-xs text-muted-foreground sm:mt-3 sm:text-sm sm:max-w-xl sm:mx-auto md:mt-4 md:text-base lg:mx-0 lg:text-left">
+                    Our mock tests and live courses are designed to help students crack:
+                  </p>
+                  <ul className="mt-2 text-xs text-muted-foreground sm:text-sm lg:mx-0 space-y-1">
+                    <li className="flex">
+                      <span className="flex-shrink-0 mr-2">•</span>
+                      <span><span className="font-semibold text-foreground">Top IT Company recruitment exams</span> - TCS, Infosys, Wipro, Accenture, Capgemini, Cognizant, and more.</span>
+                    </li>
+                    <li className="flex">
+                      <span className="flex-shrink-0 mr-2">•</span>
+                      <span><span className="font-semibold text-foreground">Government Job exams</span> - SBI PO, IBPS PO, RRB, SSC, and others.</span>
+                    </li>
+                    <li className="flex">
+                      <span className="flex-shrink-0 mr-2">•</span>
+                      <span><span className="font-semibold text-foreground">Entrance exams for higher studies</span> - CAT, GATE, GRE, and similar aptitude-based tests.</span>
+                    </li>
+                  </ul>
+                  <div className="mt-4 sm:mt-6 sm:flex sm:justify-center lg:justify-start">
                     <div className="rounded-md shadow">
                       <Link
                         to="/auth"
-                        className="w-full flex items-center justify-center px-5 py-2 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-primary/90 md:py-3 md:text-lg md:px-8"
+                        className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 md:py-2 md:text-base md:px-6"
                       >
                         Get Started
                       </Link>
                     </div>
-                    <div className="mt-3 sm:mt-0 sm:ml-3">
+                    <div className="mt-2 sm:mt-0 sm:ml-2">
                       <button
                         onClick={handleViewTests}
-                        className="w-full flex items-center justify-center px-5 py-2 border border-transparent text-base font-medium rounded-md text-primary bg-primary/10 hover:bg-primary/20 md:py-3 md:text-lg md:px-8"
+                        className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-primary bg-primary/10 hover:bg-primary/20 md:py-2 md:text-base md:px-6"
                       >
                         View Tests
                       </button>
@@ -534,13 +554,110 @@ const Home = () => {
           </div>
         </div>
       </section>
-
-      
-
-      {/* Courses Section */}
-      <section id="courses" className="py-20 bg-gradient-to-br from-background to-secondary/20">
+      {/* Core Offerings Section - Reduced padding from py-20 to py-12 */}
+      <section className="py-12 bg-gradient-to-br from-primary/5 via-white to-secondary/10">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
+              🚀 Our Core <span className="text-orange-500">Offerings</span>
+            </h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-primary to-orange-500 mx-auto mt-6 rounded-full"></div>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            {/* Live Interactive Classes */}
+            <div className="bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300 border border-gray-200 hover:border-primary/30 group hover:-translate-y-2">
+              <div className="flex items-start mb-4">
+                <div className="bg-gradient-to-br from-primary to-orange-500 text-orange-500 p-3 rounded-xl mr-4 group-hover:scale-110 transition-transform duration-300">
+                  <div className="font-bold text-4xl">1</div>
+                </div>
+                <h3 className="text-xl font-bold text-foreground mt-1">Live Interactive Classes</h3>
+              </div>
+              <p className="text-muted-foreground leading-relaxed text-sm">
+                Join our Campus2Corporate training program with daily Zoom sessions led by industry experts. Get practical knowledge, corporate exposure, and live doubt-solving sessions every day.
+              </p>
+            </div>
+            
+            {/* Recorded Sessions + Study Notes */}
+            <div className="bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300 border border-gray-200 hover:border-primary/30 group hover:-translate-y-2">
+              <div className="flex items-start mb-4">
+                <div className="bg-gradient-to-br from-primary to-orange-500 text-orange-500 p-3 rounded-xl mr-4 group-hover:scale-110 transition-transform duration-300">
+                  <div className="font-bold text-4xl">2</div>
+                </div>
+                <h3 className="text-xl font-bold text-foreground mt-1">Recorded Sessions + Study Notes</h3>
+              </div>
+              <p className="text-muted-foreground leading-relaxed text-sm">
+                Missed a class? No worries! Access all recorded sessions, notes, and study materials anytime — valid for 1 year after enrollment.
+              </p>
+            </div>
+            
+            {/* Mock Tests (Free & Paid) */}
+            <div className="bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300 border border-gray-200 hover:border-primary/30 group hover:-translate-y-2">
+              <div className="flex items-start mb-4">
+                <div className="bg-gradient-to-br from-primary to-orange-500 text-orange-500 p-3 rounded-xl mr-4 group-hover:scale-110 transition-transform duration-300">
+                  <div className="font-bold text-4xl">3</div>
+                </div>
+                <h3 className="text-xl font-bold text-foreground mt-1">Mock Tests (Free & Paid)</h3>
+              </div>
+              <p className="text-muted-foreground leading-relaxed text-sm">
+                Test your skills with real-exam-style mock tests for TCS, Infosys, Wipro, Accenture, Capgemini, Cognizant, and more. Get instant results with answers and detailed explanations.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Prepzon Section - Reduced padding from py-20 to py-12 */}
+      <section className="py-12">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
+              🎓Why Choose <span className="text-orange-500">PrepZon</span>
+            </h2>
+            
+            <div className="w-24 h-1 bg-gradient-to-r from-primary to-orange-500 mx-auto mt-6 rounded-full"></div>
+          </div>
+          
+          <div className="max-w-6xl mx-auto">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                { text: "One course to crack multiple MNC exams", icon: "🎯" },
+                { text: "Access course material for 1 full year", icon: "📅" },
+                { text: "Free & paid mock tests for self-evaluation", icon: "📝" },
+                { text: "Resume preparation & interview guidance after course completion", icon: "📄" },
+                { text: "Open discussion forum to clarify doubts and connect with trainers", icon: "💬" },
+                { text: "Daily notifications for class reminders, new courses, and updates", icon: "🔔" },
+                { text: "24/7 support for students via chat, WhatsApp, or email", icon: "🎧" },
+                { text: "Flexible learning options – Live or Recorded classes", icon: "📺" },
+                { text: "End-to-end placement support and job readiness guidance", icon: "💼" }
+              ].map((item, index) => (
+                <div key={index} className="group relative bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-200 p-5 hover:border-primary/30 hover:-translate-y-2">
+                  <div className="absolute -top-4 -left-4 w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-orange-500 flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    {item.icon}
+                  </div>
+                  <div className="pt-5">
+                    <p className="text-base text-foreground font-medium leading-relaxed">{item.text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="text-center mt-12">
+            <Link 
+              to="/auth"
+              className="inline-block bg-gradient-to-r from-primary to-orange-500 text-blue-900 font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-lg"
+            >
+              Start Your Journey Today
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Courses Section - Reduced padding from py-20 to py-12 */}
+      <section id="courses" className="py-12 bg-gradient-to-br from-background to-secondary/20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
             <span className="inline-block px-4 py-2 bg-primary/10 rounded-full text-primary font-medium text-sm mb-6">
               Popular Courses
             </span>
@@ -696,10 +813,10 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Instructors Section with Carousel */}
-      <section id="instructors" className="py-20">
+      {/* Instructors Section with Carousel - Reduced padding from py-20 to py-12 */}
+      <section id="instructors" className="py-12">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <span className="inline-block px-4 py-2 bg-primary/10 rounded-full text-primary font-medium text-sm mb-6">
               Expert Instructors
             </span>
@@ -817,113 +934,13 @@ const Home = () => {
           )}
         </div>
       </section>
-      {/* Why Choose Prepzon Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
-              🎓Why Choose <span className="text-orange-500">PrepZon</span>
-            </h2>
-            
-            <div className="w-24 h-1 bg-gradient-to-r from-primary to-orange-500 mx-auto mt-6 rounded-full"></div>
-          </div>
-          
-          <div className="max-w-6xl mx-auto">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[
-                { text: "One course to crack multiple MNC exams", icon: "🎯" },
-                { text: "Access course material for 1 full year", icon: "📅" },
-                { text: "Free & paid mock tests for self-evaluation", icon: "📝" },
-                { text: "Resume preparation & interview guidance after course completion", icon: "📄" },
-                { text: "Open discussion forum to clarify doubts and connect with trainers", icon: "💬" },
-                { text: "Daily notifications for class reminders, new courses, and updates", icon: "🔔" },
-                { text: "24/7 support for students via chat, WhatsApp, or email", icon: "🎧" },
-                { text: "Flexible learning options – Live or Recorded classes", icon: "📺" },
-                { text: "End-to-end placement support and job readiness guidance", icon: "💼" }
-              ].map((item, index) => (
-                <div key={index} className="group relative bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-200 p-6 hover:border-primary/30 hover:-translate-y-2">
-                  <div className="absolute -top-5 -left-5 w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-orange-500 flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    {item.icon}
-                  </div>
-                  <div className="pt-6">
-                    <p className="text-lg text-foreground font-medium leading-relaxed">{item.text}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          <div className="text-center mt-16">
-            <Link 
-              to="/auth"
-              className="inline-block bg-gradient-to-r from-primary to-orange-500 text-blue-900 font-bold py-4 px-10 rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-lg"
-            >
-              Start Your Journey Today
-            </Link>
-          </div>
-        </div>
-      </section>
-      {/* Core Offerings Section */}
-      <section className="py-20 bg-gradient-to-br from-primary/5 via-white to-secondary/10">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
-              🚀 Our Core <span className="text-orange-500">Offerings</span>
-            </h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-primary to-orange-500 mx-auto mt-6 rounded-full"></div>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {/* Live Interactive Classes */}
-            <div className="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-all duration-300 border border-gray-200 hover:border-primary/30 group hover:-translate-y-2">
-              <div className="flex items-start mb-6">
-                <div className="bg-gradient-to-br from-primary to-orange-500 text-orange-500 p-3 rounded-xl mr-5 group-hover:scale-110 transition-transform duration-300">
-                  <div className="font-bold text-4xl">1</div>
-                </div>
-                <h3 className="text-2xl font-bold text-foreground mt-1">Live Interactive Classes</h3>
-              </div>
-              <p className="text-muted-foreground leading-relaxed">
-                Join our Campus2Corporate training program with daily Zoom sessions led by industry experts. Get practical knowledge, corporate exposure, and live doubt-solving sessions every day.
-              </p>
-              
-            </div>
-            
-            {/* Recorded Sessions + Study Notes */}
-            <div className="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-all duration-300 border border-gray-200 hover:border-primary/30 group hover:-translate-y-2">
-              <div className="flex items-start mb-6">
-                <div className="bg-gradient-to-br from-primary to-orange-500 text-orange-500 p-3 rounded-xl mr-5 group-hover:scale-110 transition-transform duration-300">
-                  <div className="font-bold text-4xl">2</div>
-                </div>
-                <h3 className="text-2xl font-bold text-foreground mt-1">Recorded Sessions + Study Notes</h3>
-              </div>
-              <p className="text-muted-foreground leading-relaxed">
-                Missed a class? No worries! Access all recorded sessions, notes, and study materials anytime — valid for 1 year after enrollment.
-              </p>
-              
-            </div>
-            
-            {/* Mock Tests (Free & Paid) */}
-            <div className="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-all duration-300 border border-gray-200 hover:border-primary/30 group hover:-translate-y-2">
-              <div className="flex items-start mb-6">
-                <div className="bg-gradient-to-br from-primary to-orange-500 text-orange-500 p-3 rounded-xl mr-5 group-hover:scale-110 transition-transform duration-300">
-                  <div className="font-bold text-4xl">3</div>
-                </div>
-                <h3 className="text-2xl font-bold text-foreground mt-1">Mock Tests (Free & Paid)</h3>
-              </div>
-              <p className="text-muted-foreground leading-relaxed">
-                Test your skills with real-exam-style mock tests for TCS, Infosys, Wipro, Accenture, Capgemini, Cognizant, and more. Get instant results with answers and detailed explanations.
-              </p>
-              
-            </div>
-          </div>
-        </div>
-      </section>
+      
 
-      {/* Alumni Section - Only show if there are alumni */}
+      {/* Alumni Section - Only show if there are alumni - Reduced padding from py-20 to py-12 */}
       {alumni.length > 0 && (
-        <section id="testimonials" className="py-20">
+        <section id="testimonials" className="py-12">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
+            <div className="text-center mb-12">
               <span className="inline-block px-4 py-2 bg-primary/10 rounded-full text-primary font-medium text-sm mb-6">
                 Success Stories
               </span>
@@ -1043,10 +1060,10 @@ const Home = () => {
         </section>
       )}
 
-      {/* FAQ Section */}
-      <section id="faq" className="py-20 bg-gradient-to-br from-background to-secondary/20">
+      {/* FAQ Section - Reduced padding from py-20 to py-12 */}
+      <section id="faq" className="py-12 bg-gradient-to-br from-background to-secondary/20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <span className="inline-block px-4 py-2 bg-primary/10 rounded-full text-primary font-medium text-sm mb-6">
               FAQ
             </span>

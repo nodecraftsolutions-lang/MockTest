@@ -93,8 +93,9 @@ const Footer = () => {
               />
               
             </div>
-            <p className="text-blue-800 mb-6 max-w-md">
-              Prepzon is India's next-gen EdTech platform built to transform fresh graduates into job-ready professionals. We provide everything a student needs to confidently crack top MNC recruitment exams and interviews — all in one place.
+            <p className="text-black mb-6 max-w-md">
+              PrepZon is a next-generation EdTech platform built to bridge the gap between college learning and corporate readiness. We provide a complete suite of Live Interactive Training, Recorded Sessions, and Real-Time Mock Tests covering both Top IT Company Placements and Competitive Exams.
+
             </p>
             <div className="flex space-x-4">
               {socialLinks.map((social, index) => {

@@ -58,7 +58,7 @@ const Navbar = ({ isPublic = false }) => {
     { name: 'Live Courses', action: handleCourses },
     { name: 'Recordings', action: handleAllRecordings  },
     { name: 'Mock Tests', action: handleViewTests },
-    { name: 'About', path: '/about' },
+    { name: 'About Us', path: '/about' },
     { name: 'Contact Us', path: '/contact' }
   ];
 
