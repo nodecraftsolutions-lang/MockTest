@@ -520,6 +520,14 @@ const Sidebar = ({ type = "student", onStateChange }) => {
               </div>
               <div className="mb-1">
                 <NavItem 
+                  to="/admin/enrollments" 
+                  icon={FileCheck} 
+                  label="Enrollments" 
+                  showLabel={!isCollapsed}
+                />
+              </div>
+              <div className="mb-1">
+                <NavItem 
                   to="/admin/alumni" 
                   icon={GraduationCap} 
                   label="Alumni" 

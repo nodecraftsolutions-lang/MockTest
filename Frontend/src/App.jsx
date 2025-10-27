@@ -58,6 +58,7 @@ import ManageAlumni from './pages/Admin/Alumni';
 import AdminResults from './pages/Admin/Results';
 import ManagePayments from './pages/Admin/Payments';
 import AdminSettings from './pages/Admin/Settings';
+import Enrollments from './pages/Admin/Enrollments/Enrollments';
 import NotFound3D from './pages/NotFound3D'
 import ColorTest from './components/ColorTest';
 import './index.css';
@@ -165,6 +166,7 @@ function App() {
               <Route path="alumni" element={<ManageAlumni />} />
               <Route path="results" element={<AdminResults />} />
               <Route path="payments" element={<ManagePayments />} />
+              <Route path="enrollments" element={<Enrollments />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
           </Routes>

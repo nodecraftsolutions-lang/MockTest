@@ -3,7 +3,8 @@ import {
   Users, Search, Filter, Eye, UserX, RefreshCw,
   Mail, Phone, Calendar, Activity,
   ChevronDown, ChevronUp, X, Check, AlertCircle, 
-  UserCheck, FileText, CreditCard, TrendingUp
+  UserCheck, FileText, CreditCard, TrendingUp,
+  BookOpen, Video, GraduationCap, ShoppingCart
 } from 'lucide-react';
 import api from '../../api/axios';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -524,80 +525,168 @@ const ManageStudents = () => {
                   </div>
                 </div>
 
-                {/* Recent Activity */}
+                {/* Recent Activity and Enrollments */}
                 <div className="lg:col-span-2 space-y-6">
+                  {/* Enrollments Section */}
                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                      <FileText className="w-5 h-5 mr-2 text-indigo-600" />
-                      Recent Test Attempts
+                      <GraduationCap className="w-5 h-5 mr-2 text-indigo-600" />
+                      Enrollments
                     </h3>
-                    {selectedStudent.recentAttempts && selectedStudent.recentAttempts.length > 0 ? (
-                      <div className="space-y-4">
-                        {selectedStudent.recentAttempts.map((attempt) => (
-                          <div key={attempt._id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                            <div className="flex-1">
-                              <p className="font-medium text-gray-900">{attempt.testId?.title}</p>
-                              <p className="text-sm text-gray-600">
-                                {new Date(attempt.createdAt).toLocaleDateString()} at {new Date(attempt.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </p>
-                            </div>
-                            <div className="text-right ml-4">
-                              <p className="font-semibold text-gray-900">{attempt.score || 0}%</p>
-                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-1 ${
-                                attempt.isPassed 
-                                  ? 'bg-emerald-100 text-emerald-800' 
-                                  : 'bg-rose-100 text-rose-800'
-                              }`}>
-                                {attempt.isPassed ? 'Passed' : 'Failed'}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <div className="p-3 bg-blue-50 rounded-lg text-center">
+                        <BookOpen className="w-6 h-6 text-blue-600 mx-auto mb-1" />
+                        <p className="text-sm text-gray-600">Courses</p>
+                        <p className="text-xl font-bold text-blue-600">{selectedStudent.courseEnrollments?.length || 0}</p>
                       </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                        <p className="text-gray-600">No test attempts yet</p>
+                      <div className="p-3 bg-green-50 rounded-lg text-center">
+                        <FileText className="w-6 h-6 text-green-600 mx-auto mb-1" />
+                        <p className="text-sm text-gray-600">Tests</p>
+                        <p className="text-xl font-bold text-green-600">{selectedStudent.testEnrollments?.length || 0}</p>
                       </div>
-                    )}
+                      <div className="p-3 bg-purple-50 rounded-lg text-center">
+                        <Video className="w-6 h-6 text-purple-600 mx-auto mb-1" />
+                        <p className="text-sm text-gray-600">Recordings</p>
+                        <p className="text-xl font-bold text-purple-600">{selectedStudent.recordingUnlocks?.length || 0}</p>
+                      </div>
+                    </div>
+                    
+                    {/* Course Enrollments */}
+                    <div className="mb-4">
+                      <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                        <BookOpen className="w-4 h-4 mr-1 text-blue-600" />
+                        Course Enrollments
+                      </h4>
+                      {selectedStudent.courseEnrollments && selectedStudent.courseEnrollments.length > 0 ? (
+                        <div className="space-y-2 max-h-32 overflow-y-auto">
+                          {selectedStudent.courseEnrollments.map((enrollment) => (
+                            <div key={enrollment._id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                              <span className="text-sm">{enrollment.courseId?.title}</span>
+                              <span className="text-sm font-medium">₹{enrollment.courseId?.price || 0}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">No course enrollments</p>
+                      )}
+                    </div>
+                    
+                    {/* Test Enrollments */}
+                    <div className="mb-4">
+                      <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                        <FileText className="w-4 h-4 mr-1 text-green-600" />
+                        Test Enrollments
+                      </h4>
+                      {selectedStudent.testEnrollments && selectedStudent.testEnrollments.length > 0 ? (
+                        <div className="space-y-2 max-h-32 overflow-y-auto">
+                          {selectedStudent.testEnrollments.map((enrollment) => (
+                            <div key={enrollment._id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                              <span className="text-sm">{enrollment.testId?.title}</span>
+                              <span className="text-sm font-medium">₹{enrollment.testId?.price || 0}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">No test enrollments</p>
+                      )}
+                    </div>
+                    
+                    {/* Recording Unlocks */}
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                        <Video className="w-4 h-4 mr-1 text-purple-600" />
+                        Recording Unlocks
+                      </h4>
+                      {selectedStudent.recordingUnlocks && selectedStudent.recordingUnlocks.length > 0 ? (
+                        <div className="space-y-2 max-h-32 overflow-y-auto">
+                          {selectedStudent.recordingUnlocks.map((unlock) => (
+                            <div key={unlock._id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                              <span className="text-sm">{unlock.courseId?.title}</span>
+                              <span className="text-sm font-medium">₹{unlock.courseId?.recordingsPrice || 0}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">No recording unlocks</p>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                      <CreditCard className="w-5 h-5 mr-2 text-indigo-600" />
-                      Recent Orders
-                    </h3>
-                    {selectedStudent.recentOrders && selectedStudent.recentOrders.length > 0 ? (
-                      <div className="space-y-4">
-                        {selectedStudent.recentOrders.map((order) => (
-                          <div key={order._id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                            <div>
-                              <p className="font-medium text-gray-900">Order #{order.orderId}</p>
-                              <p className="text-sm text-gray-600">
-                                {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </p>
+                  {/* Recent Activity */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <FileText className="w-5 h-5 mr-2 text-indigo-600" />
+                        Recent Test Attempts
+                      </h3>
+                      {selectedStudent.recentAttempts && selectedStudent.recentAttempts.length > 0 ? (
+                        <div className="space-y-4">
+                          {selectedStudent.recentAttempts.map((attempt) => (
+                            <div key={attempt._id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                              <div className="flex-1">
+                                <p className="font-medium text-gray-900">{attempt.testId?.title}</p>
+                                <p className="text-sm text-gray-600">
+                                  {new Date(attempt.createdAt).toLocaleDateString()} at {new Date(attempt.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              </div>
+                              <div className="text-right ml-4">
+                                <p className="font-semibold text-gray-900">{attempt.score || 0}%</p>
+                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-1 ${
+                                  attempt.isPassed 
+                                    ? 'bg-emerald-100 text-emerald-800' 
+                                    : 'bg-rose-100 text-rose-800'
+                                }`}>
+                                  {attempt.isPassed ? 'Passed' : 'Failed'}
+                                </span>
+                              </div>
                             </div>
-                            <div className="text-right">
-                              <p className="font-semibold text-gray-900">₹{order.totalAmount?.toLocaleString() || 0}</p>
-                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-1 ${
-                                order.paymentStatus === 'completed' 
-                                  ? 'bg-emerald-100 text-emerald-800' 
-                                  : order.paymentStatus === 'failed' 
-                                    ? 'bg-rose-100 text-rose-800' 
-                                    : 'bg-amber-100 text-amber-800'
-                              }`}>
-                                {order.paymentStatus}
-                              </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                          <p className="text-gray-600">No test attempts yet</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <CreditCard className="w-5 h-5 mr-2 text-indigo-600" />
+                        Recent Orders
+                      </h3>
+                      {selectedStudent.recentOrders && selectedStudent.recentOrders.length > 0 ? (
+                        <div className="space-y-4">
+                          {selectedStudent.recentOrders.map((order) => (
+                            <div key={order._id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                              <div>
+                                <p className="font-medium text-gray-900">Order #{order.orderId}</p>
+                                <p className="text-sm text-gray-600">
+                                  {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-semibold text-gray-900">₹{order.totalAmount?.toLocaleString() || 0}</p>
+                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-1 ${
+                                  order.paymentStatus === 'completed' 
+                                    ? 'bg-emerald-100 text-emerald-800' 
+                                    : order.paymentStatus === 'failed' 
+                                      ? 'bg-rose-100 text-rose-800' 
+                                      : 'bg-amber-100 text-amber-800'
+                                }`}>
+                                  {order.paymentStatus}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                        <p className="text-gray-600">No orders yet</p>
-                      </div>
-                    )}
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                          <p className="text-gray-600">No orders yet</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
