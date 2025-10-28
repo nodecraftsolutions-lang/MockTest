@@ -58,7 +58,7 @@ const About = () => {
               />
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-orange-500">
-              About Prepzon
+              About PrepZon
             </h1>
             <p className="text-sm md:text-lg text-black max-w-3xl mx-auto">
               PrepZon is a next-generation EdTech platform built to bridge the gap between college learning and corporate readiness. We provide a complete suite of Live Interactive Training, Recorded Sessions, and Real-Time Mock Tests covering both Top IT Company Placements and Competitive Exams.
