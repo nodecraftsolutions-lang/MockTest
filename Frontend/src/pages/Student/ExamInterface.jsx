@@ -7,12 +7,14 @@ import {
 import api from "../../api/axios";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { useToast } from "../../context/ToastContext";
+import { useAuth } from "../../context/AuthContext";
 
 const ExamInterface = () => {
   const { testId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const [questions, setQuestions] = useState([]);
   const [sections, setSections] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -43,7 +45,7 @@ const ExamInterface = () => {
   useEffect(() => {
     // Use different storage keys for mock tests vs regular tests
     const storageKeyPrefix = isMockTest ? 'mock_test_' : 'test_';
-    const completedTestKey = `${storageKeyPrefix}${testId}_completed`;
+    const completedTestKey = `${storageKeyPrefix}${testId}_completed_${user?.id || 'anonymous'}`;
     const hasCompletedTest = sessionStorage.getItem(completedTestKey);
     
     if (hasCompletedTest) {
@@ -111,7 +113,7 @@ const ExamInterface = () => {
           
           // Store completed test info in session storage
           const storageKeyPrefix = isMockTest ? 'mock_test_' : 'test_';
-          const completedTestKey = `${storageKeyPrefix}${testId}_completed`;
+          const completedTestKey = `${storageKeyPrefix}${testId}_completed_${user?.id || 'anonymous'}`;
           sessionStorage.setItem(completedTestKey, JSON.stringify(lastAttempt));
           
           setLoading(false);
@@ -124,11 +126,19 @@ const ExamInterface = () => {
         }
       }
     } catch (error) {
-      if (error.response?.status === 403 && error.response?.data?.message?.includes('already attempted')) {
+      // Check if it's a 404 error (endpoint not found) or 403 error (already attempted)
+      if (error.response?.status === 404) {
+        // Endpoint doesn't exist, fall back to original behavior
+        if (attemptId) {
+          checkAttemptStatus(attemptId);
+        } else {
+          startTest();
+        }
+      } else if (error.response?.status === 403 && error.response?.data?.message?.includes('already attempted')) {
         setTestAlreadyAttempted(true);
         setLoading(false);
       } else {
-        // If the endpoint doesn't exist yet, fall back to original behavior
+        // For other errors, fall back to original behavior
         if (attemptId) {
           checkAttemptStatus(attemptId);
         } else {
@@ -156,7 +166,7 @@ const ExamInterface = () => {
           
           // Store completed test info in session storage
           const storageKeyPrefix = isMockTest ? 'mock_test_' : 'test_';
-          const completedTestKey = `${storageKeyPrefix}${testId}_completed`;
+          const completedTestKey = `${storageKeyPrefix}${testId}_completed_${user?.id || 'anonymous'}`;
           sessionStorage.setItem(completedTestKey, JSON.stringify(attemptData));
           
           setLoading(false);
@@ -166,8 +176,14 @@ const ExamInterface = () => {
         }
       }
     } catch (error) {
-      // If endpoint doesn't exist or other error, just try to fetch questions
-      fetchQuestions(id);
+      // Check if it's a 404 error (endpoint not found)
+      if (error.response?.status === 404) {
+        // Endpoint doesn't exist, just try to fetch questions
+        fetchQuestions(id);
+      } else {
+        // For other errors, still try to fetch questions
+        fetchQuestions(id);
+      }
     }
   };
 
@@ -193,6 +209,7 @@ const ExamInterface = () => {
         fetchQuestions(attemptId);
       }
     } catch (error) {
+      // Check if it's a 403 error (already attempted)
       if (error.response?.status === 403 && error.response?.data?.message?.includes('already attempted')) {
         setTestAlreadyAttempted(true);
       } else {
@@ -220,7 +237,7 @@ const ExamInterface = () => {
           
           // Store completed test info in session storage
           const storageKeyPrefix = isMockTest ? 'mock_test_' : 'test_';
-          const completedTestKey = `${storageKeyPrefix}${testId}_completed`;
+          const completedTestKey = `${storageKeyPrefix}${testId}_completed_${user?.id || 'anonymous'}`;
           sessionStorage.setItem(completedTestKey, JSON.stringify(attempt));
           
           setLoading(false);
@@ -264,7 +281,9 @@ const ExamInterface = () => {
         await api.post(apiEndpoint, {
           attemptId,
           questionId: currentQuestion._id,
-          selectedOptions: [answers[currentQuestion._id]],
+          selectedOptions: Array.isArray(answers[currentQuestion._id]) 
+            ? answers[currentQuestion._id] 
+            : [answers[currentQuestion._id]],
           isMarkedForReview: markedForReview[currentQuestion._id] || false,
           section: currentQuestion.section
         });
@@ -276,10 +295,35 @@ const ExamInterface = () => {
   };
 
   const handleAnswer = (qId, option) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [qId]: option.text
-    }));
+    const currentQ = questions[currentIndex];
+    
+    if (currentQ.questionType === 'multiple') {
+      // For multiple choice questions, allow selecting multiple options
+      setAnswers((prev) => {
+        const currentAnswers = prev[qId] || [];
+        let newAnswers;
+        
+        if (currentAnswers.includes(option.text)) {
+          // Remove option if already selected
+          newAnswers = currentAnswers.filter(ans => ans !== option.text);
+        } else {
+          // Add option if not selected
+          newAnswers = [...currentAnswers, option.text];
+        }
+        
+        return {
+          ...prev,
+          [qId]: newAnswers
+        };
+      });
+    } else {
+      // For single choice questions, only one option can be selected
+      setAnswers((prev) => ({
+        ...prev,
+        [qId]: option.text
+      }));
+    }
+    
     setTimeout(() => saveAnswersToServer(), 1000);
   };
 
@@ -305,7 +349,7 @@ const ExamInterface = () => {
         
         // Mark this test as completed in session storage
         const storageKeyPrefix = isMockTest ? 'mock_test_' : 'test_';
-        const completedTestKey = `${storageKeyPrefix}${testId}_completed`;
+        const completedTestKey = `${storageKeyPrefix}${testId}_completed_${user?.id || 'anonymous'}`;
         const attemptData = {
           _id: attemptId,
           submittedAt: new Date().toISOString(),
@@ -345,7 +389,7 @@ const ExamInterface = () => {
       // Mark this test as completed in session storage
       if (res.data.success) {
         const storageKeyPrefix = isMockTest ? 'mock_test_' : 'test_';
-        const completedTestKey = `${storageKeyPrefix}${testId}_completed`;
+        const completedTestKey = `${storageKeyPrefix}${testId}_completed_${user?.id || 'anonymous'}`;
         const attemptData = {
           _id: attemptId,
           submittedAt: new Date().toISOString(),
@@ -686,32 +730,43 @@ const ExamInterface = () => {
             </div>
 
             <p className="text-gray-900 mb-4 sm:mb-6 leading-relaxed text-base sm:text-lg font-medium">
-              {currentQ.questionText}
+              {currentQ.questionText.split('\n').map((line, index) => (
+                <span key={index}>
+                  {line}
+                  <br />
+                </span>
+              ))}
             </p>
 
             <div className="space-y-2 sm:space-y-3">
-              {currentQ.options.map((opt, i) => (
-                <label
-                  key={i}
-                  className={`flex items-center p-3 sm:p-4 border rounded-xl cursor-pointer transition-all shadow-sm
-                    ${answers[currentQ._id] === opt.text
-                      ? "border-primary-500 bg-primary-50 scale-[1.02]"
-                      : "border-gray-200 hover:border-primary-300 hover:bg-primary-50/30"
-                    }`}
-                >
-                  <input
-                    type="radio"
-                    name={`q-${currentQ._id}`}
-                    checked={answers[currentQ._id] === opt.text}
-                    onChange={() => handleAnswer(currentQ._id, opt)}
-                    className="mr-2 sm:mr-3 accent-primary-600 w-4 h-4"
-                  />
-                  <span className="text-gray-800 text-sm sm:text-base flex-1">
-                    <span className="font-semibold mr-1 sm:mr-2">{String.fromCharCode(65 + i)}.</span>
-                    {opt.text}
-                  </span>
-                </label>
-              ))}
+              {currentQ.options.map((opt, i) => {
+                const isSelected = currentQ.questionType === 'multiple' 
+                  ? (answers[currentQ._id] || []).includes(opt.text)
+                  : answers[currentQ._id] === opt.text;
+                  
+                return (
+                  <label
+                    key={i}
+                    className={`flex items-center p-3 sm:p-4 border rounded-xl cursor-pointer transition-all shadow-sm
+                      ${isSelected
+                        ? "border-primary-500 bg-primary-50 scale-[1.02]"
+                        : "border-gray-200 hover:border-primary-300 hover:bg-primary-50/30"
+                      }`}
+                  >
+                    <input
+                      type={currentQ.questionType === 'multiple' ? "checkbox" : "radio"}
+                      name={`q-${currentQ._id}`}
+                      checked={isSelected}
+                      onChange={() => handleAnswer(currentQ._id, opt)}
+                      className="mr-2 sm:mr-3 accent-primary-600 w-4 h-4"
+                    />
+                    <span className="text-gray-800 text-sm sm:text-base flex-1">
+                      <span className="font-semibold mr-1 sm:mr-2">{String.fromCharCode(65 + i)}.</span>
+                      {opt.text}
+                    </span>
+                  </label>
+                );
+              })}
             </div>
           </div>
 

@@ -76,8 +76,9 @@ router.post('/upload', adminAuth, upload.single('questionFile'), [
     .isMongoId()
     .withMessage('Valid company ID is required'),
   body('section')
-    .isIn(['Aptitude', 'Reasoning', 'Technical', 'English', 'General Knowledge', 'Programming'])
-    .withMessage('Valid section is required'),
+    .trim()
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Section name must be between 1 and 50 characters'),
   body('title')
     .trim()
     .isLength({ min: 3, max: 100 })
@@ -141,10 +142,21 @@ router.post('/upload', adminAuth, upload.single('questionFile'), [
                   createdBy: req.student.id
                 };
 
-                // Mark correct option
-                const correctIndex = parseInt(question.correctAnswer) - 1;
-                if (correctIndex >= 0 && correctIndex < question.options.length) {
-                  question.options[correctIndex].isCorrect = true;
+                // Handle multiple correct answers for multiple choice questions
+                if (question.questionType === 'multiple' && typeof question.correctAnswer === 'string') {
+                  // For multiple choice, correctAnswer can be comma-separated indices
+                  const correctIndices = question.correctAnswer.split(',').map(idx => parseInt(idx.trim()) - 1);
+                  correctIndices.forEach(idx => {
+                    if (idx >= 0 && idx < question.options.length) {
+                      question.options[idx].isCorrect = true;
+                    }
+                  });
+                } else if (question.questionType !== 'multiple') {
+                  // Mark correct option for single choice questions
+                  const correctIndex = parseInt(question.correctAnswer) - 1;
+                  if (correctIndex >= 0 && correctIndex < question.options.length) {
+                    question.options[correctIndex].isCorrect = true;
+                  }
                 }
 
                 // Validate question
@@ -153,46 +165,85 @@ router.post('/upload', adminAuth, upload.single('questionFile'), [
                 }
               } catch (error) {
                 console.error('Error parsing CSV row:', error);
+                // Don't reject the promise for individual row errors, just skip the row
               }
             })
             .on('end', resolve)
-            .on('error', reject);
+            .on('error', (error) => {
+              console.error('CSV parsing error:', error);
+              reject(new Error(`Failed to parse CSV file: ${error.message}`));
+            });
         });
       } else if (fileExtension === 'json') {
         // Parse JSON file
-        const fileContent = fs.readFileSync(filePath, 'utf8');
-        const jsonData = JSON.parse(fileContent);
-        
-        jsonData.forEach(item => {
-          const question = {
-            questionText: item.questionText,
-            questionType: item.questionType || 'single',
-            options: [
-              { text: item.option1, isCorrect: false },
-              { text: item.option2, isCorrect: false },
-              { text: item.option3, isCorrect: false },
-              { text: item.option4, isCorrect: false }
-            ].filter(opt => opt.text && opt.text.trim()),
-            correctAnswer: item.correctAnswer,
-            explanation: item.explanation || '',
-            difficulty: item.difficulty || 'Medium',
-            marks: parseFloat(item.marks) || 1,
-            negativeMarks: parseFloat(item.negativeMarks) || 0,
-            tags: item.tags ? item.tags.split(',').map(tag => tag.trim()) : [],
-            createdBy: req.student.id
-          };
-
-          // Mark correct option
-          const correctIndex = parseInt(question.correctAnswer) - 1;
-          if (correctIndex >= 0 && correctIndex < question.options.length) {
-            question.options[correctIndex].isCorrect = true;
+        try {
+          const fileContent = fs.readFileSync(filePath, 'utf8');
+          const jsonData = JSON.parse(fileContent);
+          
+          if (!Array.isArray(jsonData)) {
+            throw new Error('JSON file must contain an array of questions');
           }
+          
+          jsonData.forEach((item, index) => {
+            try {
+              const question = {
+                questionText: item.questionText,
+                questionType: item.questionType || 'single',
+                options: [
+                  { text: item.option1, isCorrect: false },
+                  { text: item.option2, isCorrect: false },
+                  { text: item.option3, isCorrect: false },
+                  { text: item.option4, isCorrect: false }
+                ].filter(opt => opt.text && opt.text.trim()),
+                correctAnswer: item.correctAnswer,
+                explanation: item.explanation || '',
+                difficulty: item.difficulty || 'Medium',
+                marks: parseFloat(item.marks) || 1,
+                negativeMarks: parseFloat(item.negativeMarks) || 0,
+                tags: item.tags ? item.tags.split(',').map(tag => tag.trim()) : [],
+                createdBy: req.student.id
+              };
 
-          // Validate question
-          if (question.questionText && question.options.length >= 2 && question.correctAnswer) {
-            questions.push(question);
-          }
-        });
+              // Handle multiple correct answers for multiple choice questions
+              if (question.questionType === 'multiple') {
+                if (Array.isArray(question.correctAnswer)) {
+                  // For multiple choice, correctAnswer can be an array of indices
+                  question.correctAnswer.forEach(idx => {
+                    const correctIdx = typeof idx === 'number' ? idx - 1 : parseInt(idx) - 1;
+                    if (correctIdx >= 0 && correctIdx < question.options.length) {
+                      question.options[correctIdx].isCorrect = true;
+                    }
+                  });
+                } else if (typeof question.correctAnswer === 'string') {
+                  // For multiple choice, correctAnswer can be comma-separated indices
+                  const correctIndices = question.correctAnswer.split(',').map(idx => parseInt(idx.trim()) - 1);
+                  correctIndices.forEach(idx => {
+                    if (idx >= 0 && idx < question.options.length) {
+                      question.options[idx].isCorrect = true;
+                    }
+                  });
+                }
+              } else if (question.questionType !== 'multiple') {
+                // Mark correct option for single choice questions
+                const correctIndex = parseInt(question.correctAnswer) - 1;
+                if (correctIndex >= 0 && correctIndex < question.options.length) {
+                  question.options[correctIndex].isCorrect = true;
+                }
+              }
+
+              // Validate question
+              if (question.questionText && question.options.length >= 2 && question.correctAnswer) {
+                questions.push(question);
+              }
+            } catch (itemError) {
+              console.error(`Error processing JSON item at index ${index}:`, itemError);
+              // Skip invalid items but continue processing
+            }
+          });
+        } catch (jsonError) {
+          console.error('JSON parsing error:', jsonError);
+          throw new Error(`Failed to parse JSON file: ${jsonError.message}`);
+        }
       }
 
       // Create or update question bank
@@ -248,15 +299,31 @@ router.post('/upload', adminAuth, upload.single('questionFile'), [
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
-      throw parseError;
+      
+      console.error('File parsing error:', parseError);
+      return res.status(400).json({
+        success: false,
+        message: parseError.message || 'Failed to parse question file',
+        error: process.env.NODE_ENV === 'development' ? parseError.message : 'File parsing error'
+      });
     }
 
   } catch (error) {
     console.error('Upload question bank error:', error);
+    
+    // Clean up uploaded file if it exists
+    if (req.file && fs.existsSync(req.file.path)) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (cleanupError) {
+        console.error('Cleanup error:', cleanupError);
+      }
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Failed to upload question bank',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'File processing error'
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Server error during upload'
     });
   }
 });
