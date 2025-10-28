@@ -293,7 +293,7 @@ const AnswerAnalysis = ({ attempt, showAnswers, setShowAnswers }) => {
             >
               <div className="flex items-start justify-between mb-2">
                 <h4 className="font-bold text-gray-800 text-sm">
-                  Question {index + 1}
+                  Question {index + 1} {answer.question?.questionType === 'multiple' && '(Multiple Choice)'}
                 </h4>
                 <span
                   className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
@@ -311,25 +311,43 @@ const AnswerAnalysis = ({ attempt, showAnswers, setShowAnswers }) => {
               />
               <div className="space-y-2">
                 {answer.question?.options?.map((option, optIndex) => {
-                  const isSelected = answer.selectedOptions.includes(option.text);
+                  const isSelected = answer.selectedOptions?.includes(option.text);
                   const isCorrect = option.isCorrect;
+                  
+                  // Determine the styling based on correctness and selection
                   let optionClass = "bg-gray-100 border-gray-200";
-                  if (isCorrect)
+                  if (isCorrect && isSelected) {
+                    // Correctly selected option
                     optionClass = "bg-green-100 border-green-300 text-green-900";
-                  else if (isSelected && !isCorrect)
+                  } else if (isCorrect && !isSelected) {
+                    // Missed correct option (for multiple choice)
+                    optionClass = "bg-blue-100 border-blue-300 text-blue-900";
+                  } else if (!isCorrect && isSelected) {
+                    // Incorrectly selected option
                     optionClass = "bg-red-100 border-red-300 text-red-900";
+                  }
 
                   return (
                     <div
                       key={optIndex}
                       className={`p-2 rounded-lg border flex items-center justify-between text-sm ${optionClass}`}
                     >
-                      <span>{option.text}</span>
-                      {isSelected && (
-                        <span className="text-xs font-bold text-indigo-800">
-                          Your Answer
-                        </span>
-                      )}
+                      <div className="flex items-center">
+                        <span className="mr-2">{String.fromCharCode(65 + optIndex)}.</span>
+                        <span>{option.text}</span>
+                      </div>
+                      <div className="flex items-center">
+                        {isCorrect && (
+                          <span className="text-xs font-bold text-green-800 mr-2">
+                            (Correct)
+                          </span>
+                        )}
+                        {isSelected && (
+                          <span className="text-xs font-bold text-indigo-800">
+                            Your Answer
+                          </span>
+                        )}
+                      </div>
                     </div>
                   );
                 })}

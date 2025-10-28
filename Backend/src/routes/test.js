@@ -623,29 +623,58 @@ router.post('/attempts/:id/submit', auth, async (req, res) => {
 
       let isCorrect = false, marksAwarded = 0;
 
-      if (!studentAnswer) {
+      if (!studentAnswer || (Array.isArray(studentAnswer) && studentAnswer.length === 0)) {
         unanswered++;
       } else {
         sectionWiseScore[section].attemptedQuestions++;
-        const correctOpt = q.options.find(o => o.isCorrect);
-        if (correctOpt && correctOpt.text === studentAnswer) {
-          isCorrect = true;
-          marksAwarded = q.marks || 1;
-          score += marksAwarded;
-          correct++;
-          sectionWiseScore[section].correctAnswers++;
-          sectionWiseScore[section].score += marksAwarded;
+        
+        if (q.questionType === 'multiple') {
+          // For multiple choice questions, check if all selected options are correct
+          // and all correct options are selected
+          const correctOptions = q.options.filter(o => o.isCorrect).map(o => o.text);
+          const selectedOptions = Array.isArray(studentAnswer) ? studentAnswer : [studentAnswer];
+          
+          // Check if selected options match correct options exactly
+          const isExactMatch = 
+            correctOptions.length === selectedOptions.length &&
+            correctOptions.every(opt => selectedOptions.includes(opt)) &&
+            selectedOptions.every(opt => correctOptions.includes(opt));
+          
+          if (isExactMatch) {
+            isCorrect = true;
+            marksAwarded = q.marks || 1;
+            score += marksAwarded;
+            correct++;
+            sectionWiseScore[section].correctAnswers++;
+            sectionWiseScore[section].score += marksAwarded;
+          } else {
+            const neg = q.negativeMarks || 0;
+            marksAwarded = -neg;
+            score -= neg;
+            incorrect++;
+          }
         } else {
-          const neg = q.negativeMarks || 0;
-          marksAwarded = -neg;
-          score -= neg;
-          incorrect++;
+          // For single choice questions
+          const correctOpt = q.options.find(o => o.isCorrect);
+          if (correctOpt && correctOpt.text === studentAnswer) {
+            isCorrect = true;
+            marksAwarded = q.marks || 1;
+            score += marksAwarded;
+            correct++;
+            sectionWiseScore[section].correctAnswers++;
+            sectionWiseScore[section].score += marksAwarded;
+          } else {
+            const neg = q.negativeMarks || 0;
+            marksAwarded = -neg;
+            score -= neg;
+            incorrect++;
+          }
         }
       }
 
       processed.push({
         questionId: q._id,
-        selectedOptions: studentAnswer ? [studentAnswer] : [],
+        selectedOptions: Array.isArray(studentAnswer) ? studentAnswer : (studentAnswer ? [studentAnswer] : []),
         isMarkedForReview: false,
         timeSpent: 0,
         isCorrect,
