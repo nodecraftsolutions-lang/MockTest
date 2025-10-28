@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, AlertCircle, Users, Video, MessageCircle, BookOpen } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -21,11 +21,15 @@ const Auth = () => {
   const { login, register } = useAuth();
   const { showSuccess, showError } = useToast();
   const navigate = useNavigate();
-
+  const location = useLocation();
+  
   // Function to update message based on redirect URL
   const updateRedirectMessage = () => {
     const redirectUrl = localStorage.getItem('redirectAfterLogin');
-    if (redirectUrl) {
+    // Check if the user came directly from the navbar
+    const cameFromNavbar = location.search.includes('source=navbar');
+    
+    if (redirectUrl && !cameFromNavbar) {
       // Set message based on the redirect URL
       if (redirectUrl.includes('/student/courses/')) {
         setRedirectMessage('Unlock your learning journey—sign up or log in to PREPZON and explore our live courses now!');
@@ -33,6 +37,9 @@ const Auth = () => {
         setRedirectMessage('Access recorded sessions anytime—just sign up or log in to PREPZON.');
       } else if (redirectUrl.includes('/student/mock-tests')) {
         setRedirectMessage('Sign up or log in to PREPZON to test your skills with our mock exams—designed to match real company patterns and boost your confidence.');
+      } else {
+        // Generic message for other redirects
+        setRedirectMessage('Sign in to continue to your destination.');
       }
     } else {
       setRedirectMessage('');
@@ -62,7 +69,7 @@ const Auth = () => {
       window.removeEventListener('storage', handleStorageChange);
       clearInterval(interval);
     };
-  }, []);
+  }, [location.search]); // Add location.search to dependencies
 
   const validatePassword = (password) => {
     const errors = [];

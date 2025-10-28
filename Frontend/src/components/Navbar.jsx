@@ -170,7 +170,7 @@ const Navbar = ({ isPublic = false }) => {
               ) : (
                 <div className="hidden md:flex md:items-center md:space-x-3">
                   <Link
-                    to="/auth"
+                    to="/auth?source=navbar"
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-primary-700 bg-primary-50 hover:bg-primary-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all"
                   >
                     Sign In
@@ -227,7 +227,7 @@ const Navbar = ({ isPublic = false }) => {
               {!isAuthenticated && (
                 <div className="mt-4 px-2">
                   <Link
-                    to="/auth"
+                    to="/auth?source=navbar"
                     className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-primary hover:bg-primary/90 transition-colors"
                     onClick={() => setIsMenuOpen(false)}
                   >
