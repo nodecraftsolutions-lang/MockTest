@@ -88,7 +88,7 @@ const Footer = () => {
             <div className="flex items-center space-x-3 mb-4">
               <img
                 src="/Final Logo.png"
-                alt="MockTest Pro Logo"
+                alt="PrepZon Logo"
                 className="h-12 w-auto"
               />
               

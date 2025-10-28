@@ -945,9 +945,9 @@ router.post('/create-order', auth, async (req, res) => {
     }
     console.log('Discount applied:', { discountAmount, discountPercentage });
 
-    // Calculate taxes (18% GST for India)
+    // Calculate taxes (No GST for now - use price as-is)
     const taxableAmount = subtotal - discountAmount;
-    const gstAmount = Math.round(taxableAmount * 0.18);
+    const gstAmount = 0; // Removed GST calculation
     const totalAmount = taxableAmount + gstAmount;
     console.log('Amount calculation:', { subtotal, discountAmount, taxableAmount, gstAmount, totalAmount });
 

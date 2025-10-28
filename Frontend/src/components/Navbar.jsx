@@ -82,7 +82,7 @@ const Navbar = ({ isPublic = false }) => {
               >
                 <img
                   src="/Final Logo.png"
-                  alt="MockTest Pro Logo"
+                  alt="PrepZon Logo"
                   className="h-14 w-50"
                 />
               </Link>

@@ -35,7 +35,7 @@ const About = () => {
     {
       year: '2020',
       title: 'Foundation',
-      description: 'MockTest Pro was founded with a vision to revolutionize online test preparation.'
+      description: 'PrepZon was founded with a vision to revolutionize online test preparation.'
     },
     {
       year: '2021',
@@ -66,7 +66,7 @@ const About = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl lg:text-6xl font-bold mb-6">
-              About MockTest Pro
+              About PrepZon
             </h1>
             <p className="text-xl text-primary-100 max-w-3xl mx-auto">
               We're on a mission to help students crack their dream jobs through 
@@ -193,7 +193,7 @@ const About = () => {
             Join Our Success Story
           </h2>
           <p className="text-xl text-primary-100 mb-8">
-            Be part of the thousands of students who have achieved their career goals with MockTest Pro
+            Be part of the thousands of students who have achieved their career goals with PrepZon
           </p>
           <a 
             href="/auth" 

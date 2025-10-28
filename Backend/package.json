@@ -16,7 +16,7 @@
     "express",
     "mongodb"
   ],
-  "author": "MockTest Pro Team",
+  "author": "PrepZon Team",
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^2.4.3",

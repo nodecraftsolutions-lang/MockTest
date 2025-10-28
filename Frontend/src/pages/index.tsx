@@ -193,7 +193,7 @@ const Index = () => {
                 <Link to="/" className="flex items-center space-x-2">
                   <img
                     src="../Logo_3.png"
-                    alt="MockTest Pro Logo"
+                    alt="PrepZon Logo"
                     className="h-10 w-auto"
                   />
                 </Link>

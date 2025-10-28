@@ -130,7 +130,7 @@ const CompanyDetails = () => {
             key: razorpayKeyId,
             amount: razorpayOrder.amount,
             currency: razorpayOrder.currency,
-            name: company?.name || 'MockTest Pro',
+            name: company?.name || 'PrepZon - An EdTech Platform',
             description: `Unlock ${company?.name} Paid Tests`,
             order_id: razorpayOrder.id,
             handler: async (response) => {

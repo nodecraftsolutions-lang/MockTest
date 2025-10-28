@@ -362,7 +362,7 @@ const Leaderboard = () => {
             { name: 'Consistent Performer', description: 'Maintain 85%+ average for 10 tests', color: 'green' },
             { name: 'Rising Star', description: 'Improve rank by 50+ positions', color: 'purple' },
             { name: 'Achiever', description: 'Complete 20+ tests', color: 'indigo' },
-            { name: 'Newcomer', description: 'Welcome to MockTest Pro!', color: 'gray' }
+            { name: 'Newcomer', description: 'Welcome to PrepZon!', color: 'gray' }
           ].map((badge, index) => (
             <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
               <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getBadgeColor(badge.name)}`}>
