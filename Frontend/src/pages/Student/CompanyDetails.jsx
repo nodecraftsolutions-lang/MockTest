@@ -228,30 +228,27 @@ const CompanyDetails = () => {
             <FileText className="w-5 h-5 sm:w-7 sm:h-7 text-primary-600" />
             {company?.name} Exam Pattern
           </h2>
-          {/* Overview */}
-          <ResponsiveGrid cols={1} colsSm={3} gap={4} gapMd={6}>
-            <div className="text-center p-4 sm:p-6 bg-blue-50 rounded-xl shadow hover:scale-105 transition animate-fade-in">
-              <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 mx-auto mb-2" />
-              <div className="text-2xl sm:text-3xl font-bold text-blue-600">
-                {pattern.totalQuestions}
-              </div>
-              <div className="text-xs sm:text-sm text-gray-600">Total Questions</div>
+          {/* Icon-based List for Exam Pattern */}
+          <div className="space-y-2 mb-6">
+            <div className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-blue-600" />
+              <span className="text-base">
+                <span className="font-medium text-blue-600">{pattern.totalQuestions}</span> Total Questions
+              </span>
             </div>
-            <div className="text-center p-4 sm:p-6 bg-green-50 rounded-xl shadow hover:scale-105 transition animate-fade-in">
-              <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 mx-auto mb-2" />
-              <div className="text-2xl sm:text-3xl font-bold text-green-600">
-                {pattern.totalDuration} min
-              </div>
-              <div className="text-xs sm:text-sm text-gray-600">Duration</div>
+            <div className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-green-600" />
+              <span className="text-base">
+                <span className="font-medium text-green-600">{pattern.totalDuration} minutes</span> Duration
+              </span>
             </div>
-            <div className="text-center p-4 sm:p-6 bg-purple-50 rounded-xl shadow hover:scale-105 transition animate-fade-in">
-              <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 mx-auto mb-2" />
-              <div className="text-2xl sm:text-3xl font-bold text-purple-600">
-                {pattern.cutoffPercentage}%
-              </div>
-              <div className="text-xs sm:text-sm text-gray-600">Passing Criteria</div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-purple-600" />
+              <span className="text-base">
+                <span className="font-medium text-purple-600">{pattern.cutoffPercentage}%</span> Passing Criteria
+              </span>
             </div>
-          </ResponsiveGrid>
+          </div>
           {/* Section Breakdown */}
           <div>
             <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">

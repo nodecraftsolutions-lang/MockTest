@@ -945,9 +945,11 @@ router.post('/create-order', auth, async (req, res) => {
     }
     console.log('Discount applied:', { discountAmount, discountPercentage });
 
-    // Calculate total amount (no tax added)
-    const totalAmount = subtotal - discountAmount;
-    console.log('Amount calculation:', { subtotal, discountAmount, totalAmount });
+    // Calculate taxes (18% GST for India)
+    const taxableAmount = subtotal - discountAmount;
+    const gstAmount = Math.round(taxableAmount * 0.18);
+    const totalAmount = taxableAmount + gstAmount;
+    console.log('Amount calculation:', { subtotal, discountAmount, taxableAmount, gstAmount, totalAmount });
 
     // Validate amount for Razorpay (must be integer in paise)
     if (totalAmount <= 0) {
@@ -1032,8 +1034,8 @@ router.post('/create-order', auth, async (req, res) => {
         discountPercentage
       } : undefined,
       taxes: {
-        gst: 0,
-        totalTax: 0
+        gst: gstAmount,
+        totalTax: gstAmount
       },
       metadata: {
         ipAddress: req.ip,
