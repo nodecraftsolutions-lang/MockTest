@@ -5,6 +5,36 @@ import api from '../api/axios';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 
+const ImageSlider = () => {
+  const images = ["/vite.svg", "/img4.png", "/Final.png", "/img4.png"];
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % images.length);
+    }, 3000); // changes every 3 seconds
+    return () => clearInterval(interval);
+  }, [images.length]);
+
+  return (
+    <div className="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
+      <div className="h-48 w-full sm:h-56 md:h-72 lg:w-full lg:h-full relative overflow-hidden flex items-center justify-center">
+        {images.map((src, index) => (
+          <img
+            key={index}
+            src={src}
+            alt={`Slide ${index + 1}`}
+            className={`absolute h-full w-full object-contain transition-opacity duration-1000 ${
+              index === current ? "opacity-100" : "opacity-0"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+
 const Home = () => {
   const [scrolled, setScrolled] = useState(false);
   const [courses, setCourses] = useState([]);
@@ -510,16 +540,8 @@ const Home = () => {
               </main>
             </div>
           </div>
-          <div className="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
-            <div className="h-48 w-full sm:h-56 md:h-72 lg:w-full lg:h-full flex items-center justify-center">
-              <img 
-                src="/img4.png" 
-                alt="Learning Illustration" 
-                className="h-full w-full object-contain"
-              />
-            </div>
+              <ImageSlider/>
           </div>
-        </div>
       </section>
 
       {/* Courses Section */}
