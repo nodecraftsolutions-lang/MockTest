@@ -32,7 +32,16 @@ const ManagePayments = () => {
   const { showSuccess, showError } = useToast();
 
   useEffect(() => {
+    console.log('Payments useEffect triggered');
     fetchOrders();
+  }, []); // Remove dependencies to prevent multiple calls
+
+  // Add a separate useEffect for filters
+  useEffect(() => {
+    console.log('Filter changed, fetching orders');
+    if (!loading) { // Only fetch if not already loading
+      fetchOrders();
+    }
   }, [filterStatus, filterType, dateRange]);
 
   const fetchOrders = async () => {
@@ -43,12 +52,17 @@ const ManagePayments = () => {
       if (dateRange.fromDate) params.append('fromDate', dateRange.fromDate);
       if (dateRange.toDate) params.append('toDate', dateRange.toDate);
 
+      // Log the API call for debugging
+      console.log('Fetching orders with params:', params.toString());
+      
       const response = await api.get(`/admin/orders?${params.toString()}`);
+      console.log('Orders response:', response.data);
       if (response.data.success) {
         setOrders(response.data.data.orders);
       }
     } catch (error) {
-      showError('Failed to load orders');
+      console.error('Failed to load orders:', error);
+      showError('Failed to load orders: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }

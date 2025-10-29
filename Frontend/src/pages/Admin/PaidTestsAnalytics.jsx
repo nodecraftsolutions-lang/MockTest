@@ -25,7 +25,9 @@ const PaidTestsAnalytics = () => {
 
   const fetchAnalytics = async () => {
     try {
+      console.log('Fetching paid tests analytics data');
       const response = await api.get('/admin/analytics/paid-tests-by-company');
+      console.log('Analytics response:', response.data);
       if (response.data.success) {
         setCompanyStats(response.data.data.companyStats);
         setUserPurchases(response.data.data.userPurchases);
@@ -33,7 +35,7 @@ const PaidTestsAnalytics = () => {
       }
     } catch (error) {
       console.error('Error fetching analytics:', error);
-      showError('Failed to load analytics data');
+      showError('Failed to load analytics data: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }

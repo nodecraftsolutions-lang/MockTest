@@ -544,6 +544,15 @@ const Sidebar = ({ type = "student", onStateChange }) => {
                   showLabel={!isCollapsed}
                 />
               </div>
+              {/* Add the new Admin Mail page */}
+              <div className="mb-1">
+                <NavItem 
+                  to="/admin/mail" 
+                  icon={MessageSquare} 
+                  label="Send Mail" 
+                  showLabel={!isCollapsed}
+                />
+              </div>
               <div className="mb-1">
                 <NavItem 
                   to="/admin/alumni" 
@@ -560,6 +569,8 @@ const Sidebar = ({ type = "student", onStateChange }) => {
                   showLabel={!isCollapsed}
                 />
               </div>
+              
+              
             </>
           )}
         </nav>

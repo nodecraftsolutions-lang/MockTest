@@ -26,12 +26,16 @@ const Orders = () => {
       const params = new URLSearchParams();
       if (filter !== 'all') params.append('status', filter);
       
+      console.log('Fetching student orders with params:', params.toString());
+      
       const response = await api.get(`/students/orders?${params.toString()}`);
+      console.log('Student orders response:', response.data);
       if (response.data.success) {
         setOrders(response.data.data.orders);
       }
     } catch (error) {
-      showError('Failed to load orders');
+      console.error('Failed to load orders:', error);
+      showError('Failed to load orders: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }

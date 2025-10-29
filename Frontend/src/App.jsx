@@ -162,6 +162,7 @@ function App() {
               <Route path="paid-tests-analytics" element={<PaidTestsAnalytics />} /> {/* Add this route */}
               <Route path="enrollments" element={<Enrollments />} />
               <Route path="settings" element={<AdminSettings />} />
+              <Route path="mail" element={<AdminMailPage />} />
             </Route>
           </Routes>
 

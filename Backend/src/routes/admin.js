@@ -7,9 +7,6 @@ const Test = require('../models/Test');
 const Attempt = require('../models/Attempt');
 const Order = require('../models/Order');
 const Alumni = require('../models/Alumni');
-const Enrollment = require('../models/Enrollment');
-const RecordingEnrollment = require('../models/RecordingEnrollment');
-const Course = require('../models/Course');
 const PDFDocument = require('pdfkit');
 const { generateReceiptPDF } = require('../utils/receiptGenerator');
 
@@ -311,10 +308,12 @@ router.put('/profile',
 // Student Management Routes
 // @route   GET /api/v1/admin/students
 // @desc    Get all students with filters
-// @access  Public (No Auth Required)
+// @access  Private/Admin
 router.get('/students', async (req, res) => {
   try {
     const { 
+      page = 1, 
+      limit = 20, 
       search, 
       status, 
       sortBy = 'createdAt',
@@ -338,12 +337,13 @@ router.get('/students', async (req, res) => {
     const sortOptions = {};
     sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
-    // Fetch all students without pagination limit
     const students = await Student.find(query)
       .select('name email mobile isActive lastActiveAt createdAt')
-      .sort(sortOptions);
+      .sort(sortOptions)
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
 
-    const total = students.length;
+    const total = await Student.countDocuments(query);
 
     // Get attempt counts for each student
     const studentsWithStats = await Promise.all(
@@ -363,7 +363,11 @@ router.get('/students', async (req, res) => {
       success: true,
       data: {
         students: studentsWithStats,
-        total
+        pagination: {
+          current: parseInt(page),
+          pages: Math.ceil(total / limit),
+          total
+        }
       }
     });
 
@@ -384,7 +388,7 @@ router.get('/students/:id', adminAuth, async (req, res) => {
     const student = await Student.findOne({ 
       _id: req.params.id, 
       role: 'student' 
-    }).select('-password');
+    });
 
     if (!student) {
       return res.status(404).json({
@@ -397,78 +401,13 @@ router.get('/students/:id', adminAuth, async (req, res) => {
     const attempts = await Attempt.find({ studentId: req.params.id })
       .populate('testId', 'title type companyId')
       .populate('testId.companyId', 'name')
-      .sort({ createdAt: -1 })
-      .limit(10); // Limit to recent 10 attempts
-
-    // Get student's orders
-    const orders = await Order.find({ studentId: req.params.id })
-      .sort({ createdAt: -1 })
-      .limit(10); // Limit to recent 10 orders
-
-    // Get student's course enrollments from Course model's enrolledStudents array
-    const courseEnrollments = await Course.find({ 
-      enrolledStudents: req.params.id 
-    })
-      .select('title price _id createdAt');
-
-    // Transform to match enrollment format
-    const formattedCourseEnrollments = courseEnrollments.map(course => ({
-      _id: `${course._id}-${req.params.id}`,
-      studentId: req.params.id,
-      courseId: {
-        _id: course._id,
-        title: course.title,
-        price: course.price
-      },
-      type: 'course',
-      status: 'enrolled',
-      createdAt: course.createdAt || new Date()
-    }));
-
-    // Get student's test enrollments
-    const testEnrollments = await Enrollment.find({ 
-      studentId: req.params.id, 
-      type: 'test' 
-    })
-      .populate('testId', 'title price companyId')
-      .populate('testId.companyId', 'name')
       .sort({ createdAt: -1 });
-
-    // Get student's recording unlocks
-    const recordingUnlocks = await RecordingEnrollment.find({ 
-      studentId: req.params.id 
-    })
-      .populate('courseId', 'title recordingsPrice')
-      .sort({ createdAt: -1 });
-
-    // Get student's recent activity statistics
-    const totalAttempts = await Attempt.countDocuments({ studentId: req.params.id });
-    const completedAttempts = await Attempt.countDocuments({ 
-      studentId: req.params.id, 
-      status: { $in: ['submitted', 'auto-submitted'] } 
-    });
-    const averageScore = completedAttempts > 0 
-      ? await Attempt.aggregate([
-          { $match: { studentId: req.params.id, status: { $in: ['submitted', 'auto-submitted'] } } },
-          { $group: { _id: null, avgScore: { $avg: '$score' } } }
-        ]).then(result => result[0]?.avgScore || 0)
-      : 0;
 
     res.json({
       success: true,
       data: {
         student: student.toJSON(),
-        statistics: {
-          totalAttempts,
-          completedAttempts,
-          averageScore: Math.round(averageScore * 100) / 100,
-          passRate: completedAttempts > 0 ? Math.round((completedAttempts / totalAttempts) * 100) : 0
-        },
-        recentAttempts: attempts,
-        recentOrders: orders,
-        courseEnrollments: formattedCourseEnrollments,
-        testEnrollments,
-        recordingUnlocks
+        attempts
       }
     });
 
@@ -847,18 +786,7 @@ router.get('/orders', adminAuth, async (req, res) => {
     sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
     // If no limit is specified, fetch all orders
-    let ordersQuery = Order.find(query)
-      .populate('studentId', 'name email mobile')
-      .populate({
-        path: 'items.testId',
-        select: 'title price companyId',
-        populate: {
-          path: 'companyId',
-          select: 'name'
-        }
-      })
-      .populate('items.courseId', 'title price recordingsPrice')
-      .sort(sortOptions);
+    let ordersQuery = Order.find(query).populate('studentId', 'name email').sort(sortOptions);
     
     // Only apply pagination if both page and limit are provided
     if (page && limit) {
@@ -1075,7 +1003,7 @@ router.get('/orders/export', adminAuth, async (req, res) => {
 
       // Footer
       doc.moveDown(3);
-      doc.fontSize(10).text('Generated by PrepZon Payment System', { align: 'center' });
+      doc.fontSize(10).text('Generated by MockTest Pro Payment System', { align: 'center' });
 
       // Finalize PDF
       doc.end();
@@ -1343,352 +1271,13 @@ router.get('/orders/:orderId/receipt', adminAuth, async (req, res) => {
   }
 });
 
-// Enrollment Management Routes
-// @route   GET /api/v1/admin/enrollments
-// @desc    Get all enrollments with student and course details
-// @access  Admin
-router.get('/enrollments', adminAuth, async (req, res) => {
-  try {
-    const { page = 1, limit = 20, type, status, search } = req.query;
-    
-    // Build query
-    let query = {};
-    
-    if (type) {
-      query.type = type;
-    }
-    
-    if (status) {
-      query.status = status;
-    }
-    
-    if (search) {
-      // Search by student name, email or course title
-      const studentIds = await Student.find({
-        $or: [
-          { name: { $regex: search, $options: 'i' } },
-          { email: { $regex: search, $options: 'i' } }
-        ]
-      }).distinct('_id');
-      
-      query.$or = [
-        { studentId: { $in: studentIds } },
-        { courseId: { $in: await Course.find({ title: { $regex: search, $options: 'i' } }).distinct('_id') } },
-        { testId: { $in: await Course.find({ title: { $regex: search, $options: 'i' } }).distinct('_id') } }
-      ];
-    }
-    
-    // Populate related data
-    const enrollments = await Enrollment.find(query)
-      .populate('studentId', 'name email mobile')
-      .populate('courseId', 'title')
-      .populate('testId', 'title')
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-      
-    const total = await Enrollment.countDocuments(query);
-    
-    res.json({
-      success: true,
-      data: {
-        enrollments,
-        pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
-          total,
-          pages: Math.ceil(total / limit)
-        }
-      }
-    });
-  } catch (error) {
-    console.error('Get enrollments error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch enrollments' });
-  }
-});
-
-// @route   GET /api/v1/admin/enrollments/courses
-// @desc    Get all course enrollments with student details
-// @access  Admin
-router.get('/enrollments/courses', adminAuth, async (req, res) => {
-  try {
-    const { page = 1, limit = 20, status, search } = req.query;
-    
-    // Build query for course enrollments - use Enrollment collection
-    let query = { type: 'course' };
-    
-    if (status) {
-      query.status = status;
-    }
-    
-    if (search) {
-      // Search by student name, email or course title
-      const studentIds = await Student.find({
-        $or: [
-          { name: { $regex: search, $options: 'i' } },
-          { email: { $regex: search, $options: 'i' } }
-        ]
-      }).distinct('_id');
-      
-      const courseIds = await Course.find({ 
-        title: { $regex: search, $options: 'i' } 
-      }).distinct('_id');
-      
-      query.$or = [
-        { studentId: { $in: studentIds } },
-        { courseId: { $in: courseIds } }
-      ];
-    }
-    
-    // Populate related data
-    const enrollments = await Enrollment.find(query)
-      .populate('studentId', 'name email mobile')
-      .populate('courseId', 'title price')
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-      
-    const total = await Enrollment.countDocuments(query);
-    
-    res.json({
-      success: true,
-      data: {
-        enrollments,
-        pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
-          total,
-          pages: Math.ceil(total / limit)
-        }
-      }
-    });
-  } catch (error) {
-    console.error('Get course enrollments error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch course enrollments' });
-  }
-});
-
-// @route   GET /api/v1/admin/enrollments/recordings
-// @desc    Get all recording enrollments with student details
-// @access  Admin
-router.get('/enrollments/recordings', adminAuth, async (req, res) => {
-  try {
-    const { page = 1, limit = 20, status, search } = req.query;
-    
-    // Build query for recording enrollments
-    let query = {};
-    
-    if (status) {
-      query.status = status;
-    }
-    
-    if (search) {
-      // Search by student name, email or course title
-      const studentIds = await Student.find({
-        $or: [
-          { name: { $regex: search, $options: 'i' } },
-          { email: { $regex: search, $options: 'i' } }
-        ]
-      }).distinct('_id');
-      
-      const courseIds = await Course.find({ 
-        title: { $regex: search, $options: 'i' } 
-      }).distinct('_id');
-      
-      query.$or = [
-        { studentId: { $in: studentIds } },
-        { courseId: { $in: courseIds } }
-      ];
-    }
-    
-    // Populate related data
-    const enrollments = await RecordingEnrollment.find(query)
-      .populate('studentId', 'name email mobile')
-      .populate('courseId', 'title recordingsPrice')
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-      
-    const total = await RecordingEnrollment.countDocuments(query);
-    
-    res.json({
-      success: true,
-      data: {
-        enrollments,
-        pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
-          total,
-          pages: Math.ceil(total / limit)
-        }
-      }
-    });
-  } catch (error) {
-    console.error('Get recording enrollments error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch recording enrollments' });
-  }
-});
-
-// @route   GET /api/v1/admin/enrollments/orders
-// @desc    Get all orders with student details
-// @access  Admin
-router.get('/enrollments/orders', adminAuth, async (req, res) => {
-  try {
-    const { page = 1, limit = 20, status, search } = req.query;
-    
-    // Build query for orders
-    let query = {};
-    
-    if (status) {
-      query.paymentStatus = status;
-    }
-    
-    if (search) {
-      // Search by student name, email or course/test title
-      const studentIds = await Student.find({
-        $or: [
-          { name: { $regex: search, $options: 'i' } },
-          { email: { $regex: search, $options: 'i' } }
-        ]
-      }).distinct('_id');
-      
-      query.$or = [
-        { studentId: { $in: studentIds } }
-      ];
-    }
-    
-    // Populate related data
-    const orders = await Order.find(query)
-      .populate('studentId', 'name email mobile')
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-      
-    const total = await Order.countDocuments(query);
-    
-    res.json({
-      success: true,
-      data: {
-        orders,
-        pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
-          total,
-          pages: Math.ceil(total / limit)
-        }
-      }
-    });
-  } catch (error) {
-    console.error('Get orders error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch orders' });
-  }
-});
-
-// @route   GET /api/v1/admin/enrollments/student/:studentId
-// @desc    Get all enrollments for a specific student
-// @access  Admin
-router.get('/enrollments/student/:studentId', adminAuth, async (req, res) => {
-  try {
-    const { studentId } = req.params;
-    const { type } = req.query;
-    
-    let courseEnrollments = [];
-    let testEnrollments = [];
-    let recordingEnrollments = [];
-    
-    // Get student details once
-    const studentDetails = await Student.findById(studentId, 'name email mobile');
-    
-    // If type is specified, filter accordingly
-    if (type) {
-      if (type === 'course') {
-        // Get course enrollments from Course model's enrolledStudents array
-        const courses = await Course.find({ 
-          enrolledStudents: studentId 
-        })
-          .select('title price _id createdAt');
-        
-        // Transform to match enrollment format
-        courseEnrollments = courses.map(course => ({
-          _id: `${course._id}-${studentId}`,
-          studentId: studentId,
-          student: studentDetails, // Add student details
-          courseId: {
-            _id: course._id,
-            title: course.title,
-            price: course.price
-          },
-          type: 'course',
-          status: 'enrolled',
-          createdAt: course.createdAt || new Date()
-        }));
-      } else if (type === 'test') {
-        testEnrollments = await Enrollment.find({ studentId, type: 'test' })
-          .populate('testId', 'title price')
-          .sort({ createdAt: -1 });
-      } else if (type === 'recording') {
-        recordingEnrollments = await RecordingEnrollment.find({ studentId })
-          .populate('courseId', 'title recordingsPrice')
-          .sort({ createdAt: -1 });
-      }
-    } else {
-      // Get all enrollments
-      // Get course enrollments from Course model's enrolledStudents array
-      const courses = await Course.find({ 
-        enrolledStudents: studentId 
-      })
-        .select('title price _id createdAt');
-      
-      // Transform to match enrollment format
-      courseEnrollments = courses.map(course => ({
-        _id: `${course._id}-${studentId}`,
-        studentId: studentId,
-        student: studentDetails, // Add student details
-        courseId: {
-          _id: course._id,
-          title: course.title,
-          price: course.price
-        },
-        type: 'course',
-        status: 'enrolled',
-        createdAt: course.createdAt || new Date()
-      }));
-      
-      testEnrollments = await Enrollment.find({ studentId, type: 'test' })
-        .populate('testId', 'title price')
-        .sort({ createdAt: -1 });
-      
-      recordingEnrollments = await RecordingEnrollment.find({ studentId })
-        .populate('courseId', 'title recordingsPrice')
-        .sort({ createdAt: -1 });
-    }
-    
-    // Combine all enrollments
-    const allEnrollments = [...courseEnrollments, ...testEnrollments, ...recordingEnrollments];
-    
-    // Sort by createdAt descending
-    allEnrollments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    
-    const student = await Student.findById(studentId, 'name email mobile');
-    
-    res.json({
-      success: true,
-      data: {
-        student,
-        enrollments: allEnrollments
-      }
-    });
-  } catch (error) {
-    console.error('Get student enrollments error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch student enrollments' });
-  }
-});
-
 // @route   GET /api/v1/admin/analytics/paid-tests-by-company
 // @desc    Get statistics for paid tests purchased by company (Admin only)
 // @access  Private/Admin
 router.get('/analytics/paid-tests-by-company', adminAuth, async (req, res) => {
   try {
+    console.log('Fetching paid tests analytics data');
+    
     // Aggregate orders to get paid test purchases by company
     const companyStats = await Order.aggregate([
       // Match only completed orders
@@ -1739,6 +1328,8 @@ router.get('/analytics/paid-tests-by-company', adminAuth, async (req, res) => {
       // Sort by total purchases descending
       { $sort: { totalPurchases: -1 } }
     ]);
+
+    console.log('Company stats result:', companyStats);
 
     // Get user purchase details
     const userPurchases = await Order.aggregate([
@@ -1801,6 +1392,8 @@ router.get('/analytics/paid-tests-by-company', adminAuth, async (req, res) => {
       { $sort: { purchaseDate: -1 } }
     ]);
 
+    console.log('User purchases result:', userPurchases);
+
     // Calculate overall statistics
     const overallStats = {
       totalCompanies: companyStats.length,
@@ -1808,6 +1401,8 @@ router.get('/analytics/paid-tests-by-company', adminAuth, async (req, res) => {
       totalRevenue: companyStats.reduce((sum, company) => sum + company.totalRevenue, 0),
       totalUsers: [...new Set(userPurchases.map(purchase => purchase.studentEmail))].length
     };
+
+    console.log('Overall stats:', overallStats);
 
     res.json({
       success: true,
@@ -1822,7 +1417,7 @@ router.get('/analytics/paid-tests-by-company', adminAuth, async (req, res) => {
     console.error('Get paid tests by company error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to get paid tests by company statistics'
+      message: 'Failed to get paid tests by company statistics: ' + error.message
     });
   }
 });

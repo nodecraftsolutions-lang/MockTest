@@ -283,16 +283,31 @@ router.get('/attempts/:id', auth, async (req, res) => {
 // ---------------------------------------------
 router.get('/orders', auth, async (req, res) => {
   try {
-    const { page = 1, limit = 10, status } = req.query;
-    const orders = await Order.getStudentOrders(req.student.id, status)
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const total = await Order.countDocuments({ studentId: req.student.id, ...(status && { paymentStatus: status }) });
+    const { status } = req.query;
+    const query = { studentId: req.student.id };
+    
+    if (status && status !== 'all') {
+      query.paymentStatus = status;
+    }
+    
+    const orders = await Order.find(query)
+      .sort({ createdAt: -1 })
+      .populate({
+        path: 'items.testId',
+        select: 'title companyId',
+        populate: {
+          path: 'companyId',
+          select: 'name'
+        }
+      })
+      .populate({
+        path: 'items.courseId',
+        select: 'title'
+      });
 
     res.json({
       success: true,
-      data: { orders, pagination: { current: page, pages: Math.ceil(total / limit), total } }
+      data: { orders }
     });
   } catch (error) {
     console.error('Get orders error:', error);

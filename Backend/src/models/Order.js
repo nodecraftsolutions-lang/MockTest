@@ -236,8 +236,21 @@ orderSchema.statics.generateOrderId = function() {
 // Static method to get student orders
 orderSchema.statics.getStudentOrders = function(studentId, status = null) {
   const query = { studentId };
-  if (status) query.paymentStatus = status;
-  return this.find(query).sort({ createdAt: -1 }).populate('items.testId', 'title companyId').populate('items.courseId', 'title');
+  if (status && status !== 'all') query.paymentStatus = status;
+  return this.find(query)
+    .sort({ createdAt: -1 })
+    .populate({
+      path: 'items.testId',
+      select: 'title companyId',
+      populate: {
+        path: 'companyId',
+        select: 'name'
+      }
+    })
+    .populate({
+      path: 'items.courseId',
+      select: 'title'
+    });
 };
 
 // Instance method to mark as completed
