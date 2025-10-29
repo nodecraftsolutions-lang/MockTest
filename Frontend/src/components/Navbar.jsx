@@ -53,13 +53,23 @@ const Navbar = ({ isPublic = false }) => {
     }
   };
 
+  const handleContact = () => {
+    if (isAuthenticated) {
+      // If user is logged in, go to student contact page
+      navigate('/student/contact');
+    } else {
+      // If user is not logged in, go to public contact page
+      navigate('/contact');
+    }
+  };
+
   const publicNavItems = [
     { name: 'Home', path: '/' },
     { name: 'Live Courses', action: handleCourses },
     { name: 'Recordings', action: handleAllRecordings  },
     { name: 'Mock Tests', action: handleViewTests },
     { name: 'About Us', path: '/about' },
-    { name: 'Contact Us', path: '/contact' }
+    { name: 'Contact Us', action: handleContact }
   ];
 
   return (

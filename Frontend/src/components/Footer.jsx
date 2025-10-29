@@ -52,6 +52,16 @@ const Footer = () => {
     }
   };
 
+  const handleContact = () => {
+    if (isAuthenticated) {
+      // If user is logged in, go to student contact page
+      navigate('/student/contact');
+    } else {
+      // If user is not logged in, go to public contact page
+      navigate('/contact');
+    }
+  };
+
   const footerLinks = {
     products: [
       { name: 'Mock Tests', action: handleViewTests },
@@ -62,7 +72,7 @@ const Footer = () => {
     company: [
       { name: 'About Us', path: '/about' },
       { name: 'Careers', path: '/careers' },
-      { name: 'Contact Us', path: '/contact' },
+      { name: 'Contact Us', action: handleContact },
       { name: 'Blog', path: '/blog' }
     ],
     support: [
@@ -148,12 +158,21 @@ const Footer = () => {
             <ul className="space-y-2">
               {footerLinks.company.map((item, index) => (
                 <li key={index}>
-                  <Link 
-                    to={item.path} 
-                    className="text-blue-800 hover:text-blue-600 transition-colors"
-                  >
-                    {item.name}
-                  </Link>
+                  {item.action ? (
+                    <button 
+                      onClick={item.action}
+                      className="text-blue-800 hover:text-blue-600 transition-colors text-left w-full"
+                    >
+                      {item.name}
+                    </button>
+                  ) : (
+                    <Link 
+                      to={item.path} 
+                      className="text-blue-800 hover:text-blue-600 transition-colors"
+                    >
+                      {item.name}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>

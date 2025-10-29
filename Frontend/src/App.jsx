@@ -92,6 +92,7 @@ function App() {
               <Route path="color-test" element={<ColorTest />} />
               <Route path="terms" element={<Terms />} />
               <Route path="privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="contact" element={<ContactPage />} />
             </Route>
             
             {/* Standalone Public Pages */}
@@ -127,6 +128,7 @@ function App() {
               <Route path="orders" element={<Orders />} />
               <Route path="profile" element={<Profile />} />
               <Route path="leaderboard" element={<Leaderboard />} />
+              <Route path="contact" element={<ContactPage />} />
             </Route>
 
             {/* Admin Dashboard */}
