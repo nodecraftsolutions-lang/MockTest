@@ -91,7 +91,7 @@ const Navbar = ({ isPublic = false }) => {
                 }}
               >
                 <img
-                  src="/Final Logo.png"
+                  src="/Final.png"
                   alt="PrepZon Logo"
                   className="h-14 w-50"
                 />
