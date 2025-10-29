@@ -191,7 +191,7 @@ const ContactPage = () => {
                     <p className="text-sm text-gray-600">
                       Prepzon EdTech<br />
                       Bangalore, Karnataka<br />
-                      India
+                      India.
                     </p>
                   </div>
                 </div>
@@ -208,15 +208,15 @@ const ContactPage = () => {
               <ul className="space-y-2 text-sm text-blue-700">
                 <li className="flex items-start">
                   <span className="text-blue-500 mr-2">•</span>
-                  <span>For technical issues, please include your browser and device information</span>
+                  <span>For technical issues, please include your browser and device information.</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-blue-500 mr-2">•</span>
-                  <span>For course-related questions, mention the course name</span>
+                  <span>For course-related, tests, recordings and payments questions, mention the course, test, payment details.</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-blue-500 mr-2">•</span>
-                  <span>We typically respond within 24 hours</span>
+                  <span>We typically respond within 24 hours.</span>
                 </li>
               </ul>
             </motion.div>
