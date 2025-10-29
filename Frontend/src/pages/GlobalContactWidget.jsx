@@ -109,7 +109,7 @@ const GlobalContactWidget = () => {
             <div className="p-1.5 bg-blue-500 rounded-lg">
               <MapPin size={12} className="text-white" />
             </div>
-            <span className="text-xs text-gray-700 font-medium">Prepzon EdTech, Bangalore, Karnataka, India</span>
+            <span className="text-xs text-gray-700 font-medium">Prepzon EdTech, B-Block, Silver Springs Layout, Marathahalli, Munnekolala, Bangalore, Karnataka, India, 560037</span>
           </div>
           
           <div className="flex items-center gap-2 p-2 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg hover:from-green-100 hover:to-emerald-100 transition-all">

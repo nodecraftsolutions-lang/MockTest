@@ -190,8 +190,10 @@ const ContactPage = () => {
                     <p className="text-sm font-medium text-gray-900">Address</p>
                     <p className="text-sm text-gray-600">
                       Prepzon EdTech<br />
-                      Bangalore, Karnataka<br />
-                      India.
+                      B-Block, Silver Springs Layout,
+                      Marathahalli<br />
+                      Munnekolala, Bangalore, Karnataka<br />
+                      560037, India.
                     </p>
                   </div>
                 </div>

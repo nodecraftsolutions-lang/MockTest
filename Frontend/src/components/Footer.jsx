@@ -82,10 +82,10 @@ const Footer = () => {
   };
 
   const socialLinks = [
-    { icon: Facebook, url: '#', label: 'Facebook' },
+    { icon: Facebook, url: 'https://www.facebook.com/profile.php?id=61582907136736', label: 'Facebook' },
     { icon: Instagram, url: '#', label: 'Instagram' },
     { icon: Linkedin, url: '#', label: 'LinkedIn' },
-    { icon: Youtube, url: '#', label: 'YouTube' }
+    { icon: Youtube, url: 'https://youtube.com/@prepzon?si=WSTRcbO5GrwPBmdg', label: 'YouTube' }
   ];
 
   return (
@@ -109,13 +109,25 @@ const Footer = () => {
             <div className="flex space-x-4">
               {socialLinks.map((social, index) => {
                 const Icon = social.icon;
+                // Determine brand color based on platform
+                let brandColor = "text-orange-500 hover:text-orange-600";
+                if (social.label === 'Facebook') {
+                  brandColor = "text-blue-600 hover:text-blue-700";
+                } else if (social.label === 'Instagram') {
+                  brandColor = "text-pink-700 hover:text-pink-600";
+                } else if (social.label === 'LinkedIn') {
+                  brandColor = "text-blue-800 hover:text-blue-800";
+                } else if (social.label === 'YouTube') {
+                  brandColor = "text-red-600 hover:text-red-700";
+                }
+                
                 return (
                   <a
                     key={index}
                     href={social.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-orange-500 hover:text-orange-600 transition-colors"
+                    className={`${brandColor} transition-colors`}
                     aria-label={social.label}
                   >
                     <Icon className="w-5 h-5" />
@@ -220,8 +232,8 @@ const Footer = () => {
               </a>
             </div>
             <div className="flex items-center">
-              <MapPin className="w-5 h-5 text-orange-500 mr-3" />
-              <span className="text-black">Prepzon EdTech, Bangalore, Karnataka, India</span>
+              <MapPin className="w-7 h-7 text-orange-500 mr-3" />
+              <span className="text-black">Prepzon EdTech, B-Block, Silver Springs Layout, Marathahalli, Munnekolala, Bangalore, Karnataka, India, 560037</span>
             </div>
           </div>
         </div>

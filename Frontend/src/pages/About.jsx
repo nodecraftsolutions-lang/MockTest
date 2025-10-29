@@ -226,7 +226,9 @@ const About = () => {
               </div>
               <h3 className="text-xl font-semibold mb-2">Visit Us</h3>
               <p className="text-gray-700">
-                Prepzon EdTech, Bangalore, Karnataka, India
+                Prepzon EdTech,B-Block, Silver Springs Layout,
+                Marathahalli<br />
+                Munnekolala, Bangalore, Karnataka, India, 560037
               </p>
             </div>
           </div>
