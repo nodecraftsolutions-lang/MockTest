@@ -6,20 +6,19 @@ import PublicLayout from './layouts/PublicLayout';
 import DashboardLayout from './layouts/DashboardLayout';
 import AdminLayout from './layouts/AdminLayout';
 
-//mock test bages
-import CompanyTestManagement from './pages/Admin/MockTest/CompanyTestManagement'
-import CreateCompany from './pages/Admin/MockTest/CreateCompany'
-import TestCreation from './pages/Admin/MockTest/TestCreation'
-import QuestionBankUpload from './pages/Admin/MockTest/QuestionBankUpload'
+// Mock Test Pages
+import CompanyTestManagement from './pages/Admin/MockTest/CompanyTestManagement';
+import CreateCompany from './pages/Admin/MockTest/CreateCompany';
+import TestCreation from './pages/Admin/MockTest/TestCreation';
+import QuestionBankUpload from './pages/Admin/MockTest/QuestionBankUpload';
 
-//course
+// Course Pages
+import CourseCreation from './pages/Admin/Course/CourseCreation';
+import CourseSessions from './pages/Admin/Course/CourseSessions';
+import CoursesList from './pages/Admin/Course/CourseList';
+import CourseManagement from './pages/Admin/Course/CourseManagement';
 
-import CourseCreation from './pages/Admin/Course/CourseCreation'
-import CourseSessions from './pages/Admin/Course/CourseSessions'
-import CoursesList from './pages/Admin/Course/CourseList'
-import CourseManagement from './pages/Admin/Course/CourseManagement'
-
-//recordings
+// Recordings
 import RecordingsManagement from './pages/Admin/Recordings/RecordingsManagement';
 
 // Public Pages
@@ -34,18 +33,19 @@ import FreeTests from './pages/Student/FreeTests';
 import PaidTests from './pages/Student/PaidTests';
 import ExamInterface from './pages/Student/ExamInterface';
 import Results from './pages/Student/Results';
-import ResultDetail from './pages/Student/ResultDetail'; // ✅ import
+import ResultDetail from './pages/Student/ResultDetail';
 import Orders from './pages/Student/Orders';
 import Profile from './pages/Student/Profile';
 import Leaderboard from './pages/Student/Leaderboard';
 import Courses from './pages/Student/Courses';
 import MyCourses from './pages/Student/MyCourses';
 import CourseDetails from './pages/Student/CourseDetail';
-import CompanyList from './pages/Student/CompanyList'; // ✅ import
-import CompanyDetails from './pages/Student/CompanyDetails'; // ✅ import
-import CourseLearn from './pages/Student/CourseLearn'; // ✅ import
+import CompanyList from './pages/Student/CompanyList';
+import CompanyDetails from './pages/Student/CompanyDetails';
+import CourseLearn from './pages/Student/CourseLearn';
 import Recordings from './pages/Student/Recordings';
 import RecordingsPage from './pages/Student/RecordingsPage';
+
 // Admin Pages
 import AdminDashboard from './pages/Admin/Dashboard';
 import ManageCompanies from './pages/Admin/Companies';
@@ -56,14 +56,16 @@ import ManageAlumni from './pages/Admin/Alumni';
 import AdminResults from './pages/Admin/Results';
 import ManagePayments from './pages/Admin/Payments';
 import AdminSettings from './pages/Admin/Settings';
-import NotFound3D from './pages/NotFound3D'
+import NotFound3D from './pages/NotFound3D';
 import ColorTest from './components/ColorTest';
-import './index.css';
 import DynamicGenerateQuestions from './pages/Admin/MockTest/GenerateQuestions';
 import ResourceManagement from './pages/Admin/Course/ResourceManagement';
 import ResourceRecordManagement from './pages/Admin/Course/ResourceRecordManagement';
 import DiscussionsManagement from './pages/Admin/Course/DiscussionsManagement';
-
+import AdminMailPage from './pages/AdminMailPage';
+import ContactPage from './pages/ContactPage';
+import GlobalContactWidget from './pages/GlobalContactWidget';
+import './index.css';
 
 function App() {
   return (
@@ -72,16 +74,18 @@ function App() {
         <Router>
           <Routes>
             {/* Public Routes */}
-            <Route path="*" element={<NotFound3D/>}/>
+            <Route path="*" element={<NotFound3D />} />
             <Route path="/" element={<PublicLayout />}>
               <Route index element={<Home />} />
               <Route path="mock-tests" element={<MockTests />} />
               <Route path="about" element={<About />} />
+              <Route path="mailtoall" element={<AdminMailPage />} />
               <Route path="auth" element={<Auth />} />
               <Route path="color-test" element={<ColorTest />} />
+              <Route path="contact" element={<ContactPage />} />
             </Route>
 
-            {/* Student Dashboard Routes */}
+            {/* Student Dashboard */}
             <Route
               path="/student"
               element={
@@ -90,36 +94,26 @@ function App() {
                 </ProtectedRoute>
               }
             >
-
               <Route index element={<StudentDashboard />} />
               <Route path="free-tests" element={<FreeTests />} />
               <Route path="paid-tests" element={<PaidTests />} />
-              {/* Exam Interface */}
               <Route path="exam/:testId" element={<ExamInterface />} />
-              {/* ✅ Company Tests */}
               <Route path="mock-tests" element={<CompanyList />} />
               <Route path="mock-tests/:companyId" element={<CompanyDetails />} />
-              <Route path="exam/:testId" element={<ExamInterface />} />
-
-              {/* ✅ Courses */}
               <Route path="courses" element={<Courses />} />
               <Route path="courses/:id" element={<CourseDetails />} />
               <Route path="my-courses" element={<MyCourses />} />
               <Route path="courses/:id/learn" element={<CourseLearn />} />
-              {/* ✅ Results */}
               <Route path="results" element={<Results />} />
               <Route path="results/:attemptId" element={<ResultDetail />} />
-              {/* Recordings */ }
-              <Route path="/student/recordings" element={<Recordings />} />
-              <Route path="/student/recordings/:courseId" element={<RecordingsPage />} />
-
-              {/* ✅ Other Pages */}
+              <Route path="recordings" element={<Recordings />} />
+              <Route path="recordings/:courseId" element={<RecordingsPage />} />
               <Route path="orders" element={<Orders />} />
               <Route path="profile" element={<Profile />} />
               <Route path="leaderboard" element={<Leaderboard />} />
             </Route>
-            
-            {/* Admin Dashboard Routes */}
+
+            {/* Admin Dashboard */}
             <Route
               path="/admin"
               element={
@@ -127,33 +121,24 @@ function App() {
                   <AdminLayout />
                 </ProtectedRoute>
               }
-              
             >
-              
-              <Route path="/admin/mocktest" element={<CompanyTestManagement/>}/>
-              <Route path="/admin/mocktest/question-generate" element={<DynamicGenerateQuestions/>}/>
-              <Route path="/admin/mocktest/question-bank-upload" element={<QuestionBankUpload/>}/>
-              <Route path="/admin/mocktest/create-company" element={<CreateCompany/>}/>
-              <Route path="/admin/mocktest/test-creation" element={<TestCreation/>}/>
-
-
-              <Route path="/admin/course/create" element={<CourseCreation/>}/>
-              <Route path="/admin/course/sessions" element={<CourseSessions/>}/>
-              <Route path="/admin/course/list" element={<CoursesList/>}/>
-              <Route path="/admin/course/management" element={<CourseManagement/>}/>
-
-              <Route path="/admin/recordings/upload" element={<RecordingsManagement/>}/>
-              <Route path="/admin/course/resources" element={<ResourceManagement />} />
-              <Route path="/admin/course/resourcesrec" element={<ResourceRecordManagement />} />
-              <Route path="/admin/course/discussions" element={<DiscussionsManagement />} />
-
-
-
               <Route index element={<AdminDashboard />} />
+              <Route path="mocktest" element={<CompanyTestManagement />} />
+              <Route path="mocktest/question-generate" element={<DynamicGenerateQuestions />} />
+              <Route path="mocktest/question-bank-upload" element={<QuestionBankUpload />} />
+              <Route path="mocktest/create-company" element={<CreateCompany />} />
+              <Route path="mocktest/test-creation" element={<TestCreation />} />
+              <Route path="course/create" element={<CourseCreation />} />
+              <Route path="course/sessions" element={<CourseSessions />} />
+              <Route path="course/list" element={<CoursesList />} />
+              <Route path="course/management" element={<CourseManagement />} />
+              <Route path="recordings/upload" element={<RecordingsManagement />} />
+              <Route path="course/resources" element={<ResourceManagement />} />
+              <Route path="course/resourcesrec" element={<ResourceRecordManagement />} />
+              <Route path="course/discussions" element={<DiscussionsManagement />} />
               <Route path="companies" element={<ManageCompanies />} />
               <Route path="tests" element={<ManageTests />} />
               <Route path="question-banks" element={<QuestionBanks />} />
-              <Route path="mocktest-management" element={<CompanyTestManagement />} />
               <Route path="students" element={<ManageStudents />} />
               <Route path="alumni" element={<ManageAlumni />} />
               <Route path="results" element={<AdminResults />} />
@@ -161,6 +146,9 @@ function App() {
               <Route path="settings" element={<AdminSettings />} />
             </Route>
           </Routes>
+
+          {/* 🌐 Global Floating Contact Widget */}
+          <GlobalContactWidget />
         </Router>
       </ToastProvider>
     </AuthProvider>
