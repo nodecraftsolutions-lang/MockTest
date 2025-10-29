@@ -445,7 +445,14 @@ const QuestionBanks = () => {
                     </div>
                   </div>
                   
-                  <p className="text-gray-800 mb-4">{question.questionText}</p>
+                  <p className="text-gray-800 mb-4">
+                    {question.questionText.split('\n').map((line, index) => (
+                      <span key={index}>
+                        {line}
+                        <br />
+                      </span>
+                    ))}
+                  </p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {question.options.map((option, optIndex) => (

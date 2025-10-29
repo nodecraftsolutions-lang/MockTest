@@ -1,10 +1,12 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import { ResponsiveProvider } from './context/ResponsiveContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicLayout from './layouts/PublicLayout';
 import DashboardLayout from './layouts/DashboardLayout';
 import AdminLayout from './layouts/AdminLayout';
+import ScrollToTop from './components/ScrollToTop';
 
 // Mock Test Pages
 import CompanyTestManagement from './pages/Admin/MockTest/CompanyTestManagement';
@@ -26,6 +28,8 @@ import Home from './pages/Home';
 import MockTests from './pages/MockTests';
 import About from './pages/About';
 import Auth from './pages/Auth';
+import Terms from './pages/Terms';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 // Student Pages
 import StudentDashboard from './pages/Student/Dashboard';
@@ -45,7 +49,7 @@ import CompanyDetails from './pages/Student/CompanyDetails';
 import CourseLearn from './pages/Student/CourseLearn';
 import Recordings from './pages/Student/Recordings';
 import RecordingsPage from './pages/Student/RecordingsPage';
-
+import AllRecordings from './pages/Student/AllRecordings';
 // Admin Pages
 import AdminDashboard from './pages/Admin/Dashboard';
 import ManageCompanies from './pages/Admin/Companies';
@@ -55,8 +59,10 @@ import ManageStudents from './pages/Admin/Students';
 import ManageAlumni from './pages/Admin/Alumni';
 import AdminResults from './pages/Admin/Results';
 import ManagePayments from './pages/Admin/Payments';
+import PaidTestsAnalytics from './pages/Admin/PaidTestsAnalytics'; // Add this import
 import AdminSettings from './pages/Admin/Settings';
-import NotFound3D from './pages/NotFound3D';
+import Enrollments from './pages/Admin/Enrollments/Enrollments';
+import NotFound3D from './pages/NotFound3D'
 import ColorTest from './components/ColorTest';
 import DynamicGenerateQuestions from './pages/Admin/MockTest/GenerateQuestions';
 import ResourceManagement from './pages/Admin/Course/ResourceManagement';
@@ -71,8 +77,10 @@ function App() {
   return (
     <AuthProvider>
       <ToastProvider>
-        <Router>
-          <Routes>
+        <ResponsiveProvider>
+          <Router>
+            <ScrollToTop />
+            <Routes>
             {/* Public Routes */}
             <Route path="*" element={<NotFound3D />} />
             <Route path="/" element={<PublicLayout />}>
@@ -82,8 +90,13 @@ function App() {
               <Route path="mailtoall" element={<AdminMailPage />} />
               <Route path="auth" element={<Auth />} />
               <Route path="color-test" element={<ColorTest />} />
+              <Route path="terms" element={<Terms />} />
+              <Route path="privacy-policy" element={<PrivacyPolicy />} />
               <Route path="contact" element={<ContactPage />} />
             </Route>
+            
+            {/* Standalone Public Pages */}
+            {/* <Route path="/terms" element={<Terms />} /> */}
 
             {/* Student Dashboard */}
             <Route
@@ -106,11 +119,16 @@ function App() {
               <Route path="courses/:id/learn" element={<CourseLearn />} />
               <Route path="results" element={<Results />} />
               <Route path="results/:attemptId" element={<ResultDetail />} />
-              <Route path="recordings" element={<Recordings />} />
-              <Route path="recordings/:courseId" element={<RecordingsPage />} />
+              {/* Recordings */ }
+              <Route path="/student/recordings" element={<Recordings />} />
+              <Route path="/student/recordings/:courseId" element={<RecordingsPage />} />
+              <Route path="/student/all-recordings" element={<AllRecordings />} />
+
+              {/* ✅ Other Pages */}
               <Route path="orders" element={<Orders />} />
               <Route path="profile" element={<Profile />} />
               <Route path="leaderboard" element={<Leaderboard />} />
+              <Route path="contact" element={<ContactPage />} />
             </Route>
 
             {/* Admin Dashboard */}
@@ -143,13 +161,17 @@ function App() {
               <Route path="alumni" element={<ManageAlumni />} />
               <Route path="results" element={<AdminResults />} />
               <Route path="payments" element={<ManagePayments />} />
+              <Route path="paid-tests-analytics" element={<PaidTestsAnalytics />} /> {/* Add this route */}
+              <Route path="enrollments" element={<Enrollments />} />
               <Route path="settings" element={<AdminSettings />} />
+              <Route path="mail" element={<AdminMailPage />} />
             </Route>
           </Routes>
 
           {/* 🌐 Global Floating Contact Widget */}
           <GlobalContactWidget />
         </Router>
+      </ResponsiveProvider>
       </ToastProvider>
     </AuthProvider>
   );

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, Lock, User, Mail, Phone, Settings, Camera, Bell, Moon, Sun, ChevronRight, Shield, LogOut, Edit } from 'lucide-react';
+import { Save, Lock, User, Mail, Phone, Camera, Shield, LogOut, Edit } from 'lucide-react';
 import api from '../../api/axios';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useToast } from '../../context/ToastContext';
@@ -12,11 +12,7 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const [formData, setFormData] = useState({
     name: '',
-    mobile: '',
-    preferences: {
-      notifications: { email: true, sms: false },
-      theme: 'light'
-    }
+    mobile: ''
   });
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -41,11 +37,7 @@ const Profile = () => {
         setProfile(profileData);
         setFormData({
           name: profileData.name || '',
-          mobile: profileData.mobile || '',
-          preferences: profileData.preferences || {
-            notifications: { email: true, sms: false },
-            theme: 'light'
-          }
+          mobile: profileData.mobile || ''
         });
       }
     } catch (error) {
@@ -56,26 +48,11 @@ const Profile = () => {
   };
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-
-    if (name.includes('.')) {
-      const [parent, child, grandchild] = name.split('.');
-      setFormData(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent],
-          [child]: grandchild ? {
-            ...prev[parent][child],
-            [grandchild]: type === 'checkbox' ? checked : value
-          } : (type === 'checkbox' ? checked : value)
-        }
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: type === 'checkbox' ? checked : value
-      }));
-    }
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handlePasswordChange = (e) => {
@@ -197,95 +174,60 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Main content with sidebar navigation */}
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Sidebar navigation */}
-        <div className="md:w-64 flex-shrink-0">
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <nav className="flex flex-col">
-              <SidebarNavItem 
-                icon={<User className="w-5 h-5" />} 
-                label="Personal Information" 
-                active={activeTab === 'profile'} 
-                onClick={() => setActiveTab('profile')} 
-              />
-              <SidebarNavItem 
-                icon={<Shield className="w-5 h-5" />} 
-                label="Security" 
-                active={activeTab === 'security'} 
-                onClick={() => setActiveTab('security')} 
-              />
-              <SidebarNavItem 
-                icon={<Bell className="w-5 h-5" />} 
-                label="Notifications" 
-                active={activeTab === 'notifications'} 
-                onClick={() => setActiveTab('notifications')} 
-              />
-              <SidebarNavItem 
-                icon={formData.preferences.theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />} 
-                label="Appearance" 
-                active={activeTab === 'appearance'} 
-                onClick={() => setActiveTab('appearance')} 
-              />
-              <div className="border-t border-gray-200 mt-2 pt-2">
-                <SidebarNavItem 
-                  icon={<LogOut className="w-5 h-5" />} 
-                  label="Logout" 
-                  onClick={logout} 
-                  className="text-red-600 hover:bg-red-50"
-                />
-              </div>
-            </nav>
+      {/* Sidebar navigation moved to top with improved design */}
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
+        <nav className="flex flex-wrap items-center">
+          <div className="flex flex-wrap items-center">
+            <SidebarNavItem 
+              icon={<User className="w-5 h-5" />} 
+              label="Personal Information" 
+              active={activeTab === 'profile'} 
+              onClick={() => setActiveTab('profile')} 
+            />
+            <SidebarNavItem 
+              icon={<Shield className="w-5 h-5" />} 
+              label="Security" 
+              active={activeTab === 'security'} 
+              onClick={() => setActiveTab('security')} 
+            />
           </div>
-        </div>
-
-        {/* Main content area */}
-        <div className="flex-grow">
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            {/* Tab Content */}
-            {activeTab === 'profile' && (
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Personal Information</h2>
-                <form onSubmit={handleProfileUpdate} className="space-y-6">
-                  <ProfileForm formData={formData} handleInputChange={handleInputChange} saving={saving} />
-                </form>
-              </div>
-            )}
-
-            {activeTab === 'security' && (
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Security Settings</h2>
-                <form onSubmit={handlePasswordUpdate} className="space-y-6">
-                  <PasswordForm 
-                    passwordData={passwordData} 
-                    handlePasswordChange={handlePasswordChange} 
-                    saving={saving} 
-                    passwordStrength={passwordStrength}
-                    passwordFeedback={passwordFeedback}
-                  />
-                </form>
-              </div>
-            )}
-
-            {activeTab === 'notifications' && (
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Notification Preferences</h2>
-                <form onSubmit={handleProfileUpdate} className="space-y-6">
-                  <NotificationsForm formData={formData} handleInputChange={handleInputChange} saving={saving} />
-                </form>
-              </div>
-            )}
-
-            {activeTab === 'appearance' && (
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Appearance Settings</h2>
-                <form onSubmit={handleProfileUpdate} className="space-y-6">
-                  <AppearanceForm formData={formData} handleInputChange={handleInputChange} saving={saving} />
-                </form>
-              </div>
-            )}
+          <div className="border-t border-gray-200 w-full md:border-t-0 md:border-l md:w-auto md:ml-auto">
+            <SidebarNavItem 
+              icon={<LogOut className="w-5 h-5" />} 
+              label="Logout" 
+              onClick={logout} 
+              className="text-red-600 hover:bg-red-50"
+            />
           </div>
-        </div>
+        </nav>
+      </div>
+
+      {/* Main content area */}
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        {/* Tab Content */}
+        {activeTab === 'profile' && (
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Personal Information</h2>
+            <form onSubmit={handleProfileUpdate} className="space-y-6">
+              <ProfileForm formData={formData} handleInputChange={handleInputChange} saving={saving} />
+            </form>
+          </div>
+        )}
+
+        {activeTab === 'security' && (
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Security Settings</h2>
+            <form onSubmit={handlePasswordUpdate} className="space-y-6">
+              <PasswordForm 
+                passwordData={passwordData} 
+                handlePasswordChange={handlePasswordChange} 
+                saving={saving} 
+                passwordStrength={passwordStrength}
+                passwordFeedback={passwordFeedback}
+              />
+            </form>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -294,19 +236,16 @@ const Profile = () => {
 const SidebarNavItem = ({ icon, label, active, onClick, className = '' }) => (
   <button
     onClick={onClick}
-    className={`flex items-center justify-between px-4 py-3 w-full text-left transition-colors ${
+    className={`flex items-center px-5 py-4 w-full text-left transition-all duration-200 md:w-auto border-b-2 md:border-b-0 md:border-r last:border-r-0 ${
       active
-        ? 'bg-primary-50 text-primary-700 font-medium'
-        : `text-gray-700 hover:bg-gray-50 ${className}`
+        ? 'bg-gradient-to-r from-primary-50 to-orange-50 text-primary-700 font-medium border-primary-500 shadow-sm'
+        : `text-gray-700 hover:bg-gray-50 hover:text-primary-600 border-transparent ${className}`
     }`}
   >
-    <div className="flex items-center">
-      <span className={`mr-3 ${active ? 'text-primary-600' : 'text-gray-500'}`}>
-        {icon}
-      </span>
-      <span>{label}</span>
-    </div>
-    {active && <ChevronRight className="w-5 h-5 text-primary-600" />}
+    <span className={`mr-3 ${active ? 'text-primary-600' : 'text-gray-500'}`}>
+      {icon}
+    </span>
+    <span className="font-medium">{label}</span>
   </button>
 );
 
@@ -502,162 +441,6 @@ const PasswordForm = ({ passwordData, handlePasswordChange, saving, passwordStre
             <>
               <Lock className="w-4 h-4 mr-2" />
               Update Password
-            </>
-          )}
-        </button>
-      </div>
-    </div>
-  </div>
-);
-
-const NotificationsForm = ({ formData, handleInputChange, saving }) => (
-  <div className="space-y-6">
-    <div className="space-y-4">
-      <div className="flex items-start">
-        <div className="flex items-center h-5">
-          <input
-            id="email-notifications"
-            name="preferences.notifications.email"
-            type="checkbox"
-            checked={formData.preferences.notifications.email}
-            onChange={handleInputChange}
-            className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-          />
-        </div>
-        <div className="ml-3 text-sm">
-          <label htmlFor="email-notifications" className="font-medium text-gray-700">Email Notifications</label>
-          <p className="text-gray-500">Receive email updates about your account activity, test results, and new features.</p>
-        </div>
-      </div>
-      
-      <div className="flex items-start">
-        <div className="flex items-center h-5">
-          <input
-            id="sms-notifications"
-            name="preferences.notifications.sms"
-            type="checkbox"
-            checked={formData.preferences.notifications.sms}
-            onChange={handleInputChange}
-            className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-          />
-        </div>
-        <div className="ml-3 text-sm">
-          <label htmlFor="sms-notifications" className="font-medium text-gray-700">SMS Notifications</label>
-          <p className="text-gray-500">Receive text messages for important updates and reminders about upcoming tests.</p>
-        </div>
-      </div>
-    </div>
-
-    <div className="border-t border-gray-200 pt-6">
-      <div className="flex justify-end">
-        <button 
-          type="submit" 
-          disabled={saving} 
-          className="px-4 py-2.5 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
-        >
-          {saving ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Saving...
-            </>
-          ) : (
-            <>
-              <Bell className="w-4 h-4 mr-2" />
-              Save Preferences
-            </>
-          )}
-        </button>
-      </div>
-    </div>
-  </div>
-);
-
-const AppearanceForm = ({ formData, handleInputChange, saving }) => (
-  <div className="space-y-6">
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div 
-        className={`border rounded-lg p-4 cursor-pointer transition-all ${
-          formData.preferences.theme === 'light' 
-            ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500' 
-            : 'border-gray-200 hover:border-gray-300'
-        }`}
-        onClick={() => handleInputChange({
-          target: { name: 'preferences.theme', value: 'light', type: 'radio' }
-        })}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center">
-            <input
-              type="radio"
-              id="light-theme"
-              name="preferences.theme"
-              value="light"
-              checked={formData.preferences.theme === 'light'}
-              onChange={handleInputChange}
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
-            />
-            <label htmlFor="light-theme" className="ml-2 font-medium text-gray-700">Light Theme</label>
-          </div>
-          <Sun className="w-5 h-5 text-gray-600" />
-        </div>
-        <div className="bg-white border border-gray-200 rounded-md p-3 flex items-center justify-center">
-          <div className="w-full h-10 bg-gray-100 rounded-md flex items-center px-3">
-            <div className="w-4 h-4 rounded-full bg-primary-500 mr-2"></div>
-            <div className="h-2 w-16 bg-gray-300 rounded-full"></div>
-          </div>
-        </div>
-      </div>
-      
-      <div 
-        className={`border rounded-lg p-4 cursor-pointer transition-all ${
-          formData.preferences.theme === 'dark' 
-            ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500' 
-            : 'border-gray-200 hover:border-gray-300'
-        }`}
-        onClick={() => handleInputChange({
-          target: { name: 'preferences.theme', value: 'dark', type: 'radio' }
-        })}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center">
-            <input
-              type="radio"
-              id="dark-theme"
-              name="preferences.theme"
-              value="dark"
-              checked={formData.preferences.theme === 'dark'}
-              onChange={handleInputChange}
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
-            />
-            <label htmlFor="dark-theme" className="ml-2 font-medium text-gray-700">Dark Theme</label>
-          </div>
-          <Moon className="w-5 h-5 text-gray-600" />
-        </div>
-        <div className="bg-gray-800 border border-gray-700 rounded-md p-3 flex items-center justify-center">
-          <div className="w-full h-10 bg-gray-700 rounded-md flex items-center px-3">
-            <div className="w-4 h-4 rounded-full bg-primary-500 mr-2"></div>
-            <div className="h-2 w-16 bg-gray-600 rounded-full"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div className="border-t border-gray-200 pt-6">
-      <div className="flex justify-end">
-        <button 
-          type="submit" 
-          disabled={saving} 
-          className="px-4 py-2.5 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
-        >
-          {saving ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Saving...
-            </>
-          ) : (
-            <>
-              <Settings className="w-4 h-4 mr-2" />
-              Save Appearance
             </>
           )}
         </button>

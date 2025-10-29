@@ -28,7 +28,8 @@ import {
   Play,
   List,
   FileCheck,
-  MessageSquare
+  MessageSquare,
+  TrendingUp
 } from "lucide-react";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
@@ -244,7 +245,7 @@ const Sidebar = ({ type = "student", onStateChange }) => {
                 <Link to="/" className="flex items-center space-x-2">
                   <img
                     src="/Final Logo.png"
-                    alt="MockTest Pro Logo"
+                    alt="PrepZon Logo"
                     className="h-7 w-auto"
                   />
                 </Link>
@@ -362,6 +363,12 @@ const Sidebar = ({ type = "student", onStateChange }) => {
                       View All Recordings
                     </Link>
                   )}
+                  <Link
+                    to="/student/all-recordings"
+                    className="block px-3 py-2 text-sm text-primary-600 hover:bg-primary-50 rounded-lg font-medium transition-colors mt-1"
+                  >
+                    All Recordings
+                  </Link>
                 </DropdownContent>
               </div>
 
@@ -420,33 +427,6 @@ const Sidebar = ({ type = "student", onStateChange }) => {
               
               <div className="relative group mb-2">
                 <DropdownButton 
-                  icon={Building} 
-                  label="MockTest" 
-                  menu="mocktest" 
-                  hasChildren={true}
-                />
-                
-                <DropdownContent menu="mocktest">
-                  <MockTestSubItem 
-                    to="/admin/mocktest" 
-                    icon={Building} 
-                    label="Company & Test Management" 
-                  />
-                  <MockTestSubItem 
-                    to="/admin/mocktest/question-generate" 
-                    icon={ListStartIcon} 
-                    label="Generate Test Questions" 
-                  />
-                  <MockTestSubItem 
-                    to="/admin/mocktest/question-bank-upload" 
-                    icon={Upload} 
-                    label="Question Bank Upload" 
-                  />
-                </DropdownContent>
-              </div>
-              
-              <div className="relative group mb-2">
-                <DropdownButton 
                   icon={BookOpen} 
                   label="Course Management" 
                   menu="course" 
@@ -493,7 +473,34 @@ const Sidebar = ({ type = "student", onStateChange }) => {
                   />
                 </DropdownContent>
               </div>
-
+              
+              <div className="relative group mb-2">
+                <DropdownButton 
+                  icon={Building} 
+                  label="MockTest" 
+                  menu="mocktest" 
+                  hasChildren={true}
+                />
+                
+                <DropdownContent menu="mocktest">
+                  <MockTestSubItem 
+                    to="/admin/mocktest" 
+                    icon={Building} 
+                    label="Company & Test Management" 
+                  />
+                  <MockTestSubItem 
+                    to="/admin/mocktest/question-generate" 
+                    icon={ListStartIcon} 
+                    label="Generate Test Questions" 
+                  />
+                  <MockTestSubItem 
+                    to="/admin/mocktest/question-bank-upload" 
+                    icon={Upload} 
+                    label="Question Bank Upload" 
+                  />
+                </DropdownContent>
+              </div>
+              
               <div className="mb-1">
                 <NavItem 
                   to="/admin/students" 
@@ -518,6 +525,34 @@ const Sidebar = ({ type = "student", onStateChange }) => {
                   showLabel={!isCollapsed}
                 />
               </div>
+              
+              {/* Add the new Paid Tests Analytics page */}
+              <div className="mb-1">
+                <NavItem 
+                  to="/admin/paid-tests-analytics" 
+                  icon={TrendingUp} 
+                  label="Paid Tests Analytics" 
+                  showLabel={!isCollapsed}
+                />
+              </div>
+              
+              <div className="mb-1">
+                <NavItem 
+                  to="/admin/enrollments" 
+                  icon={FileCheck} 
+                  label="Enrollments" 
+                  showLabel={!isCollapsed}
+                />
+              </div>
+              {/* Add the new Admin Mail page */}
+              <div className="mb-1">
+                <NavItem 
+                  to="/admin/mail" 
+                  icon={MessageSquare} 
+                  label="Send Mail" 
+                  showLabel={!isCollapsed}
+                />
+              </div>
               <div className="mb-1">
                 <NavItem 
                   to="/admin/alumni" 
@@ -534,6 +569,8 @@ const Sidebar = ({ type = "student", onStateChange }) => {
                   showLabel={!isCollapsed}
                 />
               </div>
+              
+              
             </>
           )}
         </nav>

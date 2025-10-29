@@ -945,9 +945,9 @@ router.post('/create-order', auth, async (req, res) => {
     }
     console.log('Discount applied:', { discountAmount, discountPercentage });
 
-    // Calculate taxes (18% GST for India)
+    // Calculate taxes (No GST for now - use price as-is)
     const taxableAmount = subtotal - discountAmount;
-    const gstAmount = Math.round(taxableAmount * 0.18);
+    const gstAmount = 0; // Removed GST calculation
     const totalAmount = taxableAmount + gstAmount;
     console.log('Amount calculation:', { subtotal, discountAmount, taxableAmount, gstAmount, totalAmount });
 
@@ -1469,6 +1469,104 @@ async function handleOrderPaid(payload) {
     console.error('Handle order paid error:', error);
   }
 }
+
+// @route   GET /api/v1/payments/orders/:orderId/receipt
+// @desc    Get order receipt data
+// @access  Private
+router.get('/orders/:orderId/receipt', auth, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    
+    // Find order and populate necessary data
+    const order = await Order.findOne({
+      _id: orderId,
+      studentId: req.student.id
+    }).populate('items.testId', 'title').populate('items.courseId', 'title');
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    // Check if order is completed
+    if (order.paymentStatus !== 'completed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Receipt is only available for completed orders'
+      });
+    }
+
+    // Get receipt data from order
+    const receiptData = order.getReceiptData();
+
+    res.json({
+      success: true,
+      message: 'Receipt data retrieved successfully',
+      data: {
+        receipt: receiptData
+      }
+    });
+
+  } catch (error) {
+    console.error('Get receipt error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve receipt data'
+    });
+  }
+});
+
+// @route   GET /api/v1/payments/orders/:orderId/receipt/pdf
+// @desc    Download order receipt as PDF
+// @access  Private
+router.get('/orders/:orderId/receipt/pdf', auth, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    
+    // Find order and populate necessary data
+    const order = await Order.findOne({
+      _id: orderId,
+      studentId: req.student.id
+    }).populate('items.testId', 'title').populate('items.courseId', 'title');
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    // Check if order is completed
+    if (order.paymentStatus !== 'completed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Receipt is only available for completed orders'
+      });
+    }
+
+    // Get receipt data from order
+    const receiptData = order.getReceiptData();
+
+    // Generate PDF
+    const pdfBuffer = await generateReceiptPDF(receiptData);
+
+    // Set headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=receipt-${receiptData.orderId}.pdf`);
+    
+    // Send PDF
+    res.send(pdfBuffer);
+
+  } catch (error) {
+    console.error('Download receipt error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate receipt PDF'
+    });
+  }
+});
 
 // @route   GET /api/v1/payments/orders/:orderId/receipt
 // @desc    Get receipt details for an order
