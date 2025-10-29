@@ -62,8 +62,22 @@ async function parseQuestions(filePath, ext, section, sectionName) {
         negativeMarks: section.negativeMarking,
         tags: row.tags ? row.tags.split(',').map(t => t.trim()) : []
       };
-      const correctIdx = parseInt(q.correctAnswer) - 1;
-      if (correctIdx >= 0 && correctIdx < q.options.length) q.options[correctIdx].isCorrect = true;
+      
+      // Handle multiple correct answers for multiple choice questions
+      if (q.questionType === 'multiple' && typeof q.correctAnswer === 'string') {
+        // For multiple choice, correctAnswer can be comma-separated indices
+        const correctIndices = q.correctAnswer.split(',').map(idx => parseInt(idx.trim()) - 1);
+        correctIndices.forEach(idx => {
+          if (idx >= 0 && idx < q.options.length) {
+            q.options[idx].isCorrect = true;
+          }
+        });
+      } else if (q.questionType !== 'multiple' && typeof q.correctAnswer === 'number') {
+        // For single choice, correctAnswer is a single index
+        const correctIdx = parseInt(q.correctAnswer) - 1;
+        if (correctIdx >= 0 && correctIdx < q.options.length) q.options[correctIdx].isCorrect = true;
+      }
+      
       return q;
     });
   }
@@ -89,10 +103,32 @@ async function parseQuestions(filePath, ext, section, sectionName) {
         negativeMarks: section.negativeMarking,
         tags: item.tags ? (Array.isArray(item.tags) ? item.tags : item.tags.split(',').map(t => t.trim())) : []
       };
-      if (typeof q.correctAnswer === 'number') {
+      
+      // Handle multiple correct answers for multiple choice questions
+      if (q.questionType === 'multiple') {
+        if (Array.isArray(q.correctAnswer)) {
+          // For multiple choice, correctAnswer can be an array of indices
+          q.correctAnswer.forEach(idx => {
+            const correctIdx = typeof idx === 'number' ? idx - 1 : parseInt(idx) - 1;
+            if (correctIdx >= 0 && correctIdx < q.options.length) {
+              q.options[correctIdx].isCorrect = true;
+            }
+          });
+        } else if (typeof q.correctAnswer === 'string') {
+          // For multiple choice, correctAnswer can be comma-separated indices
+          const correctIndices = q.correctAnswer.split(',').map(idx => parseInt(idx.trim()) - 1);
+          correctIndices.forEach(idx => {
+            if (idx >= 0 && idx < q.options.length) {
+              q.options[idx].isCorrect = true;
+            }
+          });
+        }
+      } else if (q.questionType !== 'multiple' && typeof q.correctAnswer === 'number') {
+        // For single choice, correctAnswer is a single index
         const correctIdx = q.correctAnswer - 1;
         if (correctIdx >= 0 && correctIdx < q.options.length) q.options[correctIdx].isCorrect = true;
       }
+      
       return q;
     });
   }
@@ -587,29 +623,58 @@ router.post('/attempts/:id/submit', auth, async (req, res) => {
 
       let isCorrect = false, marksAwarded = 0;
 
-      if (!studentAnswer) {
+      if (!studentAnswer || (Array.isArray(studentAnswer) && studentAnswer.length === 0)) {
         unanswered++;
       } else {
         sectionWiseScore[section].attemptedQuestions++;
-        const correctOpt = q.options.find(o => o.isCorrect);
-        if (correctOpt && correctOpt.text === studentAnswer) {
-          isCorrect = true;
-          marksAwarded = q.marks || 1;
-          score += marksAwarded;
-          correct++;
-          sectionWiseScore[section].correctAnswers++;
-          sectionWiseScore[section].score += marksAwarded;
+        
+        if (q.questionType === 'multiple') {
+          // For multiple choice questions, check if all selected options are correct
+          // and all correct options are selected
+          const correctOptions = q.options.filter(o => o.isCorrect).map(o => o.text);
+          const selectedOptions = Array.isArray(studentAnswer) ? studentAnswer : [studentAnswer];
+          
+          // Check if selected options match correct options exactly
+          const isExactMatch = 
+            correctOptions.length === selectedOptions.length &&
+            correctOptions.every(opt => selectedOptions.includes(opt)) &&
+            selectedOptions.every(opt => correctOptions.includes(opt));
+          
+          if (isExactMatch) {
+            isCorrect = true;
+            marksAwarded = q.marks || 1;
+            score += marksAwarded;
+            correct++;
+            sectionWiseScore[section].correctAnswers++;
+            sectionWiseScore[section].score += marksAwarded;
+          } else {
+            const neg = q.negativeMarks || 0;
+            marksAwarded = -neg;
+            score -= neg;
+            incorrect++;
+          }
         } else {
-          const neg = q.negativeMarks || 0;
-          marksAwarded = -neg;
-          score -= neg;
-          incorrect++;
+          // For single choice questions
+          const correctOpt = q.options.find(o => o.isCorrect);
+          if (correctOpt && correctOpt.text === studentAnswer) {
+            isCorrect = true;
+            marksAwarded = q.marks || 1;
+            score += marksAwarded;
+            correct++;
+            sectionWiseScore[section].correctAnswers++;
+            sectionWiseScore[section].score += marksAwarded;
+          } else {
+            const neg = q.negativeMarks || 0;
+            marksAwarded = -neg;
+            score -= neg;
+            incorrect++;
+          }
         }
       }
 
       processed.push({
         questionId: q._id,
-        selectedOptions: studentAnswer ? [studentAnswer] : [],
+        selectedOptions: Array.isArray(studentAnswer) ? studentAnswer : (studentAnswer ? [studentAnswer] : []),
         isMarkedForReview: false,
         timeSpent: 0,
         isCorrect,

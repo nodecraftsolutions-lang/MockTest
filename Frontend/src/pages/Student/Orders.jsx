@@ -110,78 +110,23 @@ const Orders = () => {
 
   const downloadReceipt = async (orderId) => {
     try {
-      const response = await api.get(`/payments/orders/${orderId}/receipt`);
-      if (response.data.success) {
-        // Create and download receipt
-        const receiptData = response.data.data.receipt;
-        const receiptContent = generateReceiptHTML(receiptData);
-        
-        const blob = new Blob([receiptContent], { type: 'text/html' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `receipt-${receiptData.orderId}.html`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }
+      // Download PDF receipt directly
+      const response = await api.get(`/payments/orders/${orderId}/receipt/pdf`, {
+        responseType: 'blob'
+      });
+      
+      // Create and download receipt
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `receipt-${orderId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     } catch (error) {
       showError('Failed to download receipt');
     }
-  };
-
-  const generateReceiptHTML = (receipt) => {
-    return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Receipt - ${receipt.orderId}</title>
-        <style>
-          body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
-          .details { margin-bottom: 20px; }
-          .items { border-collapse: collapse; width: 100%; }
-          .items th, .items td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-          .items th { background-color: #f2f2f2; }
-          .total { text-align: right; font-weight: bold; font-size: 18px; margin-top: 20px; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>PrepZon</h1>
-          <h2>Payment Receipt</h2>
-        </div>
-        <div class="details">
-          <p><strong>Receipt Number:</strong> ${receipt.receiptNumber}</p>
-          <p><strong>Order ID:</strong> ${receipt.orderId}</p>
-          <p><strong>Date:</strong> ${new Date(receipt.paymentDate).toLocaleDateString()}</p>
-          <p><strong>Customer:</strong> ${receipt.studentName}</p>
-          <p><strong>Email:</strong> ${receipt.email}</p>
-          <p><strong>Transaction ID:</strong> ${receipt.transactionId}</p>
-        </div>
-        <table class="items">
-          <thead>
-            <tr>
-              <th>Item</th>
-              <th>Price</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${receipt.items.map(item => `
-              <tr>
-                <td>${item.testTitle || item.courseTitle}</td>
-                <td>₹${item.price}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-        <div class="total">
-          <p>Total Amount: ₹${receipt.totalAmount}</p>
-        </div>
-      </body>
-      </html>
-    `;
   };
 
   if (loading) {
@@ -569,15 +514,13 @@ const Orders = () => {
           <h3 className="text-lg font-medium text-gray-900 mb-2">No Orders Yet</h3>
           <p className="text-gray-600 mb-4">You haven't made any purchases yet</p>
           <div className="flex justify-center space-x-4">
-            <Link to="/student/paid-tests" className="btn-primary">
+            <Link to="/student/mock-tests" className="btn-primary">
               Browse Paid Tests
             </Link>
             <Link to="/student/courses" className="btn-primary">
               Browse Courses
             </Link>
-            <Link to="/student/recordings" className="btn-primary">
-              Browse Recordings
-            </Link>
+            
           </div>
         </div>
       )}

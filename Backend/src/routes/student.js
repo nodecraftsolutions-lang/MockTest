@@ -241,14 +241,27 @@ router.get('/attempts/:id', auth, async (req, res) => {
         q => q._id.toString() === answer.questionId.toString()
       );
       if (question) {
-        const correctOpt = question.options.find(opt => opt.isCorrect);
+        // For multiple choice questions, we need to handle multiple correct answers
+        let correctAnswerText = null;
+        if (question.questionType === 'multiple') {
+          // Get all correct options for multiple choice questions
+          correctAnswerText = question.options
+            .filter(opt => opt.isCorrect)
+            .map(opt => opt.text);
+        } else {
+          // For single choice questions, get the single correct option
+          const correctOpt = question.options.find(opt => opt.isCorrect);
+          correctAnswerText = correctOpt ? correctOpt.text : null;
+        }
+        
         return {
           ...answer.toObject(),
           question: {
             text: question.questionText,
             options: question.options,
-            correctAnswer: correctOpt ? correctOpt.text : null,
-            explanation: question.explanation
+            correctAnswer: correctAnswerText,
+            explanation: question.explanation,
+            questionType: question.questionType || 'single'
           }
         };
       }

@@ -236,6 +236,20 @@ const QuestionBankUpload = () => {
         "tags": "programming,web",
         "marks": 1,
         "negativeMarks": 0.25
+      },
+      {
+        "questionText": "Which of the following are programming languages? (Select all that apply)",
+        "questionType": "multiple",
+        "option1": "Python",
+        "option2": "HTML",
+        "option3": "JavaScript",
+        "option4": "CSS",
+        "correctAnswer": [1, 3],
+        "explanation": "Python and JavaScript are programming languages, while HTML and CSS are markup/styling languages.",
+        "difficulty": "medium",
+        "tags": "programming,web",
+        "marks": 2,
+        "negativeMarks": 0.5
       }
     ];
 
@@ -251,10 +265,11 @@ const QuestionBankUpload = () => {
   };
 
   const generateSampleCSV = () => {
-    const csvContent = `questionText,option1,option2,option3,option4,correctAnswer,explanation,difficulty,tags,marks,negativeMarks
-"What is the capital of France?","London","Berlin","Paris","Madrid","3","Paris is the capital city of France.","easy","geography,capitals",1,0
-"Which of the following is not a programming language?","Python","Java","HTML","C++","3","HTML is a markup language, not a programming language.","medium","programming,web",1,0.25
-"What does CPU stand for?","Central Processing Unit","Computer Personal Unit","Central Processor Unit","Central Process Unit","1","CPU stands for Central Processing Unit.","easy","computer,hardware",1,0`;
+    const csvContent = `questionText,questionType,option1,option2,option3,option4,correctAnswer,explanation,difficulty,tags,marks,negativeMarks
+"What is the capital of France?","","London","Berlin","Paris","Madrid","3","Paris is the capital city of France.","easy","geography,capitals",1,0
+"Which of the following is not a programming language?","","Python","Java","HTML","C++","3","HTML is a markup language, not a programming language.","medium","programming,web",1,0.25
+"Which of the following are programming languages? (Select all that apply)","multiple","Python","HTML","JavaScript","CSS","1,3","Python and JavaScript are programming languages, while HTML and CSS are markup/styling languages.","medium","programming,web",2,0.5
+"What does CPU stand for?","","Central Processing Unit","Computer Personal Unit","Central Processor Unit","Central Process Unit","1","CPU stands for Central Processing Unit.","easy","computer,hardware",1,0`;
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -491,6 +506,20 @@ const QuestionBankUpload = () => {
     "tags": "tag1,tag2",
     "marks": 1,
     "negativeMarks": 0
+  },
+  {
+    "questionText": "Multiple choice question?",
+    "questionType": "multiple",
+    "option1": "Option 1",
+    "option2": "Option 2", 
+    "option3": "Option 3",
+    "option4": "Option 4",
+    "correctAnswer": [1, 3],
+    "explanation": "...",
+    "difficulty": "medium",
+    "tags": "tag1,tag2",
+    "marks": 2,
+    "negativeMarks": 0.5
   }
 ]`}
                             </pre>
@@ -499,14 +528,19 @@ const QuestionBankUpload = () => {
                           <div>
                             <p className="font-semibold mb-1">CSV Format:</p>
                             <pre className="bg-white p-2 rounded text-xs overflow-x-auto">
-{`questionText,option1,option2,option3,option4,correctAnswer,...
-"What is...?","Opt1","Opt2","Opt3","Opt4","1",...`}
+{`questionText,questionType,option1,option2,option3,option4,correctAnswer,...
+"What is...?","","Opt1","Opt2","Opt3","Opt4","1",...
+"Multiple...?","multiple","Opt1","Opt2","Opt3","Opt4","1,3",...`}
                             </pre>
                           </div>
                         </div>
                         
                         <p className="mt-2 text-xs">
-                          <strong>Note:</strong> correctAnswer should be 1, 2, 3, or 4 corresponding to the option number
+                          <strong>Note:</strong> 
+                          <ul className="list-disc pl-4 mt-1 space-y-1">
+                            <li>For single choice: correctAnswer should be 1, 2, 3, or 4</li>
+                            <li>For multiple choice: correctAnswer should be comma-separated numbers like "1,3" or [1,3]</li>
+                          </ul>
                         </p>
                       </div>
                     </div>

@@ -23,8 +23,7 @@ const generateReceiptPDF = (receiptData) => {
       doc.moveDown();
 
       // Company Info
-      doc.fontSize(12).text('MockTest Pro', { align: 'center' });
-      doc.fontSize(10).text('Education Platform', { align: 'center' });
+      doc.fontSize(12).text('PrepZon - An EdTech Platform', { align: 'center' });
       doc.moveDown(2);
 
       // Receipt Info

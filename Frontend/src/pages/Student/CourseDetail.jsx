@@ -285,7 +285,7 @@ const CourseDetail = () => {
                 <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
                   {course.title}
                 </h1>
-                <p className="text-xl text-blue-100 leading-relaxed max-w-3xl">
+                <p className="text-sm text-blue-100 leading-relaxed max-w-3xl">
                   {descriptionLines[0] || course.description}
                 </p>
               </motion.div>
@@ -301,10 +301,7 @@ const CourseDetail = () => {
                   <Star className="w-4 h-4 text-yellow-400 fill-current" />
                   <span>{enhancedCourse.rating} Rating</span>
                 </div>
-                <div className="flex items-center space-x-2 bg-white/10 px-3 py-2 rounded-lg">
-                  <Users className="w-4 h-4" />
-                  <span>{enhancedCourse.students}+ Students</span>
-                </div>
+                
                 <div className="flex items-center space-x-2 bg-white/10 px-3 py-2 rounded-lg">
                   <BarChart3 className="w-4 h-4" />
                   <span>{enhancedCourse.level}</span>
@@ -329,7 +326,7 @@ const CourseDetail = () => {
                     {course.price > 0 ? `₹${course.price}` : "Free"}
                   </div>
                   <div className="text-blue-200 text-sm">
-                    One-time payment • Lifetime access
+                    Enroll to access 
                   </div>
                 </div>
 
@@ -358,28 +355,19 @@ const CourseDetail = () => {
                 <div className="space-y-3 text-sm text-blue-200">
                   <div className="flex items-center space-x-3">
                     <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span>Full lifetime access</span>
+                    <span>Access to Live Sessions</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span>Certificate of completion</span>
+                    <span>Live Mentor Support</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span>Downloadable resources</span>
+                    <span>Discussion Forums</span>
                   </div>
                 </div>
 
-                <div className="flex space-x-4 pt-4 border-t border-white/20">
-                  <button className="flex-1 flex items-center justify-center space-x-2 text-blue-200 hover:text-white transition-colors">
-                    <Bookmark className="w-4 h-4" />
-                    <span className="text-sm">Save</span>
-                  </button>
-                  <button className="flex-1 flex items-center justify-center space-x-2 text-blue-200 hover:text-white transition-colors">
-                    <Share2 className="w-4 h-4" />
-                    <span className="text-sm">Share</span>
-                  </button>
-                </div>
+                
               </div>
             </motion.div>
           </div>
@@ -486,11 +474,11 @@ const CourseDetail = () => {
                     <span className="font-medium">{enhancedCourse.language}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Certificate</span>
+                    <span className="text-gray-600">Mentor Support</span>
                     <span className="font-medium">{enhancedCourse.certificate ? 'Yes' : 'No'}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Lifetime Access</span>
+                    <span className="text-gray-600">Discussion Forums</span>
                     <span className="font-medium">{enhancedCourse.lifetimeAccess ? 'Yes' : 'No'}</span>
                   </div>
                 </div>
