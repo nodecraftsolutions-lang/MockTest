@@ -256,6 +256,11 @@ const AdminDashboard = () => {
               View All
             </Link>
           </div>
+                <div className="flex items-center justify-between mb-4">
+          <Link to="/mailtoall" className="text-indigo-600 hover:text-indigo-700 text-sm font-medium">
+            New Update
+          </Link>
+        </div>
           
           {recentActivities?.students && recentActivities.students.length > 0 ? (
             <div className="space-y-3">

@@ -142,6 +142,28 @@ const Auth = () => {
     }
   };
 
+  // Function to send welcome email
+  const sendWelcomeEmail = async (name, email) => {
+    try {
+      const response = await fetch('https://prep-zone-mailserver.vercel.app/api/mail/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: name,
+          email: email
+        })
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to send welcome email');
+      }
+    } catch (error) {
+      console.error('Error sending welcome email:', error);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
