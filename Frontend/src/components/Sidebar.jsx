@@ -244,7 +244,7 @@ const Sidebar = ({ type = "student", onStateChange }) => {
               <div className="flex items-center">
                 <Link to="/" className="flex items-center space-x-2">
                   <img
-                    src="/Final Logo.png"
+                    src="/Final.png"
                     alt="PrepZon Logo"
                     className="h-7 w-auto"
                   />

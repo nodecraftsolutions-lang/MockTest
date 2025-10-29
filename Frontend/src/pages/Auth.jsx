@@ -294,7 +294,7 @@ const Auth = () => {
           {/* Logo */}
           <div className="flex justify-center mb-6">
             <img 
-              src="/Final Logo.png" 
+              src="/Final.png" 
               alt="PrepZone Logo" 
               className="h-12 w-auto"
             />

@@ -52,7 +52,7 @@ const About = () => {
           <div className="text-center bg-white rounded-2xl p-8 shadow-lg mx-auto max-w-4xl">
             <div className="flex justify-center mb-6">
               <img 
-                src="/Final Logo.png" 
+                src="/Final.png" 
                 alt="PrepZon Logo" 
                 className="h-20 w-auto mx-auto"
               />
