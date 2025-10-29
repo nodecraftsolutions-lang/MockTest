@@ -6,7 +6,7 @@ import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 
 const ImageSlider = () => {
-  const images = ["/vite.svg", "/img4.png", "/Final.png", "/img4.png"];
+  const images = ["student.png", "/course.png", "code.png"];
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
@@ -17,17 +17,23 @@ const ImageSlider = () => {
   }, [images.length]);
 
   return (
-    <div className="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
-      <div className="h-48 w-full sm:h-56 md:h-72 lg:w-full lg:h-full relative overflow-hidden flex items-center justify-center">
+    <div className="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2 lg:top-[-100px]">
+      <div className="h-64 w-full sm:h-72 md:h-80 lg:w-full lg:h-full relative overflow-hidden flex items-center justify-center rounded-2xl shadow-xl">
         {images.map((src, index) => (
-          <img
+          <div 
             key={index}
-            src={src}
-            alt={`Slide ${index + 1}`}
-            className={`absolute h-full w-full object-contain transition-opacity duration-1000 ${
+            className={`absolute inset-0 transition-opacity duration-1000 flex items-center justify-center ${
               index === current ? "opacity-100" : "opacity-0"
             }`}
-          />
+          >
+            <div className="flex items-center justify-center h-full w-full">
+              <img
+                src={src}
+                alt={`Slide ${index + 1}`}
+                className="max-h-full max-w-full object-contain rounded-2xl"
+              />
+            </div>
+          </div>
         ))}
       </div>
     </div>
