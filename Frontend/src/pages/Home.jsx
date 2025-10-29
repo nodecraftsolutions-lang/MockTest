@@ -6,7 +6,7 @@ import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 
 const ImageSlider = () => {
-  const images = ["student.png", "/course.png", "code.png"];
+  const images = ["student.png", "/course.png"];
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {

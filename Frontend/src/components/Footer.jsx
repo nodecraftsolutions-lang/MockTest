@@ -83,7 +83,7 @@ const Footer = () => {
 
   const socialLinks = [
     { icon: Facebook, url: 'https://www.facebook.com/profile.php?id=61582907136736', label: 'Facebook' },
-    { icon: Instagram, url: '#', label: 'Instagram' },
+    { icon: Instagram, url: 'https://www.instagram.com/prepzon_edtech/', label: 'Instagram' },
     { icon: Linkedin, url: '#', label: 'LinkedIn' },
     { icon: Youtube, url: 'https://youtube.com/@prepzon?si=WSTRcbO5GrwPBmdg', label: 'YouTube' }
   ];
