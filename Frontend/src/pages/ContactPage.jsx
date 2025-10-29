@@ -171,6 +171,18 @@ const ContactPage = () => {
                 </div>
                 
                 <div className="flex items-start">
+                  <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                    <img src="/whatsapp.jpg" alt="WhatsApp" className="w-8 h-8 object-contain" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">WhatsApp</p>
+                    <a href="https://api.whatsapp.com/send?phone=918431761279" target="_blank" rel="noopener noreferrer" className="text-sm text-green-600 hover:text-green-800">
+                      +91 8431761279
+                    </a>
+                  </div>
+                </div>
+                
+                <div className="flex items-start">
                   <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
                     <MessageSquare className="w-4 h-4 text-blue-600" />
                   </div>

@@ -122,13 +122,13 @@ const GlobalContactWidget = () => {
 
         {/* Compact WhatsApp Button */}
         <a
-          href="https://wa.me/918431761279"
+          href="https://api.whatsapp.com/send?phone=918431761279"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-1.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-2 px-3 rounded-lg mb-4 hover:from-green-600 hover:to-emerald-700 transition-all transform hover:scale-105 shadow-lg text-sm font-medium"
+          className="flex items-center justify-center gap-1.5 bg-gradient-to-r from-white-500 to-emerald-600 text-green-700 py-2 px-3 rounded-lg mb-4 hover:from-green-600 hover:to-emerald-700 transition-all transform hover:scale-105 shadow-lg text-sm font-medium"
         >
-          <Phone size={14} />
-          <span>💬 WhatsApp</span>
+          <img src="/whatsapp.jpg" alt="WhatsApp" className="w-6 h-6 object-contain" />
+          <span>WhatsApp</span>
         </a>
 
         {/* Compact Divider */}
