@@ -72,11 +72,10 @@ const Footer = () => {
     company: [
       { name: 'About Us', path: '/about' },
       { name: 'Careers', path: '/careers' },
-      { name: 'Contact Us', action: handleContact },
       { name: 'Blog', path: '/blog' }
     ],
     support: [
-      { name: 'Help Center', path: '/help' },
+      { name: 'Contact Us', action: handleContact },
       { name: 'Terms of Service', path: '/terms' },
       { name: 'Privacy Policy', path: '/privacy-policy' }
     ]
@@ -184,12 +183,21 @@ const Footer = () => {
             <ul className="space-y-2">
               {footerLinks.support.map((item, index) => (
                 <li key={index}>
-                  <Link 
-                    to={item.path} 
-                    className="text-blue-800 hover:text-blue-600 transition-colors"
-                  >
-                    {item.name}
-                  </Link>
+                  {item.action ? (
+                    <button 
+                      onClick={item.action}
+                      className="text-blue-800 hover:text-blue-600 transition-colors text-left w-full"
+                    >
+                      {item.name}
+                    </button>
+                  ) : (
+                    <Link 
+                      to={item.path} 
+                      className="text-blue-800 hover:text-blue-600 transition-colors"
+                    >
+                      {item.name}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>

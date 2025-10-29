@@ -52,8 +52,8 @@ const ContactPage = () => {
             className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6"
           >
             <div className="flex items-center mb-6">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                <MessageSquare className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                <MessageSquare className="w-5 h-5 text-orange-600" />
               </div>
               <h2 className="text-xl font-semibold text-gray-900">📧 Send us a Message</h2>
             </div>
@@ -122,7 +122,7 @@ const ContactPage = () => {
                 whileTap={{ scale: 0.98 }}
                 disabled={loading}
                 type="submit"
-                className="w-full flex justify-center items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all py-3 rounded-lg text-white font-medium disabled:opacity-50 shadow-sm"
+                className="w-full flex justify-center items-center gap-2 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-blue-700 hover:to-blue-800 transition-all py-3 rounded-lg text-white font-medium disabled:opacity-50 shadow-sm"
               >
                 {loading ? (
                   <>
