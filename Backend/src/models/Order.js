@@ -162,12 +162,6 @@ const orderSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Test'
     }
-  },
-  expiresAt: {
-    type: Date,
-    default: function() {
-      return new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
-    }
   }
 }, {
   timestamps: true,
@@ -181,7 +175,6 @@ orderSchema.index({ studentId: 1, createdAt: -1 });
 orderSchema.index({ paymentStatus: 1 });
 orderSchema.index({ paymentGatewayOrderId: 1 });
 orderSchema.index({ transactionId: 1 });
-orderSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 // Virtual for student details
 orderSchema.virtual('student', {
@@ -280,11 +273,6 @@ orderSchema.methods.processRefund = function(refundAmount, reason, refundedBy) {
     refundedBy: refundedBy
   };
   return this.save();
-};
-
-// Instance method to check if order is expired
-orderSchema.methods.isExpired = function() {
-  return this.expiresAt < new Date() && this.paymentStatus === 'pending';
 };
 
 // Instance method to get receipt data
