@@ -313,11 +313,12 @@ router.get('/students', async (req, res) => {
   try {
     const { 
       page = 1, 
-      limit = 20, 
+      limit = 1000, // Default to 1000, but allow fetching all with a special parameter
       search, 
       status, 
       sortBy = 'createdAt',
-      sortOrder = 'desc'
+      sortOrder = 'desc',
+      fetchAll // Special parameter to fetch all students
     } = req.query;
 
     const query = { role: 'student' };
@@ -337,13 +338,25 @@ router.get('/students', async (req, res) => {
     const sortOptions = {};
     sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
-    const students = await Student.find(query)
-      .select('name email mobile isActive lastActiveAt createdAt')
-      .sort(sortOptions)
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const total = await Student.countDocuments(query);
+    let students, total;
+    
+    // If fetchAll is specified, fetch all students (but still apply filters)
+    if (fetchAll === 'true') {
+      students = await Student.find(query)
+        .select('name email mobile isActive lastActiveAt createdAt')
+        .sort(sortOptions);
+      
+      total = students.length;
+    } else {
+      // Apply pagination when fetchAll is not specified
+      students = await Student.find(query)
+        .select('name email mobile isActive lastActiveAt createdAt')
+        .sort(sortOptions)
+        .limit(limit * 1)
+        .skip((page - 1) * limit);
+      
+      total = await Student.countDocuments(query);
+    }
 
     // Get attempt counts for each student
     const studentsWithStats = await Promise.all(
@@ -365,7 +378,7 @@ router.get('/students', async (req, res) => {
         students: studentsWithStats,
         pagination: {
           current: parseInt(page),
-          pages: Math.ceil(total / limit),
+          pages: fetchAll === 'true' ? 0 : Math.ceil(total / limit),
           total
         }
       }

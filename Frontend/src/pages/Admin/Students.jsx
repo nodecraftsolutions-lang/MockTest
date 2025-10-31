@@ -30,6 +30,7 @@ const ManageStudents = () => {
   const fetchStudents = async () => {
     try {
       const params = new URLSearchParams();
+      params.append('fetchAll', 'true'); // Fetch all students
       if (filterStatus !== 'all') params.append('status', filterStatus);
       params.append('sortBy', sortBy);
       params.append('sortOrder', sortOrder);
