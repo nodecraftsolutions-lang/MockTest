@@ -69,39 +69,18 @@ router.get('/company/:companyId/status', auth, async (req, res) => {
  */
 
 // @route   GET /api/v1/enrollments/admin/courses
-// @desc    Get all course enrollments with student details (Admin only)
+// @desc    Get all students enrolled in courses with student details (Admin only)
 // @access  Admin
 router.get('/admin/courses', adminAuth, async (req, res) => {
   try {
-    const { page = 1, limit = 20, status, search } = req.query;
+    const { page = 1, limit = 1000, search, status, fetchAll } = req.query;
     
-    // Build query for courses that have enrolled students
-    let courseQuery = {
-      enrolledStudents: { $exists: true, $ne: [] }  // Only get courses with enrolled students
-    };
+    // For the "All Enrollments" tab, we want to show all student-course relationships
+    // This includes both course enrollments and recording unlocks
     
-    if (search) {
-      // Search by student name, email or course title
-      const studentIds = await Student.find({
-        $or: [
-          { name: { $regex: search, $options: 'i' } },
-          { email: { $regex: search, $options: 'i' } }
-        ]
-      }).distinct('_id');
-      
-      const courseIds = await Course.find({ 
-        title: { $regex: search, $options: 'i' } 
-      }).distinct('_id');
-      
-      courseQuery.$or = [
-        { enrolledStudents: { $in: studentIds } },
-        { _id: { $in: courseIds } }
-      ];
-      // Remove the enrolledStudents condition when searching
-      delete courseQuery.enrolledStudents;
-    }
+    // Get all courses with enrolled students
+    let courseQuery = { isActive: true };
     
-    // Get courses with enrolled students and populate student details
     const coursesWithEnrolledStudents = await Course.find(courseQuery)
       .populate('enrolledStudents', 'name email mobile')
       .select('title price recordingsPrice enrolledStudents createdAt _id');
@@ -210,19 +189,25 @@ router.get('/admin/courses', adminAuth, async (req, res) => {
     // Sort by createdAt descending
     filteredEnrollments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     
-    // Apply pagination
+    // Apply pagination only if fetchAll is not specified
     const total = filteredEnrollments.length;
-    const paginatedEnrollments = filteredEnrollments.slice((page - 1) * limit, page * limit);
-      
+    let paginatedEnrollments;
+    
+    if (fetchAll === 'true') {
+      paginatedEnrollments = filteredEnrollments;
+    } else {
+      paginatedEnrollments = filteredEnrollments.slice((page - 1) * limit, page * limit);
+    }
+    
     res.json({
       success: true,
       data: {
         enrollments: paginatedEnrollments,
         pagination: {
           page: parseInt(page),
-          limit: parseInt(limit),
+          limit: fetchAll === 'true' ? 0 : parseInt(limit),
           total,
-          pages: Math.ceil(total / limit)
+          pages: fetchAll === 'true' ? 0 : Math.ceil(total / limit)
         }
       }
     });
@@ -237,7 +222,7 @@ router.get('/admin/courses', adminAuth, async (req, res) => {
 // @access  Admin
 router.get('/admin/recordings', adminAuth, async (req, res) => {
   try {
-    const { page = 1, limit = 20, status, search } = req.query;
+    const { page = 1, limit = 1000, status, search, fetchAll } = req.query;
     
     // Build query for recording enrollments
     let query = {};
@@ -266,24 +251,31 @@ router.get('/admin/recordings', adminAuth, async (req, res) => {
     }
     
     // Populate related data
-    const enrollments = await RecordingEnrollment.find(query)
+    const allEnrollments = await RecordingEnrollment.find(query)
       .populate('studentId', 'name email mobile')
       .populate('courseId', 'title price recordingsPrice') // Make sure we're populating price and recordingsPrice
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+      .sort({ createdAt: -1 });
       
-    const total = await RecordingEnrollment.countDocuments(query);
+    const total = allEnrollments.length;
+    
+    // Apply pagination only if fetchAll is not specified
+    let paginatedEnrollments;
+    
+    if (fetchAll === 'true') {
+      paginatedEnrollments = allEnrollments;
+    } else {
+      paginatedEnrollments = allEnrollments.slice((page - 1) * limit, page * limit);
+    }
     
     res.json({
       success: true,
       data: {
-        enrollments,
+        enrollments: paginatedEnrollments,
         pagination: {
           page: parseInt(page),
-          limit: parseInt(limit),
+          limit: fetchAll === 'true' ? 0 : parseInt(limit),
           total,
-          pages: Math.ceil(total / limit)
+          pages: fetchAll === 'true' ? 0 : Math.ceil(total / limit)
         }
       }
     });
@@ -1148,7 +1140,7 @@ router.get('/admin/debug-enrollments/:studentId', adminAuth, async (req, res) =>
 router.get('/admin/courses/:courseId', adminAuth, async (req, res) => {
   try {
     const { courseId } = req.params;
-    const { page = 1, limit = 20, search } = req.query;
+    const { page = 1, limit = 1000, search, fetchAll } = req.query;
     
     // Validate courseId
     if (!mongoose.Types.ObjectId.isValid(courseId)) {
@@ -1259,9 +1251,15 @@ router.get('/admin/courses/:courseId', adminAuth, async (req, res) => {
     // Sort by createdAt descending (latest first)
     allEnrollments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     
-    // Apply pagination
+    // Apply pagination only if fetchAll is not specified
     const total = allEnrollments.length;
-    const paginatedEnrollments = allEnrollments.slice((page - 1) * limit, page * limit);
+    let paginatedEnrollments;
+    
+    if (fetchAll === 'true') {
+      paginatedEnrollments = allEnrollments;
+    } else {
+      paginatedEnrollments = allEnrollments.slice((page - 1) * limit, page * limit);
+    }
     
     res.json({
       success: true,
@@ -1269,9 +1267,9 @@ router.get('/admin/courses/:courseId', adminAuth, async (req, res) => {
         enrollments: paginatedEnrollments,
         pagination: {
           page: parseInt(page),
-          limit: parseInt(limit),
+          limit: fetchAll === 'true' ? 0 : parseInt(limit),
           total,
-          pages: Math.ceil(total / limit)
+          pages: fetchAll === 'true' ? 0 : Math.ceil(total / limit)
         }
       }
     });
@@ -1287,7 +1285,7 @@ router.get('/admin/courses/:courseId', adminAuth, async (req, res) => {
 router.get('/admin/recordings/:courseId', adminAuth, async (req, res) => {
   try {
     const { courseId } = req.params;
-    const { page = 1, limit = 20, search } = req.query;
+    const { page = 1, limit = 1000, search, fetchAll } = req.query;
     
     // Validate courseId
     if (!mongoose.Types.ObjectId.isValid(courseId)) {
@@ -1317,14 +1315,12 @@ router.get('/admin/recordings/:courseId', adminAuth, async (req, res) => {
     }
     
     // Get recording unlocks with student details, sorted by latest first
-    const enrollments = await RecordingEnrollment.find(query)
+    const allEnrollments = await RecordingEnrollment.find(query)
       .populate('studentId', 'name email mobile')
-      .sort({ createdAt: -1 }) // Sort by latest first
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+      .sort({ createdAt: -1 }); // Sort by latest first
     
     // Format enrollments to match the expected structure
-    const formattedEnrollments = enrollments.map(enrollment => ({
+    const formattedEnrollments = allEnrollments.map(enrollment => ({
       _id: enrollment._id,
       studentId: enrollment.studentId._id,
       student: {
@@ -1343,17 +1339,25 @@ router.get('/admin/recordings/:courseId', adminAuth, async (req, res) => {
       createdAt: enrollment.createdAt
     }));
     
-    const total = await RecordingEnrollment.countDocuments(query);
+    // Apply pagination only if fetchAll is not specified
+    const total = formattedEnrollments.length;
+    let paginatedEnrollments;
+    
+    if (fetchAll === 'true') {
+      paginatedEnrollments = formattedEnrollments;
+    } else {
+      paginatedEnrollments = formattedEnrollments.slice((page - 1) * limit, page * limit);
+    }
     
     res.json({
       success: true,
       data: {
-        enrollments: formattedEnrollments,
+        enrollments: paginatedEnrollments,
         pagination: {
           page: parseInt(page),
-          limit: parseInt(limit),
+          limit: fetchAll === 'true' ? 0 : parseInt(limit),
           total,
-          pages: Math.ceil(total / limit)
+          pages: fetchAll === 'true' ? 0 : Math.ceil(total / limit)
         }
       }
     });

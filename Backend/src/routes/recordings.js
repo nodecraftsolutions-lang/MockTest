@@ -124,7 +124,7 @@ router.delete("/:id", adminAuth, async (req, res) => {
 // GET /recordings - Get all recordings with optional filtering and pagination
 router.get("/", async (req, res) => {
   try {
-    const { courseId, page = 1, limit = 10, search, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+    const { courseId, page = 1, limit = 1000, search, sortBy = 'createdAt', sortOrder = 'desc', fetchAll } = req.query;
     
     const query = {};
     
@@ -144,13 +144,23 @@ router.get("/", async (req, res) => {
     const sortOptions = {};
     sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
-    const recordings = await Recording.find(query)
+    // Get all recordings without pagination if fetchAll is specified
+    let recordingsQuery = Recording.find(query)
       .populate('courseId', 'title category')
-      .sort(sortOptions)
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const total = await Recording.countDocuments(query);
+      .sort(sortOptions);
+    
+    // Apply pagination only if fetchAll is not specified
+    let recordings, total;
+    
+    if (fetchAll === 'true') {
+      recordings = await recordingsQuery;
+      total = recordings.length;
+    } else {
+      recordings = await recordingsQuery
+        .limit(limit * 1)
+        .skip((page - 1) * limit);
+      total = await Recording.countDocuments(query);
+    }
 
     res.json({
       success: true,
@@ -158,10 +168,10 @@ router.get("/", async (req, res) => {
         recordings,
         pagination: {
           current: parseInt(page),
-          pages: Math.ceil(total / limit),
+          pages: fetchAll === 'true' ? 0 : Math.ceil(total / limit),
           total,
-          hasNext: page * limit < total,
-          hasPrev: page > 1
+          hasNext: fetchAll === 'true' ? false : page * limit < total,
+          hasPrev: fetchAll === 'true' ? false : page > 1
         }
       }
     });

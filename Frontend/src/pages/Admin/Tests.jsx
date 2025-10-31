@@ -92,7 +92,10 @@ const ManageTests = () => {
   const fetchTests = async () => {
     try {
       // Changed from /admin/tests to /tests to match backend API endpoint
-      const response = await api.get('/tests');
+      const params = new URLSearchParams();
+      params.append('fetchAll', 'true'); // Fetch all tests
+      
+      const response = await api.get(`/tests?${params.toString()}`);
       if (response.data.success) {
         // Handle different response structures
         const testsData = response.data.data.tests || response.data.data || [];

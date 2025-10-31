@@ -34,7 +34,10 @@ const QuestionBanks = () => {
 
   const fetchQuestionBanks = async () => {
     try {
-      const response = await api.get('/question-banks');
+      const params = new URLSearchParams();
+      params.append('fetchAll', 'true'); // Fetch all question banks
+      
+      const response = await api.get(`/question-banks?${params.toString()}`);
       if (response.data.success) {
         setQuestionBanks(response.data.data.questionBanks);
       }

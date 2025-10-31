@@ -519,13 +519,14 @@ router.get('/results', adminAuth, async (req, res) => {
   try {
     const { 
       page = 1, 
-      limit = 20, 
+      limit = 1000, // Default to 1000, but allow fetching all with a special parameter
       testId,
       status,
       fromDate,
       toDate,
       sortBy = 'createdAt',
-      sortOrder = 'desc'
+      sortOrder = 'desc',
+      fetchAll // Special parameter to fetch all results
     } = req.query;
 
     const query = {};
@@ -577,10 +578,19 @@ router.get('/results', adminAuth, async (req, res) => {
       return acc;
     }, {});
 
-    // Convert grouped object back to array and apply pagination
+    // Convert grouped object back to array
     const allUniqueAttempts = Object.values(groupedAttempts);
     const total = allUniqueAttempts.length;
-    const paginatedAttempts = allUniqueAttempts.slice((page - 1) * limit, page * limit);
+    
+    let paginatedAttempts;
+    
+    // If fetchAll is specified, fetch all attempts (but still apply filters)
+    if (fetchAll === 'true') {
+      paginatedAttempts = allUniqueAttempts;
+    } else {
+      // Apply pagination when fetchAll is not specified
+      paginatedAttempts = allUniqueAttempts.slice((page - 1) * limit, page * limit);
+    }
 
     res.json({
       success: true,
@@ -588,7 +598,7 @@ router.get('/results', adminAuth, async (req, res) => {
         attempts: paginatedAttempts,
         pagination: {
           current: parseInt(page),
-          pages: Math.ceil(total / limit),
+          pages: fetchAll === 'true' ? 0 : Math.ceil(total / limit),
           total
         }
       }

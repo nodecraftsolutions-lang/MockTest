@@ -39,6 +39,7 @@ const ManageAlumni = () => {
   const fetchAlumni = async () => {
     try {
       const params = new URLSearchParams();
+      params.append('fetchAll', 'true'); // Fetch all alumni
       if (filterStatus !== 'all') params.append('status', filterStatus);
 
       const response = await api.get(`/alumni?${params.toString()}`);

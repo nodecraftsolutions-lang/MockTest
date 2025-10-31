@@ -12,7 +12,7 @@ const router = express.Router();
 // @access  Public
 router.get('/', optionalAuth, async (req, res) => {
   try {
-    const { page = 1, limit = 20, search, category } = req.query;
+    const { page = 1, limit = 1000, search, category, fetchAll } = req.query;
     
     const query = { isActive: true };
     
@@ -24,13 +24,17 @@ router.get('/', optionalAuth, async (req, res) => {
       query.category = category;
     }
 
-    const companies = await Company.find(query)
+    // Build query without pagination if fetchAll is specified
+    let companiesQuery = Company.find(query)
       .select('name logoUrl description category difficulty totalQuestions totalDuration defaultPattern')
-      .sort({ name: 1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .populate('testCount');
+      .sort({ name: 1 });
+    
+    // Apply pagination only if fetchAll is not specified
+    if (fetchAll !== 'true') {
+      companiesQuery = companiesQuery.limit(limit * 1).skip((page - 1) * limit);
+    }
 
+    const companies = await companiesQuery;
     const total = await Company.countDocuments(query);
 
     res.json({
@@ -39,7 +43,7 @@ router.get('/', optionalAuth, async (req, res) => {
         companies,
         pagination: {
           current: parseInt(page),
-          pages: Math.ceil(total / limit),
+          pages: fetchAll === 'true' ? 0 : Math.ceil(total / limit),
           total
         }
       }

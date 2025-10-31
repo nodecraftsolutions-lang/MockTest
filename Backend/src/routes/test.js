@@ -165,7 +165,7 @@ async function parseQuestions(filePath, ext, section, sectionName) {
 // ---------------------------------------------
 router.get('/', optionalAuth, async (req, res) => {
   try {
-    const { page = 1, limit = 20, type, companyId, difficulty, search, featured } = req.query;
+    const { page = 1, limit = 1000, type, companyId, difficulty, search, featured, fetchAll } = req.query;
     const query = { isActive: true };
 
     if (type) query.type = type;
@@ -179,13 +179,18 @@ router.get('/', optionalAuth, async (req, res) => {
       ];
     }
 
-    const tests = await Test.find(query)
+    // Build query without pagination if fetchAll is specified
+    let testsQuery = Test.find(query)
       .populate('companyId', 'name logoUrl category')
       .select('title description type price duration totalQuestions difficulty isFeatured createdAt isGenerated sections')
-      .sort({ isFeatured: -1, createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+      .sort({ isFeatured: -1, createdAt: -1 });
+    
+    // Apply pagination only if fetchAll is not specified
+    if (fetchAll !== 'true') {
+      testsQuery = testsQuery.limit(limit * 1).skip((page - 1) * limit);
+    }
 
+    const tests = await testsQuery;
     const total = await Test.countDocuments(query);
 
     res.json({
@@ -194,7 +199,7 @@ router.get('/', optionalAuth, async (req, res) => {
         tests,
         pagination: {
           current: parseInt(page),
-          pages: Math.ceil(total / limit),
+          pages: fetchAll === 'true' ? 0 : Math.ceil(total / limit),
           total
         }
       }

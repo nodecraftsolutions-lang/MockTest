@@ -31,6 +31,7 @@ const AdminResults = () => {
   const fetchResults = async () => {
     try {
       const params = new URLSearchParams();
+      params.append('fetchAll', 'true'); // Fetch all results
       if (filterTest !== 'all') params.append('testId', filterTest);
       if (filterStatus !== 'all') params.append('status', filterStatus);
       if (dateRange.fromDate) params.append('fromDate', dateRange.fromDate);

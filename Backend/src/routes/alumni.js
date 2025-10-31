@@ -37,10 +37,11 @@ router.get('/', adminAuth, async (req, res) => {
   try {
     const { 
       page = 1, 
-      limit = 20, 
+      limit = 1000, 
       search, 
       status,
-      featured
+      featured,
+      fetchAll
     } = req.query;
 
     const query = {};
@@ -62,11 +63,15 @@ router.get('/', adminAuth, async (req, res) => {
       query.featured = featured === 'true';
     }
 
-    const alumni = await Alumni.find(query)
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+    // Build query without pagination if fetchAll is specified
+    let alumniQuery = Alumni.find(query).sort({ createdAt: -1 });
+    
+    // Apply pagination only if fetchAll is not specified
+    if (fetchAll !== 'true') {
+      alumniQuery = alumniQuery.limit(limit * 1).skip((page - 1) * limit);
+    }
 
+    const alumni = await alumniQuery;
     const total = await Alumni.countDocuments(query);
 
     res.json({
@@ -75,7 +80,7 @@ router.get('/', adminAuth, async (req, res) => {
         alumni,
         pagination: {
           current: parseInt(page),
-          pages: Math.ceil(total / limit),
+          pages: fetchAll === 'true' ? 0 : Math.ceil(total / limit),
           total
         }
       }

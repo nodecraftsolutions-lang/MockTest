@@ -32,19 +32,24 @@ const upload = multer({
 // @access  Private/Admin
 router.get('/', adminAuth, async (req, res) => {
   try {
-    const { companyId, section, page = 1, limit = 20 } = req.query;
+    const { companyId, section, page = 1, limit = 1000, fetchAll } = req.query;
     
     const query = {};
     if (companyId) query.companyId = companyId;
     if (section) query.section = section;
 
-    const questionBanks = await QuestionBank.find(query)
+    // Build query without pagination if fetchAll is specified
+    let questionBanksQuery = QuestionBank.find(query)
       .populate('companyId', 'name logoUrl')
       .populate('uploadedBy', 'name email')
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+      .sort({ createdAt: -1 });
+    
+    // Apply pagination only if fetchAll is not specified
+    if (fetchAll !== 'true') {
+      questionBanksQuery = questionBanksQuery.limit(limit * 1).skip((page - 1) * limit);
+    }
 
+    const questionBanks = await questionBanksQuery;
     const total = await QuestionBank.countDocuments(query);
 
     res.json({
@@ -53,7 +58,7 @@ router.get('/', adminAuth, async (req, res) => {
         questionBanks,
         pagination: {
           current: parseInt(page),
-          pages: Math.ceil(total / limit),
+          pages: fetchAll === 'true' ? 0 : Math.ceil(total / limit),
           total
         }
       }

@@ -89,7 +89,7 @@ const RecordingsManagement = () => {
     const fetchRecordings = async () => {
       setLoading(true);
       try {
-        const res = await api.get(`/recordings?page=${pagination.current}&limit=10&sortBy=${sortBy}&sortOrder=${sortOrder}${selectedCourse ? `&courseId=${selectedCourse}` : ''}${searchTerm ? `&search=${searchTerm}` : ''}`);
+        const res = await api.get(`/recordings?fetchAll=true&sortBy=${sortBy}&sortOrder=${sortOrder}${selectedCourse ? `&courseId=${selectedCourse}` : ''}${searchTerm ? `&search=${searchTerm}` : ''}`);
         const recordingsData = res.data.data?.recordings || [];
         const paginationData = res.data.data?.pagination || {};
         
@@ -210,7 +210,7 @@ const RecordingsManagement = () => {
 
       // Refresh recordings list
       try {
-        const recordingsRes = await api.get(`/recordings?page=${pagination.current}&limit=10&sortBy=${sortBy}&sortOrder=${sortOrder}${selectedCourse ? `&courseId=${selectedCourse}` : ''}${searchTerm ? `&search=${searchTerm}` : ''}`);
+        const recordingsRes = await api.get(`/recordings?fetchAll=true&sortBy=${sortBy}&sortOrder=${sortOrder}${selectedCourse ? `&courseId=${selectedCourse}` : ''}${searchTerm ? `&search=${searchTerm}` : ''}`);
         const recordingsData = recordingsRes.data.data?.recordings || [];
         const paginationData = recordingsRes.data.data?.pagination || {};
         setRecordings(recordingsData);
@@ -264,7 +264,7 @@ const RecordingsManagement = () => {
       
       // Refresh recordings list
       try {
-        const recordingsRes = await api.get(`/recordings?page=${pagination.current}&limit=10&sortBy=${sortBy}&sortOrder=${sortOrder}${selectedCourse ? `&courseId=${selectedCourse}` : ''}${searchTerm ? `&search=${searchTerm}` : ''}`);
+        const recordingsRes = await api.get(`/recordings?fetchAll=true&sortBy=${sortBy}&sortOrder=${sortOrder}${selectedCourse ? `&courseId=${selectedCourse}` : ''}${searchTerm ? `&search=${searchTerm}` : ''}`);
         const recordingsData = recordingsRes.data.data?.recordings || [];
         const paginationData = recordingsRes.data.data?.pagination || {};
         setRecordings(recordingsData);
@@ -709,7 +709,7 @@ const RecordingsManagement = () => {
                         <button
                           onClick={async () => {
                             try {
-                              const res = await api.get(`/recordings?page=${pagination.current}&limit=10&sortBy=${sortBy}&sortOrder=${sortOrder}${selectedCourse ? `&courseId=${selectedCourse}` : ''}${searchTerm ? `&search=${searchTerm}` : ''}`);
+                              const res = await api.get(`/recordings?fetchAll=true&sortBy=${sortBy}&sortOrder=${sortOrder}${selectedCourse ? `&courseId=${selectedCourse}` : ''}${searchTerm ? `&search=${searchTerm}` : ''}`);
                               const recordingsData = res.data.data?.recordings || [];
                               const paginationData = res.data.data?.pagination || {};
                               setRecordings(recordingsData);
@@ -834,7 +834,7 @@ const RecordingsManagement = () => {
                       <button
                         onClick={async () => {
                           try {
-                            const res = await api.get(`/recordings?page=${pagination.current}&limit=10&sortBy=${sortBy}&sortOrder=${sortOrder}${selectedCourse ? `&courseId=${selectedCourse}` : ''}${searchTerm ? `&search=${searchTerm}` : ''}`);
+                            const res = await api.get(`/recordings?fetchAll=true&sortBy=${sortBy}&sortOrder=${sortOrder}${selectedCourse ? `&courseId=${selectedCourse}` : ''}${searchTerm ? `&search=${searchTerm}` : ''}`);
                             const recordingsData = res.data.data?.recordings || [];
                             const paginationData = res.data.data?.pagination || {};
                             setRecordings(recordingsData);

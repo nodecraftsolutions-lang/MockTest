@@ -49,7 +49,10 @@ const ManageCompanies = () => {
 
   const fetchCompanies = async () => {
     try {
-      const response = await api.get('/companies');
+      const params = new URLSearchParams();
+      params.append('fetchAll', 'true'); // Fetch all companies
+      
+      const response = await api.get(`/companies?${params.toString()}`);
       if (response.data.success) {
         // Handle different response structures
         const companiesData = response.data.data.companies || response.data.data || [];
