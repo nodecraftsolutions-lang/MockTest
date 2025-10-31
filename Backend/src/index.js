@@ -28,8 +28,8 @@ const corsOptions = {
   origin: [
     'http://localhost:5173',  // Local development
     'http://localhost:3000',  // Alternative local development
-    'https://mock-test-ten.vercel.app',  // Your Vercel frontend
-    'https://mocktest-bckx.onrender.com',  // Your Render backend (for internal requests)
+    'http://localhost:5173',  // Your Vercel frontend
+    'http://localhost:8000',  // Your Render backend (for internal requests)
     /\.vercel\.app$/,  // Any Vercel deployment
     /\.onrender\.com$/  // Any Render deployment
   ],
@@ -73,7 +73,7 @@ const io = new Server(server, {
     origin: [
       'http://localhost:5173',
       'http://localhost:3000',
-      'https://mock-test-ten.vercel.app',
+      'http://localhost:5173',
       /\.vercel\.app$/,
       /\.onrender\.com$/
     ],
