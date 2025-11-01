@@ -7,7 +7,8 @@ const getBaseURL = () => {
   if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') {
     return 'http://localhost:8000/api/v1';
   }
-  return 'http://localhost:8000/api/v1';
+  // For production, use your actual domain
+  return '/api/v1';
 };
 
 const api = axios.create({

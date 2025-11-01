@@ -1,0 +1,16 @@
+[Unit]
+Description=MockTest Application
+After=network.target
+
+[Service]
+Type=notify
+User=root
+WorkingDirectory=/root/MockTest/Backend
+ExecStart=/usr/bin/node src/index.js
+Restart=always
+RestartSec=10
+Environment=NODE_ENV=production
+Environment=PORT=8000
+
+[Install]
+WantedBy=multi-user.target
