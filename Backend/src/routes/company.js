@@ -4,6 +4,7 @@ const { auth, adminAuth, optionalAuth } = require('../middlewares/auth');
 const Company = require('../models/Company');
 const Test = require('../models/Test');
 const Student = require('../models/Student');
+const QuestionBank = require('../models/QuestionBank');
 
 const router = express.Router();
 
@@ -373,27 +374,25 @@ router.delete('/:id', adminAuth, async (req, res) => {
       });
     }
 
-    // Check if company has associated tests
-    const testCount = await Test.countDocuments({ companyId: req.params.id });
-    if (testCount > 0) {
-      return res.status(400).json({
-        success: false,
-        message: `Cannot delete company. It has ${testCount} associated tests. Please delete or reassign the tests first.`
-      });
-    }
+    // Delete all associated tests
+    await Test.deleteMany({ companyId: req.params.id });
+    
+    // Delete all associated question banks
+    await QuestionBank.deleteMany({ companyId: req.params.id });
 
+    // Delete the company
     await Company.findByIdAndDelete(req.params.id);
 
     res.json({
       success: true,
-      message: 'Company deleted successfully'
+      message: 'Company and associated tests/question banks deleted successfully'
     });
 
   } catch (error) {
     console.error('Delete company error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to delete company'
+      message: 'Failed to delete company: ' + error.message
     });
   }
 });

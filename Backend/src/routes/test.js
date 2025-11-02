@@ -810,6 +810,35 @@ router.post('/:id/generate-questions', adminAuth, async (req, res) => {
   }
 });
 
+// ---------------------------------------------
+// DELETE /api/v1/tests/:id (Admin) - delete test
+// ---------------------------------------------
+router.delete('/:id', adminAuth, async (req, res) => {
+  try {
+    const test = await Test.findById(req.params.id);
+    if (!test) {
+      return res.status(404).json({
+        success: false,
+        message: 'Test not found'
+      });
+    }
+
+    // Delete the test
+    await Test.findByIdAndDelete(req.params.id);
+
+    res.json({
+      success: true,
+      message: 'Test deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete test error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete test'
+    });
+  }
+});
+
 // POST /api/v1/enrollments/company/:companyId
 router.post('/company/:companyId', auth, async (req, res) => {
   try {

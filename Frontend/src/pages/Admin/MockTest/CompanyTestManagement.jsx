@@ -374,12 +374,14 @@ const CompanyTestManagement = () => {
 
   // Delete company
   const deleteCompany = async (companyId) => {
-    if (window.confirm("Are you sure you want to delete this company?")) {
+    if (window.confirm("Are you sure you want to delete this company? This will also delete all associated tests and question banks.")) {
       try {
         const response = await api.delete(`/companies/${companyId}`);
         if (response.data.success) {
-          showSuccess("Company deleted successfully");
+          showSuccess("Company and associated tests/question banks deleted successfully");
           fetchCompanies();
+          fetchTests();
+          fetchQuestionBanks();
         }
       } catch (err) {
         const errorMsg = err.response?.data?.message || "Failed to delete company";
@@ -390,7 +392,7 @@ const CompanyTestManagement = () => {
 
   // Delete test
   const deleteTest = async (testId) => {
-    if (window.confirm("Are you sure you want to delete this test?")) {
+    if (window.confirm("Are you sure you want to delete this test? This action cannot be undone.")) {
       try {
         const response = await api.delete(`/tests/${testId}`);
         if (response.data.success) {
