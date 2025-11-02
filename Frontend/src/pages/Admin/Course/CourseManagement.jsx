@@ -635,34 +635,7 @@ const CourseManagement = () => {
                 Manage all courses, create new ones, and organize content
               </p>
             </div>
-            <button
-              onClick={() => {
-                setEditingCourse(null);
-                setCourseData({
-                  title: "",
-                  description: "",
-                  outcomes: [""],
-                  features: [""],
-                  price: "",
-                  currency: "INR",
-                  category: "",
-                  startDate: "",
-                  duration: "",
-                  level: "Beginner",
-                  isPaid: true,
-                  recordingsPrice: "",
-                  curriculum: {
-                    phases: []
-                  },
-                  instructors: [{ name: "", bio: "", experience: "", expertise: "", photoUrl: "" }]
-                });
-                setActiveTab("create");
-              }}
-              className="btn-primary flex items-center px-4 py-2 rounded-lg shadow hover:shadow-md transition"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Create New Course
-            </button>
+
           </div>
         </div>
 
@@ -681,38 +654,7 @@ const CourseManagement = () => {
                 <BookOpen className="w-5 h-5 inline mr-2" />
                 All Courses
               </button>
-              <button
-                onClick={() => {
-                  setEditingCourse(null);
-                  setCourseData({
-                    title: "",
-                    description: "",
-                    outcomes: [""],
-                    features: [""],
-                    price: "",
-                    currency: "INR",
-                    category: "",
-                    startDate: "",
-                    duration: "",
-                    level: "Beginner",
-                    isPaid: true,
-                    recordingsPrice: "",
-                    curriculum: {
-                      phases: []
-                    },
-                    instructors: [{ name: "", bio: "", experience: "", expertise: "", photoUrl: "" }]
-                  });
-                  setActiveTab("create");
-                }}
-                className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${
-                  activeTab === "create"
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                <Plus className="w-5 h-5 inline mr-2" />
-                Create Course
-              </button>
+
               {activeTab === "edit" && (
                 <button
                   className="py-4 px-6 text-center border-b-2 font-medium text-sm border-blue-500 text-blue-600"
@@ -780,33 +722,7 @@ const CourseManagement = () => {
                       ? "Try adjusting your search or filter criteria." 
                       : "Get started by creating your first course."}
                   </p>
-                  <button
-                    onClick={() => {
-                      setEditingCourse(null);
-                      setCourseData({
-                        title: "",
-                        description: "",
-                        outcomes: [""],
-                        features: [""],
-                        price: "",
-                        currency: "INR",
-                        category: "",
-                        startDate: "",
-                        duration: "",
-                        level: "Beginner",
-                        isPaid: true,
-                        recordingsPrice: "",
-                        curriculum: {
-                          phases: []
-                        },
-                        instructors: [{ name: "", bio: "", experience: "", expertise: "", photoUrl: "" }]
-                      });
-                      setActiveTab("create");
-                    }}
-                    className="btn-primary px-6 py-2 rounded-lg"
-                  >
-                    Create Course
-                  </button>
+
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-6">
