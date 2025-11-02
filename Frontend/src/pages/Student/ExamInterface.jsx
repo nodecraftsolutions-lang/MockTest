@@ -32,19 +32,18 @@ const ExamInterface = () => {
   const [testAlreadyAttempted, setTestAlreadyAttempted] = useState(false);
   const { showError, showSuccess } = useToast();
   
-  // Determine if this is a mock test based on the URL path
-  // Improved detection to check for both /mock-test/ and /mock-tests/ in the URL
-  const isMockTest = location.pathname.includes('/mock-test/') || location.pathname.includes('/mock-tests/');
+  // All tests now use the same API endpoints
+  const isMockTest = false;
   
   // Get the appropriate return path based on test type
   const getReturnPath = () => {
-    return isMockTest ? '/student/mock-tests' : '/student/tests';
+    return '/student/mock-tests';
   };
 
   // Check for completed attempt in session storage to handle post-submission navigation
   useEffect(() => {
     // Use different storage keys for mock tests vs regular tests
-    const storageKeyPrefix = isMockTest ? 'mock_test_' : 'test_';
+    const storageKeyPrefix = 'mock_test_';
     const completedTestKey = `${storageKeyPrefix}${testId}_completed_${user?.id || 'anonymous'}`;
     const hasCompletedTest = sessionStorage.getItem(completedTestKey);
     
@@ -56,10 +55,10 @@ const ExamInterface = () => {
         setLoading(false);
       } catch (e) {
         // If parsing fails, proceed with normal flow
-        checkPreviousAttempt();
+        startTest();
       }
     } else {
-      checkPreviousAttempt();
+      startTest();
     }
     // eslint-disable-next-line
   }, [testId]);
@@ -95,108 +94,15 @@ const ExamInterface = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [testAlreadyAttempted]);
 
-  // Function to check if the test has already been attempted
-  const checkPreviousAttempt = async () => {
-    try {
-      // Use different API endpoints based on test type
-      const apiEndpoint = isMockTest 
-        ? `/mock-tests/${testId}/previous-attempts` 
-        : `/tests/${testId}/previous-attempts`;
-        
-      const res = await api.get(apiEndpoint);
-      if (res.data.success) {
-        const { hasCompletedAttempt, lastAttempt } = res.data.data;
-        
-        if (hasCompletedAttempt) {
-          setTestAlreadyAttempted(true);
-          setPreviousAttempt(lastAttempt);
-          
-          // Store completed test info in session storage
-          const storageKeyPrefix = isMockTest ? 'mock_test_' : 'test_';
-          const completedTestKey = `${storageKeyPrefix}${testId}_completed_${user?.id || 'anonymous'}`;
-          sessionStorage.setItem(completedTestKey, JSON.stringify(lastAttempt));
-          
-          setLoading(false);
-        } else if (attemptId) {
-          // Check if this attempt is already submitted
-          checkAttemptStatus(attemptId);
-        } else {
-          // Start new test
-          startTest();
-        }
-      }
-    } catch (error) {
-      // Check if it's a 404 error (endpoint not found) or 403 error (already attempted)
-      if (error.response?.status === 404) {
-        // Endpoint doesn't exist, fall back to original behavior
-        if (attemptId) {
-          checkAttemptStatus(attemptId);
-        } else {
-          startTest();
-        }
-      } else if (error.response?.status === 403 && error.response?.data?.message?.includes('already attempted')) {
-        setTestAlreadyAttempted(true);
-        setLoading(false);
-      } else {
-        // For other errors, fall back to original behavior
-        if (attemptId) {
-          checkAttemptStatus(attemptId);
-        } else {
-          startTest();
-        }
-      }
-    }
-  };
-
-  // New function to check if an attempt is already submitted
-  const checkAttemptStatus = async (id) => {
-    try {
-      // Use different API endpoints based on test type
-      const apiEndpoint = isMockTest 
-        ? `/mock-tests/attempts/${id}/status` 
-        : `/tests/attempts/${id}/status`;
-        
-      const res = await api.get(apiEndpoint);
-      if (res.data.success) {
-        const { status, attemptData } = res.data.data;
-        
-        if (status === 'submitted' || status === 'completed') {
-          setTestAlreadyAttempted(true);
-          setPreviousAttempt(attemptData);
-          
-          // Store completed test info in session storage
-          const storageKeyPrefix = isMockTest ? 'mock_test_' : 'test_';
-          const completedTestKey = `${storageKeyPrefix}${testId}_completed_${user?.id || 'anonymous'}`;
-          sessionStorage.setItem(completedTestKey, JSON.stringify(attemptData));
-          
-          setLoading(false);
-        } else {
-          // Continue with the attempt
-          fetchQuestions(id);
-        }
-      }
-    } catch (error) {
-      // Check if it's a 404 error (endpoint not found)
-      if (error.response?.status === 404) {
-        // Endpoint doesn't exist, just try to fetch questions
-        fetchQuestions(id);
-      } else {
-        // For other errors, still try to fetch questions
-        fetchQuestions(id);
-      }
-    }
-  };
-
   const startTest = async () => {
     try {
-      // Use different API endpoints based on test type
-      const apiEndpoint = isMockTest 
-        ? `/mock-tests/${testId}/launch` 
-        : `/tests/${testId}/launch`;
+      // Use the standard tests endpoint for all tests
+      const apiEndpoint = `/tests/${testId}/launch`;
         
       const res = await api.post(apiEndpoint, {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
       });
+      
       if (res.data.success) {
         const { attemptId, duration, startTime, serverTime } = res.data.data;
         setAttemptId(attemptId);
@@ -212,6 +118,7 @@ const ExamInterface = () => {
       // Check if it's a 403 error (already attempted)
       if (error.response?.status === 403 && error.response?.data?.message?.includes('already attempted')) {
         setTestAlreadyAttempted(true);
+        setLoading(false);
       } else {
         showError(error.response?.data?.message || "Failed to start test");
       }
@@ -221,12 +128,11 @@ const ExamInterface = () => {
 
   const fetchQuestions = async (id) => {
     try {
-      // Use different API endpoints based on test type
-      const apiEndpoint = isMockTest 
-        ? `/mock-tests/${testId}/questions?attemptId=${id}` 
-        : `/tests/${testId}/questions?attemptId=${id}`;
+      // Use the standard tests endpoint for all tests
+      const apiEndpoint = `/tests/${testId}/questions?attemptId=${id}`;
         
       const res = await api.get(apiEndpoint);
+      
       if (res.data.success) {
         const { questions, sections, savedAnswers, attempt } = res.data.data;
         
@@ -236,7 +142,7 @@ const ExamInterface = () => {
           setPreviousAttempt(attempt);
           
           // Store completed test info in session storage
-          const storageKeyPrefix = isMockTest ? 'mock_test_' : 'test_';
+          const storageKeyPrefix = 'mock_test_';
           const completedTestKey = `${storageKeyPrefix}${testId}_completed_${user?.id || 'anonymous'}`;
           sessionStorage.setItem(completedTestKey, JSON.stringify(attempt));
           
@@ -273,10 +179,8 @@ const ExamInterface = () => {
     try {
       const currentQuestion = questions[currentIndex];
       if (currentQuestion && answers[currentQuestion._id]) {
-        // Use different API endpoints based on test type
-        const apiEndpoint = isMockTest 
-          ? `/mock-tests/${testId}/save-answer` 
-          : `/tests/${testId}/save-answer`;
+        // Use the standard tests endpoint for all tests
+        const apiEndpoint = `/tests/${testId}/save-answer`;
           
         await api.post(apiEndpoint, {
           attemptId,
@@ -338,17 +242,15 @@ const ExamInterface = () => {
     if (!attemptId) return showError("No attempt found");
     setSubmitting(true);
     try {
-      // Use different API endpoints based on test type
-      const apiEndpoint = isMockTest 
-        ? `/mock-tests/attempts/${attemptId}/submit` 
-        : `/tests/attempts/${attemptId}/submit`;
+      // Use the standard tests endpoint for all tests
+      const apiEndpoint = `/tests/attempts/${attemptId}/submit`;
         
       const res = await api.post(apiEndpoint, { answers });
       if (res.data.success) {
         showSuccess("Test submitted successfully!");
         
         // Mark this test as completed in session storage
-        const storageKeyPrefix = isMockTest ? 'mock_test_' : 'test_';
+        const storageKeyPrefix = 'mock_test_';
         const completedTestKey = `${storageKeyPrefix}${testId}_completed_${user?.id || 'anonymous'}`;
         const attemptData = {
           _id: attemptId,
@@ -363,9 +265,7 @@ const ExamInterface = () => {
         setPreviousAttempt(attemptData);
         
         // Navigate to the appropriate results page
-        const resultsPath = isMockTest 
-          ? `/student/mock-results/${attemptId}` 
-          : `/student/results/${attemptId}`;
+        const resultsPath = `/student/results/${attemptId}`;
         navigate(resultsPath);
       }
     } catch (error) {
@@ -379,16 +279,14 @@ const ExamInterface = () => {
   const handleAutoSubmit = async () => {
     if (!attemptId) return;
     try {
-      // Use different API endpoints based on test type
-      const apiEndpoint = isMockTest 
-        ? `/mock-tests/attempts/${attemptId}/submit` 
-        : `/tests/attempts/${attemptId}/submit`;
+      // Use the standard tests endpoint for all tests
+      const apiEndpoint = `/tests/attempts/${attemptId}/submit`;
         
       const res = await api.post(apiEndpoint, { answers });
       
       // Mark this test as completed in session storage
       if (res.data.success) {
-        const storageKeyPrefix = isMockTest ? 'mock_test_' : 'test_';
+        const storageKeyPrefix = 'mock_test_';
         const completedTestKey = `${storageKeyPrefix}${testId}_completed_${user?.id || 'anonymous'}`;
         const attemptData = {
           _id: attemptId,
@@ -402,9 +300,7 @@ const ExamInterface = () => {
       showError("Time expired! Test auto-submitted.");
     
       // Navigate to the appropriate results page
-      const resultsPath = isMockTest 
-        ? `/student/mock-results/${attemptId}` 
-        : `/student/results/${attemptId}`;
+      const resultsPath = `/student/results/${attemptId}`;
       navigate(resultsPath);
     } catch {
       navigate(getReturnPath());
@@ -452,9 +348,7 @@ const ExamInterface = () => {
     if (!previousAttempt || (!previousAttempt._id && !attemptId)) return null;
     
     const id = previousAttempt._id || attemptId;
-    return isMockTest 
-      ? `/student/mock-results/${id}` 
-      : `/student/results/${id}`;
+    return `/student/results/${id}`;
   };
 
   // Show already attempted message
@@ -470,7 +364,7 @@ const ExamInterface = () => {
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Test Already Attempted</h1>
           <p className="text-gray-600 mb-6">
-            You've already attempted this {isMockTest ? 'mock test' : 'test'}. Only one attempt is allowed per test.
+            You've already attempted this mock test. Only one attempt is allowed per test.
           </p>
           
           {previousAttempt && (
@@ -528,7 +422,7 @@ const ExamInterface = () => {
           <div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-primary-700 flex items-center gap-2">
               <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600" />
-              {isMockTest ? 'Mock Test' : 'Test'}
+              Mock Test
             </h1>
             <p className="text-xs sm:text-sm text-gray-600">
               Question {currentIndex + 1} of {questions.length} • Section: <span className="font-semibold">{currentQ?.section}</span>
@@ -912,14 +806,14 @@ const ExamInterface = () => {
             </div>
             <div className="mb-4 sm:mb-6">
               <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                Are you sure you want to submit your {isMockTest ? 'mock test' : 'test'}? You cannot change your answers after submission.
+                Are you sure you want to submit your mock test? You cannot change your answers after submission.
               </p>
               {/* Warning about one attempt */}
               <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
                 <div className="flex items-start">
                   <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 mt-0.5 mr-2 flex-shrink-0" />
                   <p className="text-red-700 text-xs sm:text-sm">
-                    <strong>Important:</strong> This {isMockTest ? 'mock test' : 'test'} allows only one attempt. Once submitted, you won't be able to retake it.
+                    <strong>Important:</strong> This mock test allows only one attempt. Once submitted, you won't be able to retake it.
                   </p>
                 </div>
               </div>
