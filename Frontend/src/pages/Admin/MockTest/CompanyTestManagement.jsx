@@ -635,7 +635,7 @@ const CompanyTestManagement = () => {
                     </div>
                     
                     {company.description && (
-                      <p className="mt-3 text-gray-600">{company.description}</p>
+                      <p className="mt-3 text-gray-600 whitespace-pre-line">{company.description}</p>
                     )}
                     
                     {/* Show company sections below the description */}

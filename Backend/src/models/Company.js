@@ -48,7 +48,7 @@ const companySchema = new mongoose.Schema({
   },
   description: {
     type: String,
-    maxlength: [500, 'Description cannot exceed 500 characters']
+    maxlength: [5000, 'Description cannot exceed 5000 characters']
   },
   defaultPattern: [sectionSchema],
   totalQuestions: { type: Number, default: 0 },

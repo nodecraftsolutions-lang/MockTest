@@ -84,7 +84,7 @@ const CompanyList = () => {
               <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-1">
                 {company.name}
               </h3>
-              <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+              <p className="text-sm text-gray-600 mt-1 line-clamp-2 whitespace-pre-line">
                 {company.description}
               </p>
             </Link>

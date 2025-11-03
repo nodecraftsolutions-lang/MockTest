@@ -201,7 +201,7 @@ const CompanyDetails = () => {
   return (
     <ResponsiveContainer className="py-4 sm:py-6 lg:py-10 px-4 space-y-6 sm:space-y-8 lg:space-y-10">
       {/* Company Header */}
-      <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 bg-white rounded-2xl shadow-xl p-4 sm:p-6 mb-2 transition hover:shadow-2xl animate-fade-in">
+      <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 bg-white rounded-2xl shadow-xl p-4 sm:p-6 mb-2 transition hover:shadow-2xl animate-fade-in">
         {company?.logoUrl ? (
           <img
             src={company.logoUrl}
@@ -217,7 +217,9 @@ const CompanyDetails = () => {
           <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-1 tracking-tight">
             {company?.name}
           </h1>
-          <p className="text-gray-600 text-base sm:text-lg">{company?.description}</p>
+          <p className="text-gray-600 text-base sm:text-lg whitespace-pre-line">
+            {company?.description}
+          </p>
         </div>
       </div>
 
