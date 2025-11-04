@@ -217,7 +217,8 @@ const CompanyDetails = () => {
           <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-1 tracking-tight">
             {company?.name}
           </h1>
-          <p className="text-gray-600 text-xs sm:text-sm" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: company?.description?.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-lg">$1</strong>') || '' }} />
+          <p className="text-gray-600 text-xs sm:text-sm" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: company?.description?.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-lg">$1</strong>').replace(/\*\*‍\*(.*?)\*\*‍\*/g, '<strong class="font-bold text-lg">$1</strong>') || '' }} />
+
         </div>
       </div>
 
