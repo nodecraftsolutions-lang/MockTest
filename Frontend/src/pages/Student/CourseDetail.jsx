@@ -467,7 +467,7 @@ const CourseDetail = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">Duration</span>
-                    <span className="font-medium">{enhancedCourse.duration || 'Self-paced'}</span>
+                    <span className="font-medium">{enhancedCourse.duration || 'Self-paced'} weeks</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">Language</span>
