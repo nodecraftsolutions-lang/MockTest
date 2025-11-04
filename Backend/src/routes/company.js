@@ -183,8 +183,16 @@ router.post('/', adminAuth, [
     .withMessage('Please provide a valid logo URL'),
   body('description')
     .optional()
-    .isLength({ max: 10000 })
-    .withMessage('Description cannot exceed 10000 characters'),
+    .custom((value) => {
+      if (value && value.length > 10000) {
+        throw new Error('Description cannot exceed 10000 characters');
+      }
+      // Remove zero-width characters that can cause validation issues
+      if (value) {
+        value = value.replace(/[\u200B-\u200D\uFEFF]/g, '');
+      }
+      return true;
+    }),
   body('category')
     .isIn(['IT Services', 'Product', 'Consulting', 'Banking', 'Government', 'Other'])
     .withMessage('Please select a valid category'),
@@ -221,7 +229,7 @@ router.post('/', adminAuth, [
       });
     }
 
-    const { name, logoUrl, description, category, difficulty, defaultPattern, tags, metadata } = req.body;
+    let { name, logoUrl, description, category, difficulty, defaultPattern, tags, metadata } = req.body;
 
     // Check if company name already exists
     const existingCompany = await Company.findOne({ 
@@ -285,8 +293,12 @@ router.put('/:id', adminAuth, [
     .withMessage('Please provide a valid logo URL'),
   body('description')
     .optional()
-    .isLength({ max: 10000 })
-    .withMessage('Description cannot exceed 10000 characters'),
+    .custom((value) => {
+      if (value && value.length > 10000) {
+        throw new Error('Description cannot exceed 10000 characters');
+      }
+      return true;
+    }),
   body('category')
     .optional()
     .isIn(['IT Services', 'Product', 'Consulting', 'Banking', 'Government', 'Other'])
@@ -331,10 +343,14 @@ router.put('/:id', adminAuth, [
       }
     }
 
+    // Update description directly as it's already normalized in validation
+    if (description !== undefined) {
+      company.description = description;
+    }
+    
     // Update fields
     if (name) company.name = name;
     if (logoUrl !== undefined) company.logoUrl = logoUrl;
-    if (description !== undefined) company.description = description;
     if (category) company.category = category;
     if (difficulty) company.difficulty = difficulty;
     if (defaultPattern) company.defaultPattern = defaultPattern;
