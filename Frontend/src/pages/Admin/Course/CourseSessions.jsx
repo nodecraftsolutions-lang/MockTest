@@ -364,8 +364,8 @@ const CourseSessions = () => {
                       <textarea
                         value={sessionForm.description}
                         onChange={(e) => handleSessionChange("description", e.target.value)}
-                        placeholder="Session description, agenda, or important notes..."
-                        rows="3"
+                        placeholder="Session description, agenda, or important notes (supports all characters including emojis and symbols)..."
+                        rows="5"
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
@@ -442,7 +442,7 @@ const CourseSessions = () => {
                               )}
                             </div>
                             
-                            <p className="text-sm text-gray-600 mb-2">{session.description}</p>
+                            <p className="text-xs text-gray-600 mb-2" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: session.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
                             
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
                               <div className="flex items-center">

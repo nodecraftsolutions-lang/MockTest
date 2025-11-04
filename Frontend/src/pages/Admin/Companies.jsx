@@ -350,7 +350,7 @@ const ManageCompanies = () => {
                 </div>
 
                 {company.description && (
-                  <p className="text-sm text-gray-600 mb-4">{company.description}</p>
+                  <p className="text-xs text-gray-600 mb-4" style={{ fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: company.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
                 )}
 
                 {/* Pattern Overview */}
@@ -570,8 +570,8 @@ const ManageCompanies = () => {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="input-field"
-                  rows={3}
-                  placeholder="Enter company description"
+                  rows={6}
+                  placeholder="Enter company description (supports all characters including emojis and symbols)"
                 />
               </div>
 

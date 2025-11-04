@@ -413,13 +413,13 @@ const CourseDetail = () => {
               {/* Description */}
               <div className="bg-white rounded-2xl shadow-sm p-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Description</h2>
-                <div className="prose max-w-none text-gray-600 space-y-4">
+                <div className="prose max-w-none text-gray-600 text-xs sm:text-sm space-y-4">
                   {descriptionLines.length > 0 ? (
                     descriptionLines.map((line, index) => (
-                      <p key={index}>{line}</p>
+                      <p key={index} style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
                     ))
                   ) : (
-                    <p>{course.description}</p>
+                    <p style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: course.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
                   )}
                 </div>
               </div>
@@ -523,7 +523,7 @@ const CourseDetail = () => {
                         Phase {phase.phaseNumber}: {phase.title}
                       </h3>
                       {phase.description && (
-                        <p className="text-gray-600 mt-1">{phase.description}</p>
+                        <p className="text-gray-600 mt-1 text-sm" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: phase.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
                       )}
                     </div>
                     <div className="p-6 space-y-4">

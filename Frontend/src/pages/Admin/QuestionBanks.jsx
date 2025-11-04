@@ -253,9 +253,7 @@ const QuestionBanks = () => {
             </div>
 
             {bank.description && (
-              <p className="text-sm text-gray-600 mt-3 pt-3 border-t border-gray-200">
-                {bank.description}
-              </p>
+              <p className="text-sm text-gray-600 mt-3 pt-3 border-t border-gray-200" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: bank.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
             )}
           </div>
         ))}

@@ -635,7 +635,7 @@ const CompanyTestManagement = () => {
                     </div>
                     
                     {company.description && (
-                      <p className="mt-3 text-gray-600 whitespace-pre-line">{company.description}</p>
+                      <p className="mt-3 text-gray-600 text-sm" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: company.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
                     )}
                     
                     {/* Show company sections below the description */}

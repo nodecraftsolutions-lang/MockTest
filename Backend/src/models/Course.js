@@ -6,13 +6,19 @@ const SessionSchema = new Schema({
   startsAt: { type: Date, required: true },
   duration: { type: Number, required: true }, // minutes
   streamLink: { type: String, required: true },
-  description: String,
+  description: { 
+    type: String,
+    maxlength: [10000, 'Description cannot exceed 10000 characters']
+  },
 }, { timestamps: true });
 
 // Instructor schema
 const InstructorSchema = new Schema({
   name: { type: String, required: true },
-  bio: { type: String },
+  bio: { 
+    type: String,
+    maxlength: [10000, 'Bio cannot exceed 10000 characters']
+  },
   experience: { type: String },
   expertise: { type: String },
   photoUrl: { type: String }
@@ -21,7 +27,10 @@ const InstructorSchema = new Schema({
 // Topic schema
 const TopicSchema = new Schema({
   title: { type: String, required: true },
-  description: { type: String }
+  description: { 
+    type: String,
+    maxlength: [10000, 'Description cannot exceed 10000 characters']
+  }
 });
 
 // Week schema
@@ -29,21 +38,30 @@ const WeekSchema = new Schema({
   weekNumber: { type: Number, required: true },
   title: { type: String, required: true },
   topics: [TopicSchema],
-  goal: { type: String }
+  goal: { 
+    type: String,
+    maxlength: [10000, 'Goal cannot exceed 10000 characters']
+  }
 });
 
 // Phase schema
 const PhaseSchema = new Schema({
   phaseNumber: { type: Number, required: true },
   title: { type: String, required: true },
-  description: { type: String },
+  description: { 
+    type: String,
+    maxlength: [10000, 'Description cannot exceed 10000 characters']
+  },
   goal: { type: String },
   weeks: [WeekSchema]
 });
 
 const RecordingSchema = new Schema({
   title: { type: String, required: true }, // e.g. "Aptitude Basics"
-  description: { type: String },
+  description: { 
+    type: String,
+    maxlength: [10000, 'Description cannot exceed 10000 characters']
+  },
   videoUrl: {
     type: String,
     required: true,
@@ -95,7 +113,10 @@ const resourceRecordingSchema = new Schema(
 
 const CourseSchema = new Schema({
   title: { type: String, required: true },
-  description: String,
+  description: {
+    type: String,
+    maxlength: [10000, 'Description cannot exceed 10000 characters']
+  },
   outcomes: [String],
   features: [String],
   price: { type: Number, default: 0 },

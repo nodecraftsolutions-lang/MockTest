@@ -509,8 +509,8 @@ const CourseCreation = () => {
                     <textarea
                       value={courseData.description}
                       onChange={(e) => handleCourseChange("description", e.target.value)}
-                      placeholder="Detailed course description..."
-                      rows="4"
+                      placeholder="Detailed course description (supports all characters including emojis and symbols)..."
+                      rows="6"
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -1144,7 +1144,7 @@ const CourseCreation = () => {
                 <div className="space-y-3">
                   <div>
                     <h4 className="font-semibold text-gray-900">{courseData.title}</h4>
-                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">{courseData.description}</p>
+                    <p className="text-xs text-gray-600 mt-1 line-clamp-2" style={{ fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: courseData.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
                   </div>
                   
                   <div className="grid grid-cols-2 gap-2 text-sm">

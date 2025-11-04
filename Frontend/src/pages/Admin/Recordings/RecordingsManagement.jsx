@@ -465,9 +465,9 @@ const RecordingsManagement = () => {
                     <textarea
                       value={recordingForm.description}
                       onChange={(e) => handleRecordingChange("description", e.target.value)}
-                      placeholder="Recording description, topics covered, key takeaways..."
-                      rows="3"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Recording description, topics covered, key takeaways (supports all characters including emojis and symbols)..."
+                      rows="4"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                     />
                   </div>
 
@@ -926,9 +926,7 @@ const RecordingsManagement = () => {
                               </div>
                             </div>
                             
-                            <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                              {recording.description}
-                            </p>
+                            <p className="text-xs text-gray-600 mb-3 line-clamp-2" style={{ fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: recording.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
                             
                             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                               <div className="flex items-center">

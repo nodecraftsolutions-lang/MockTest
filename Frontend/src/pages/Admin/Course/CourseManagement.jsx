@@ -752,7 +752,7 @@ const CourseManagement = () => {
                               </div>
                             </div>
                             
-                            <p className="text-gray-600 mb-4">{course.description}</p>
+                            <p className="text-gray-600 mb-4 text-sm" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: course.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
                             
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                               <div className="flex items-center text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">
@@ -950,9 +950,9 @@ const CourseManagement = () => {
                     <textarea
                       value={courseData.description}
                       onChange={(e) => handleCourseChange("description", e.target.value)}
-                      rows={4}
+                      rows={6}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Enter course description"
+                      placeholder="Enter course description (supports all characters including emojis and symbols)"
                     />
                   </div>
                 </div>
@@ -1142,9 +1142,9 @@ const CourseManagement = () => {
                           </div>
                           
                           {phase.description && (
-                            <div className="text-sm text-gray-600 mb-3">
+                            <div className="text-xs text-gray-600 mb-3">
                               <span className="text-gray-500">Description:</span>
-                              <span className="ml-2">{phase.description}</span>
+                              <span className="ml-2" style={{ fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: phase.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
                             </div>
                           )}
                           
@@ -1462,9 +1462,9 @@ const CourseManagement = () => {
                         <textarea
                           value={newInstructor.bio}
                           onChange={(e) => handleNewInstructorChange("bio", e.target.value)}
-                          rows={2}
+                          rows={4}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="Enter instructor bio"
+                          placeholder="Enter instructor bio (supports all characters including emojis and symbols)"
                         />
                       </div>
                       

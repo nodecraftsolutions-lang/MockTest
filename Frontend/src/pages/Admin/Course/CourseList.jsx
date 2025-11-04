@@ -241,9 +241,7 @@ const CoursesList = () => {
                           </div>
                         </div>
 
-                        <p className="text-gray-600 mb-4 whitespace-pre-line">
-                          {course.description}
-                        </p>
+                        <p className="text-gray-600 text-xs mb-4" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: course.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
 
                         {/* Course Stats */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -342,9 +340,7 @@ const CoursesList = () => {
                                   <h4 className="font-semibold text-gray-900 text-lg">
                                     Week {index + 1} – {section.title}
                                   </h4>
-                                  <p className="text-gray-600 mt-2 whitespace-pre-line text-sm">
-                                    {section.description}
-                                  </p>
+                                  <p className="text-gray-600 mt-2 text-xs" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: section.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
                                 </div>
                                 <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium flex items-center">
                                   <FileText className="w-4 h-4 mr-1" />

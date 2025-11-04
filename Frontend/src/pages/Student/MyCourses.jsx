@@ -66,9 +66,7 @@ const MyCourses = () => {
                 <h2 className="text-xl font-bold text-gray-900 mb-2 line-clamp-1">
                   {course.title}
                 </h2>
-                <p className="text-gray-600 line-clamp-2 mb-4 flex-1">
-                  {course.description}
-                </p>
+                <p className="text-xs text-gray-600 line-clamp-2 mb-4 flex-1" style={{ fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: course.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
                 <div className="flex items-center text-sm text-gray-500 mb-2 gap-2">
                   <Clock className="w-4 h-4" />
                   <span>

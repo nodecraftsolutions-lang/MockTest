@@ -336,9 +336,7 @@ const RecordingsPage = () => {
                   <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
                     {course.title}
                   </h1>
-                  <p className="text-sm text-blue-100 leading-relaxed">
-                    {descriptionLines[0] || course.description}
-                  </p>
+                  <p className="text-xs sm:text-sm text-blue-100 leading-relaxed" style={{ fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: (descriptionLines[0] || course.description)?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
                 </motion.div>
 
                 {/* Stats */}
@@ -464,9 +462,9 @@ const RecordingsPage = () => {
               {/* Course Description */}
               <div className="bg-white rounded-2xl shadow-lg p-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Course Description</h2>
-                <div className="prose prose-lg max-w-none text-gray-600 leading-relaxed">
+                <div className="prose max-w-none text-gray-600 text-xs sm:text-sm leading-relaxed">
                   {descriptionLines.map((line, idx) => (
-                    <p key={idx} className="mb-4">{line}</p>
+                    <p key={idx} className="mb-4" style={{ fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
                   ))}
                 </div>
               </div>
@@ -566,7 +564,7 @@ const RecordingsPage = () => {
 
                       <div className="p-6">
                         {phase.description && (
-                          <p className="text-gray-700 mb-6 leading-relaxed">{phase.description}</p>
+                          <p className="text-gray-700 mb-6 leading-relaxed text-sm" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: phase.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
                         )}
 
                         <div className="space-y-4">
@@ -776,7 +774,7 @@ const RecordingsPage = () => {
                     <div className="space-y-4">
                       <h3 className="text-2xl font-bold text-gray-900">{selectedRecording.title}</h3>
                       {selectedRecording.description && (
-                        <p className="text-gray-700 text-lg leading-relaxed">{selectedRecording.description}</p>
+                        <p className="text-gray-700 text-lg leading-relaxed" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: selectedRecording.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
                       )}
                     </div>
 

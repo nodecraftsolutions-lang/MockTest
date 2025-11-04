@@ -183,8 +183,8 @@ router.post('/', adminAuth, [
     .withMessage('Please provide a valid logo URL'),
   body('description')
     .optional()
-    .isLength({ max: 5000 })
-    .withMessage('Description cannot exceed 5000 characters'),
+    .isLength({ max: 10000 })
+    .withMessage('Description cannot exceed 10000 characters'),
   body('category')
     .isIn(['IT Services', 'Product', 'Consulting', 'Banking', 'Government', 'Other'])
     .withMessage('Please select a valid category'),
@@ -285,8 +285,8 @@ router.put('/:id', adminAuth, [
     .withMessage('Please provide a valid logo URL'),
   body('description')
     .optional()
-    .isLength({ max: 2000 })
-    .withMessage('Description cannot exceed 2000 characters'),
+    .isLength({ max: 10000 })
+    .withMessage('Description cannot exceed 10000 characters'),
   body('category')
     .optional()
     .isIn(['IT Services', 'Product', 'Consulting', 'Banking', 'Government', 'Other'])
