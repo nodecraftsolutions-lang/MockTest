@@ -752,7 +752,7 @@ const CourseManagement = () => {
                               </div>
                             </div>
                             
-                            <p className="text-gray-600 mb-4 text-sm" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: course.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
+                            <p className="text-gray-600 mb-4 text-sm" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: course.description?.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-lg">$1</strong>') || '' }} />
                             
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                               <div className="flex items-center text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">
@@ -1144,7 +1144,7 @@ const CourseManagement = () => {
                           {phase.description && (
                             <div className="text-xs text-gray-600 mb-3">
                               <span className="text-gray-500">Description:</span>
-                              <span className="ml-2" style={{ fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: phase.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
+                              <span className="ml-2" style={{ fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: phase.description?.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-lg">$1</strong>') || '' }} />
                             </div>
                           )}
                           

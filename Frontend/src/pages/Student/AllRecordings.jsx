@@ -184,7 +184,7 @@ const AllRecordings = () => {
                       </div>
                       
                       {recording.description && (
-                        <p className="text-gray-600 mb-4 line-clamp-3 text-sm" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: recording.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
+                        <p className="text-gray-600 mb-4 line-clamp-3 text-sm" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: recording.description?.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-lg">$1</strong>') || '' }} />
                       )}
                       
                       <div className="flex items-center justify-between text-xs text-gray-500 mb-4">

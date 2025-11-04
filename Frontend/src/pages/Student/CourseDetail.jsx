@@ -278,16 +278,14 @@ const CourseDetail = () => {
                 transition={{ delay: 0.2 }}
                 className="space-y-4"
               >
-                <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm text-sm font-medium">
+                <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm text-sm font-medium border border-white/30 shadow-lg">
                   <BookOpen className="w-4 h-4 mr-2" />
                   {enhancedCourse.level} Level • {enhancedCourse.duration || 'Self-paced'}
                 </div>
                 <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
                   {course.title}
                 </h1>
-                <p className="text-sm text-blue-100 leading-relaxed max-w-3xl">
-                  {descriptionLines[0] || course.description}
-                </p>
+                <p className="text-base sm:text-sm text-blue-100 leading-relaxed max-w-3xl font-medium" style={{ fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: (descriptionLines[0] || course.description)?.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-lg">$1</strong>') || '' }} />
               </motion.div>
 
               {/* Stats */}
@@ -297,18 +295,18 @@ const CourseDetail = () => {
                 transition={{ delay: 0.4 }}
                 className="flex flex-wrap gap-6 text-sm"
               >
-                <div className="flex items-center space-x-2 bg-white/10 px-3 py-2 rounded-lg">
+                <div className="flex items-center space-x-2 bg-white/10 px-4 py-2 rounded-lg border border-white/20 shadow-sm hover:bg-white/20 transition-colors">
                   <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                  <span>{enhancedCourse.rating} Rating</span>
+                  <span className="font-medium">{enhancedCourse.rating} Rating</span>
                 </div>
                 
-                <div className="flex items-center space-x-2 bg-white/10 px-3 py-2 rounded-lg">
+                <div className="flex items-center space-x-2 bg-white/10 px-4 py-2 rounded-lg border border-white/20 shadow-sm hover:bg-white/20 transition-colors">
                   <BarChart3 className="w-4 h-4" />
-                  <span>{enhancedCourse.level}</span>
+                  <span className="font-medium">{enhancedCourse.level}</span>
                 </div>
-                <div className="flex items-center space-x-2 bg-white/10 px-3 py-2 rounded-lg">
+                <div className="flex items-center space-x-2 bg-white/10 px-4 py-2 rounded-lg border border-white/20 shadow-sm hover:bg-white/20 transition-colors">
                   <Languages className="w-4 h-4" />
-                  <span>{enhancedCourse.language}</span>
+                  <span className="font-medium">{enhancedCourse.language}</span>
                 </div>
               </motion.div>
             </div>
@@ -318,14 +316,14 @@ const CourseDetail = () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3 }}
-              className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 shadow-2xl"
+              className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/30 shadow-2xl hover:shadow-3xl transition-shadow duration-300"
             >
               <div className="space-y-6">
                 <div className="text-center">
-                  <div className="text-3xl font-bold mb-2">
+                  <div className="text-4xl font-bold mb-2 text-white">
                     {course.price > 0 ? `₹${course.price}` : "Free"}
                   </div>
-                  <div className="text-blue-200 text-sm">
+                  <div className="text-blue-200 text-sm mb-4">
                     Enroll to access 
                   </div>
                 </div>
@@ -335,20 +333,20 @@ const CourseDetail = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleEnroll}
-                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center space-x-2"
+                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 transform hover:-translate-y-1"
                   >
                     <BookOpen className="w-5 h-5" />
-                    <span>Enroll Now</span>
+                    <span className="text-lg">Enroll Now</span>
                   </motion.button>
                 ) : (
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => navigate(`/student/courses/${id}/learn`)}
-                    className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center space-x-2"
+                    className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 transform hover:-translate-y-1"
                   >
                     <Play className="w-5 h-5" />
-                    <span>Continue Learning</span>
+                    <span className="text-lg">Continue Learning</span>
                   </motion.button>
                 )}
 
@@ -416,10 +414,10 @@ const CourseDetail = () => {
                 <div className="prose max-w-none text-gray-600 text-xs sm:text-sm space-y-4">
                   {descriptionLines.length > 0 ? (
                     descriptionLines.map((line, index) => (
-                      <p key={index} style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                      <p key={index} style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: line.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-lg">$1</strong>') }} />
                     ))
                   ) : (
-                    <p style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: course.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
+                    <p style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: course.description?.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-lg">$1</strong>') || '' }} />
                   )}
                 </div>
               </div>
@@ -523,7 +521,7 @@ const CourseDetail = () => {
                         Phase {phase.phaseNumber}: {phase.title}
                       </h3>
                       {phase.description && (
-                        <p className="text-gray-600 mt-1 text-sm" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: phase.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
+                        <p className="text-gray-600 mt-1 text-sm" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: phase.description?.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-lg">$1</strong>') || '' }} />
                       )}
                     </div>
                     <div className="p-6 space-y-4">

@@ -413,7 +413,7 @@ const ManageTests = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">{test.title}</div>
-                        <div className="text-sm text-gray-500" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: test.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
+                        <div className="text-sm text-gray-500" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: test.description?.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-lg">$1</strong>') || '' }} />
                         <div className="flex items-center space-x-2 mt-1">
                           <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                             test.type === 'free' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'

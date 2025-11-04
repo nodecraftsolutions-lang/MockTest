@@ -335,7 +335,7 @@ const PaidTests = () => {
                                 ₹{test.price}
                               </span>
                               {test.description && (
-                                <p className="text-sm text-gray-600" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: test.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
+                                <p className="text-sm text-gray-600" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: test.description?.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-lg">$1</strong>') || '' }} />
                               )}
                             </div>
                           </div>

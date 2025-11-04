@@ -350,7 +350,7 @@ const ManageCompanies = () => {
                 </div>
 
                 {company.description && (
-                  <p className="text-xs text-gray-600 mb-4" style={{ fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: company.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
+                  <p className="text-xs text-gray-600 mb-4" style={{ fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: company.description?.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-lg">$1</strong>') || '' }} />
                 )}
 
                 {/* Pattern Overview */}

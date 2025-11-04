@@ -61,7 +61,7 @@ const Courses = () => {
                 </div>
 
                 {/* Course Info */}
-                <p className="text-xs text-gray-600 mb-4 line-clamp-3" style={{ fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: course.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
+                <p className="text-xs text-gray-600 mb-4 line-clamp-3" style={{ fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: course.description?.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-lg">$1</strong>') || '' }} />
 
                 <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
                   {course.duration && (

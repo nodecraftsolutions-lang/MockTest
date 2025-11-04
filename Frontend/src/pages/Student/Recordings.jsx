@@ -62,7 +62,7 @@ const Recordings = () => {
                 </div>
                 
                 {course.description && (
-                  <p className="text-sm text-gray-600 mt-2 line-clamp-3" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: course.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
+                  <p className="text-sm text-gray-600 mt-2 line-clamp-3" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: course.description?.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-lg">$1</strong>') || '' }} />
                 )}
                 
                 <div className="mt-4 flex flex-wrap gap-2">

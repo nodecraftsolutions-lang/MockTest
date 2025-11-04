@@ -778,7 +778,7 @@ const Home = () => {
                               {course.title}
                             </h3>
                             
-                            <p className="text-muted-foreground text-sm mb-4 line-clamp-2" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: course.description?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }} />
+                            <p className="text-muted-foreground text-sm mb-4 line-clamp-2" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: course.description?.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-lg">$1</strong>') || '' }} />
                             
                             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
                               <div className="flex items-center gap-1">
