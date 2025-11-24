@@ -530,7 +530,7 @@ const Home = () => {
         title="PrepZon - Mock Tests, Courses & Exam Preparation Platform"
         description="Ace your exams with PrepZon! Access company-specific mock tests, online courses, live recordings, and leaderboards. Join thousands of students preparing for their dream jobs."
         keywords="mock tests online, exam preparation platform, company-specific tests, online learning courses, test practice platform, competitive exam prep, student dashboard, exam analytics, free mock tests, paid practice tests, career preparation, PrepZon platform"
-        canonical="https://www.prepzon.com/"
+        canonical="/"
         schema={{
           "@context": "https://schema.org",
           "@type": "WebPage",
