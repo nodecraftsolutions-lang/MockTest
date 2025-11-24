@@ -45,8 +45,8 @@ const Hero = () => {
           </div>
           <div className="animate-fade-in-up lg:animate-slide-in-right">
             <img 
-              src={"../../img4.png"} 
-              alt="E-learning illustration showing a student studying online" 
+              src={"/prepzon-feature-illustration.png"} 
+              alt="PrepZon platform features - comprehensive learning tools and analytics illustration" 
               className="w-full h-auto"
             />
           </div>
