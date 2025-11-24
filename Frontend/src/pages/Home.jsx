@@ -4,9 +4,13 @@ import { BookOpen, Users, Award, Clock, ChevronDown, Star, ArrowRight, Play, Che
 import api from '../api/axios';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
+import SEO from '../components/SEO';
 
 const ImageSlider = () => {
-  const images = ["student.png", "/course.png"];
+  const images = [
+    { src: "student.png", alt: "Students taking online mock tests on PrepZon platform" },
+    { src: "/course.png", alt: "Online courses and learning materials on PrepZon" }
+  ];
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
@@ -19,7 +23,7 @@ const ImageSlider = () => {
   return (
     <div className="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2 lg:top-[-100px]">
       <div className="h-64 w-full sm:h-72 md:h-80 lg:w-full lg:h-full relative overflow-hidden flex items-center justify-center rounded-2xl shadow-xl">
-        {images.map((src, index) => (
+        {images.map((image, index) => (
           <div 
             key={index}
             className={`absolute inset-0 transition-opacity duration-1000 flex items-center justify-center ${
@@ -28,8 +32,8 @@ const ImageSlider = () => {
           >
             <div className="flex items-center justify-center h-full w-full">
               <img
-                src={src}
-                alt={`Slide ${index + 1}`}
+                src={image.src}
+                alt={image.alt}
                 className="max-h-full max-w-full object-contain rounded-2xl"
               />
             </div>
@@ -84,7 +88,7 @@ const Home = () => {
             title: course.title,
             category: course.category || 'General',
             description: course.description,
-            image: "/course Image.png", // Use the same image for all courses
+            image: "/prepzon-course-thumbnail.png", // Use the same image for all courses
             price: course.price || 0,
             rating: 4.5, // Default rating
             students: Math.floor(Math.random() * 10000) + 1000, // Random student count
@@ -344,7 +348,7 @@ const Home = () => {
       title: "Web Development Bootcamp",
       category: "Development",
       description: "Learn HTML, CSS, JavaScript, React, Node.js and more in this comprehensive bootcamp.",
-      image: "/course Image.png", // Use the same image for all courses
+      image: "/prepzon-course-thumbnail.png", // Use the same image for all courses
       price: 89.99,
       rating: 4.8,
       students: 12543,
@@ -358,7 +362,7 @@ const Home = () => {
       title: "UI/UX Design Masterclass",
       category: "Design",
       description: "Master the principles of user interface and user experience design with hands-on projects.",
-      image: "/course Image.png", // Use the same image for all courses
+      image: "/prepzon-course-thumbnail.png", // Use the same image for all courses
       price: 79.99,
       rating: 4.9,
       students: 8932,
@@ -372,7 +376,7 @@ const Home = () => {
       title: "Data Science Fundamentals",
       category: "Data Science",
       description: "Learn Python, statistics, machine learning, and data visualization from scratch.",
-      image: "/course Image.png", // Use the same image for all courses
+      image: "/prepzon-course-thumbnail.png", // Use the same image for all courses
       price: 99.99,
       rating: 4.7,
       students: 10234,
@@ -386,7 +390,7 @@ const Home = () => {
       title: "Digital Marketing Strategy",
       category: "Marketing",
       description: "Master SEO, social media marketing, content marketing, and paid advertising.",
-      image: "/course Image.png", // Use the same image for all courses
+      image: "/prepzon-course-thumbnail.png", // Use the same image for all courses
       price: 69.99,
       rating: 4.6,
       students: 7654,
@@ -400,7 +404,7 @@ const Home = () => {
       title: "Mobile App Development",
       category: "Development",
       description: "Build native iOS and Android apps using React Native and Flutter.",
-      image: "/course Image.png", // Use the same image for all courses
+      image: "/prepzon-course-thumbnail.png", // Use the same image for all courses
       price: 94.99,
       rating: 4.8,
       students: 9234,
@@ -414,7 +418,7 @@ const Home = () => {
       title: "Business Analytics",
       category: "Business",
       description: "Learn data-driven decision making, business intelligence, and analytics tools.",
-      image: "/course Image.png", // Use the same image for all courses
+      image: "/prepzon-course-thumbnail.png", // Use the same image for all courses
       price: 84.99,
       rating: 4.7,
       students: 6789,
@@ -522,6 +526,19 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="PrepZon - Mock Tests, Courses & Exam Preparation Platform"
+        description="Ace your exams with PrepZon! Access company-specific mock tests, online courses, live recordings, and leaderboards. Join thousands of students preparing for their dream jobs."
+        keywords="mock tests online, exam preparation platform, company-specific tests, online learning courses, test practice platform, competitive exam prep, student dashboard, exam analytics, free mock tests, paid practice tests, career preparation, PrepZon platform"
+        canonical="/"
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          "name": "PrepZon Home",
+          "description": "Online mock test and course platform for students and professionals",
+          "url": "https://www.prepzon.com/"
+        }}
+      />
       {/* Hero Section with new content and img4.png */}
       <section id="home">
         <div className="relative overflow-hidden">

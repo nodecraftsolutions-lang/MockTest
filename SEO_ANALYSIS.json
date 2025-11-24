@@ -1,0 +1,744 @@
+{
+  "repository": "MockTest - PrepZon Platform",
+  "generated": "2025-11-24",
+  "pages": {
+    "home": {
+      "file": "/Frontend/src/pages/Home.jsx",
+      "seo": {
+        "title": "PrepZon - Mock Tests, Courses & Exam Preparation Platform",
+        "description": "Ace your exams with PrepZon! Access company-specific mock tests, online courses, live recordings, and leaderboards. Join thousands of students preparing for their dream jobs.",
+        "keywords": [
+          "mock tests online",
+          "exam preparation platform",
+          "company-specific tests",
+          "online learning courses",
+          "test practice platform",
+          "competitive exam prep",
+          "student dashboard",
+          "exam analytics",
+          "free mock tests",
+          "paid practice tests",
+          "career preparation",
+          "PrepZon platform"
+        ],
+        "primary_keyword": "online mock test platform",
+        "slug": "/",
+        "canonical": "https://www.prepzon.com/",
+        "og": {
+          "title": "PrepZon - Mock Tests, Courses & Exam Preparation Platform",
+          "description": "Ace your exams with PrepZon! Access company-specific mock tests, online courses, live recordings, and leaderboards.",
+          "image": "https://www.prepzon.com/Final.png",
+          "url": "https://www.prepzon.com/",
+          "type": "website"
+        },
+        "twitter": {
+          "card": "summary_large_image",
+          "title": "PrepZon - Mock Tests, Courses & Exam Preparation Platform",
+          "description": "Ace your exams with PrepZon! Access company-specific mock tests, online courses, live recordings, and leaderboards.",
+          "image": "https://www.prepzon.com/Final.png"
+        },
+        "jsonld": {
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          "name": "PrepZon Home",
+          "description": "Online mock test and course platform for students and professionals",
+          "url": "https://www.prepzon.com/"
+        },
+        "headings": {
+          "h1": "Welcome to PrepZon - Your Ultimate Exam Preparation Platform",
+          "h2": [
+            "Featured Courses",
+            "Why Choose PrepZon",
+            "Success Stories",
+            "Start Your Journey Today"
+          ]
+        },
+        "image_alts": {
+          "student.png": "Students taking online mock tests on PrepZon platform",
+          "course.png": "Online courses and learning materials on PrepZon",
+          "Final.png": "PrepZon logo - Online mock test and exam preparation platform"
+        },
+        "internal_links": [
+          "/mock-tests - Browse Mock Tests",
+          "/about - About PrepZon",
+          "/student - Student Dashboard",
+          "/auth - Login/Register"
+        ],
+        "score": 92,
+        "checklist": [
+          "Add H1 tag to home page hero section",
+          "Ensure all images have descriptive alt text",
+          "Add breadcrumb navigation",
+          "Implement FAQ schema markup",
+          "Add testimonials with review schema",
+          "Optimize page load speed",
+          "Add internal linking to courses",
+          "Implement lazy loading for images",
+          "Add social proof elements",
+          "Create clear call-to-action buttons"
+        ]
+      }
+    },
+    "mock_tests": {
+      "file": "/Frontend/src/pages/MockTests.jsx",
+      "seo": {
+        "title": "Browse Mock Tests - Company-Specific Practice Tests | PrepZon",
+        "description": "Explore hundreds of company-specific mock tests on PrepZon. Practice with real exam patterns from top companies and improve your chances of success.",
+        "keywords": [
+          "company mock tests",
+          "practice tests online",
+          "exam patterns",
+          "company-specific tests",
+          "online test practice",
+          "recruitment tests",
+          "placement tests",
+          "aptitude tests online"
+        ],
+        "primary_keyword": "company-specific mock tests",
+        "slug": "/mock-tests",
+        "canonical": "https://www.prepzon.com/mock-tests",
+        "og": {
+          "title": "Browse Mock Tests - Company-Specific Practice Tests",
+          "description": "Explore hundreds of company-specific mock tests. Practice with real exam patterns.",
+          "image": "https://www.prepzon.com/code.png",
+          "url": "https://www.prepzon.com/mock-tests"
+        },
+        "twitter": {
+          "card": "summary_large_image",
+          "title": "Browse Mock Tests - Company-Specific Practice Tests",
+          "description": "Explore hundreds of company-specific mock tests. Practice with real exam patterns."
+        },
+        "jsonld": {
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          "name": "Mock Tests",
+          "description": "Collection of company-specific mock tests for exam preparation"
+        },
+        "headings": {
+          "h1": "Company-Specific Mock Tests",
+          "h2": [
+            "Top Companies",
+            "Free Mock Tests",
+            "Paid Mock Tests",
+            "Recently Added Tests"
+          ]
+        },
+        "score": 88,
+        "checklist": [
+          "Add company logo images with alt text",
+          "Implement filters for test categories",
+          "Add test difficulty indicators",
+          "Include test duration information",
+          "Add number of questions per test",
+          "Implement sorting options",
+          "Add search functionality",
+          "Include user ratings/reviews",
+          "Add 'Most Popular' section",
+          "Implement pagination"
+        ]
+      }
+    },
+    "about": {
+      "file": "/Frontend/src/pages/About.jsx",
+      "seo": {
+        "title": "About PrepZon - Leading Online Mock Test Platform",
+        "description": "Learn about PrepZon's mission to help students succeed through quality mock tests, courses, and comprehensive exam preparation resources.",
+        "keywords": [
+          "about PrepZon",
+          "online learning platform",
+          "exam preparation",
+          "student success",
+          "mock test platform",
+          "educational technology"
+        ],
+        "primary_keyword": "about PrepZon platform",
+        "slug": "/about",
+        "canonical": "https://www.prepzon.com/about",
+        "og": {
+          "title": "About PrepZon - Leading Online Mock Test Platform",
+          "description": "Learn about PrepZon's mission to help students succeed through quality mock tests and courses.",
+          "image": "https://www.prepzon.com/Final.png",
+          "url": "https://www.prepzon.com/about"
+        },
+        "score": 85,
+        "checklist": [
+          "Add team member photos with alt text",
+          "Include company history timeline",
+          "Add mission and vision statements",
+          "Include statistics and achievements",
+          "Add testimonials section",
+          "Include partner/client logos",
+          "Add social media links",
+          "Include contact information",
+          "Add company values section",
+          "Include career opportunities link"
+        ]
+      }
+    },
+    "contact": {
+      "file": "/Frontend/src/pages/ContactPage.jsx",
+      "seo": {
+        "title": "Contact PrepZon - Get Help & Support",
+        "description": "Have questions? Contact PrepZon support team for assistance with mock tests, courses, or technical issues. We're here to help you succeed.",
+        "keywords": [
+          "contact PrepZon",
+          "customer support",
+          "help center",
+          "contact form",
+          "technical support",
+          "student support"
+        ],
+        "primary_keyword": "contact PrepZon support",
+        "slug": "/contact",
+        "canonical": "https://www.prepzon.com/contact",
+        "score": 80,
+        "checklist": [
+          "Add LocalBusiness schema markup",
+          "Include phone number with tel: link",
+          "Add email with mailto: link",
+          "Include office address if available",
+          "Add contact form with clear labels",
+          "Include FAQ section",
+          "Add social media contact options",
+          "Include response time information",
+          "Add WhatsApp contact option",
+          "Include map if physical location exists"
+        ]
+      }
+    },
+    "student_dashboard": {
+      "file": "/Frontend/src/pages/Student/Dashboard.jsx",
+      "seo": {
+        "title": "Student Dashboard - Track Your Progress | PrepZon",
+        "description": "Access your personalized student dashboard on PrepZon. View test results, track progress, manage courses, and monitor your learning journey.",
+        "keywords": [
+          "student dashboard",
+          "test results",
+          "progress tracking",
+          "course management",
+          "learning analytics",
+          "student portal"
+        ],
+        "primary_keyword": "student dashboard",
+        "slug": "/student",
+        "canonical": "https://www.prepzon.com/student",
+        "score": 75,
+        "internal_links": [
+          "/student/free-tests",
+          "/student/paid-tests",
+          "/student/courses",
+          "/student/results",
+          "/student/profile"
+        ],
+        "checklist": [
+          "Add personalized welcome message",
+          "Display recent activity",
+          "Show upcoming tests/courses",
+          "Include progress charts",
+          "Add quick action buttons",
+          "Display performance metrics",
+          "Include notifications section",
+          "Add recommendations",
+          "Show achievement badges",
+          "Include recent test scores"
+        ]
+      }
+    },
+    "free_tests": {
+      "file": "/Frontend/src/pages/Student/FreeTests.jsx",
+      "seo": {
+        "title": "Free Mock Tests - Practice Tests at No Cost | PrepZon",
+        "description": "Access free mock tests on PrepZon. Practice with company-specific exam patterns without any cost and improve your skills.",
+        "keywords": [
+          "free mock tests",
+          "free practice tests",
+          "no cost exams",
+          "free online tests",
+          "practice exams free"
+        ],
+        "primary_keyword": "free mock tests online",
+        "slug": "/student/free-tests",
+        "canonical": "https://www.prepzon.com/student/free-tests",
+        "score": 82,
+        "checklist": [
+          "Highlight 'FREE' badge prominently",
+          "Add test difficulty levels",
+          "Show number of attempts allowed",
+          "Include test duration",
+          "Add test descriptions",
+          "Show number of questions",
+          "Include passing criteria",
+          "Add 'Start Test' CTA",
+          "Show test categories",
+          "Include user ratings"
+        ]
+      }
+    },
+    "paid_tests": {
+      "file": "/Frontend/src/pages/Student/PaidTests.jsx",
+      "seo": {
+        "title": "Premium Mock Tests - Advanced Practice Tests | PrepZon",
+        "description": "Unlock premium mock tests with detailed analytics, explanations, and advanced features. Invest in your success with PrepZon's paid test packages.",
+        "keywords": [
+          "premium mock tests",
+          "paid practice tests",
+          "advanced test features",
+          "test packages",
+          "premium exam prep"
+        ],
+        "primary_keyword": "premium mock tests",
+        "slug": "/student/paid-tests",
+        "canonical": "https://www.prepzon.com/student/paid-tests",
+        "score": 80,
+        "checklist": [
+          "Show pricing clearly",
+          "Add 'Premium' badges",
+          "Include feature comparison",
+          "Add testimonials",
+          "Show value propositions",
+          "Include secure payment badges",
+          "Add money-back guarantee",
+          "Show what's included",
+          "Add purchase CTA",
+          "Include FAQs"
+        ]
+      }
+    },
+    "courses": {
+      "file": "/Frontend/src/pages/Student/Courses.jsx",
+      "seo": {
+        "title": "Online Courses - Learn & Master New Skills | PrepZon",
+        "description": "Explore comprehensive online courses on PrepZon. Learn from expert instructors with video lectures, assignments, and certification.",
+        "keywords": [
+          "online courses",
+          "video lectures",
+          "online learning",
+          "skill development",
+          "course certification",
+          "expert instructors"
+        ],
+        "primary_keyword": "online courses platform",
+        "slug": "/student/courses",
+        "canonical": "https://www.prepzon.com/student/courses",
+        "score": 85,
+        "checklist": [
+          "Add course thumbnails with alt text",
+          "Show instructor information",
+          "Include course duration",
+          "Add number of lectures",
+          "Show course ratings",
+          "Include enrollment count",
+          "Add course categories",
+          "Show course level (beginner/intermediate/advanced)",
+          "Include price information",
+          "Add 'Enroll Now' CTA"
+        ]
+      }
+    },
+    "results": {
+      "file": "/Frontend/src/pages/Student/Results.jsx",
+      "seo": {
+        "title": "Test Results & Analytics - View Your Performance | PrepZon",
+        "description": "View detailed test results and analytics on PrepZon. Track your performance, identify strengths and weaknesses, and improve continuously.",
+        "keywords": [
+          "test results",
+          "performance analytics",
+          "score tracking",
+          "test analysis",
+          "performance metrics"
+        ],
+        "primary_keyword": "test results analytics",
+        "slug": "/student/results",
+        "canonical": "https://www.prepzon.com/student/results",
+        "score": 78,
+        "checklist": [
+          "Display results in charts/graphs",
+          "Show section-wise performance",
+          "Include time management stats",
+          "Add accuracy percentage",
+          "Show rank/percentile",
+          "Include comparison with peers",
+          "Add improvement suggestions",
+          "Show correct/incorrect answers",
+          "Include detailed explanations",
+          "Add download/share options"
+        ]
+      }
+    },
+    "leaderboard": {
+      "file": "/Frontend/src/pages/Student/Leaderboard.jsx",
+      "seo": {
+        "title": "Leaderboard - Top Performers & Rankings | PrepZon",
+        "description": "Check the PrepZon leaderboard to see top performers and track your ranking. Compete with peers and strive for excellence.",
+        "keywords": [
+          "leaderboard",
+          "rankings",
+          "top performers",
+          "student rankings",
+          "competitive learning"
+        ],
+        "primary_keyword": "student leaderboard rankings",
+        "slug": "/student/leaderboard",
+        "canonical": "https://www.prepzon.com/student/leaderboard",
+        "score": 75,
+        "checklist": [
+          "Add user avatars with alt text",
+          "Show rank numbers clearly",
+          "Include score/points",
+          "Add filtering options",
+          "Show time period selector",
+          "Include user's current rank",
+          "Add achievement badges",
+          "Show test-wise leaderboards",
+          "Include pagination",
+          "Add share functionality"
+        ]
+      }
+    },
+    "profile": {
+      "file": "/Frontend/src/pages/Student/Profile.jsx",
+      "seo": {
+        "title": "User Profile - Manage Your Account | PrepZon",
+        "description": "Manage your PrepZon profile, update personal information, change password, and customize your learning preferences.",
+        "keywords": [
+          "user profile",
+          "account settings",
+          "profile management",
+          "user preferences",
+          "account security"
+        ],
+        "primary_keyword": "user profile management",
+        "slug": "/student/profile",
+        "canonical": "https://www.prepzon.com/student/profile",
+        "score": 70,
+        "checklist": [
+          "Add profile photo upload",
+          "Include personal info fields",
+          "Add password change option",
+          "Include email verification",
+          "Add notification preferences",
+          "Show account statistics",
+          "Include linked accounts",
+          "Add privacy settings",
+          "Show subscription status",
+          "Include delete account option"
+        ]
+      }
+    },
+    "company_list": {
+      "file": "/Frontend/src/pages/Student/CompanyList.jsx",
+      "seo": {
+        "title": "Company-Wise Mock Tests - Practice by Company | PrepZon",
+        "description": "Browse mock tests organized by company. Practice with exam patterns from top companies and boost your placement preparation.",
+        "keywords": [
+          "company mock tests",
+          "placement tests",
+          "company-wise tests",
+          "recruitment exams",
+          "company exam patterns"
+        ],
+        "primary_keyword": "company-wise mock tests",
+        "slug": "/student/mock-tests",
+        "canonical": "https://www.prepzon.com/student/mock-tests",
+        "score": 83,
+        "checklist": [
+          "Add company logos with alt text",
+          "Show test count per company",
+          "Include company descriptions",
+          "Add search/filter functionality",
+          "Show difficulty levels",
+          "Include test categories",
+          "Add sorting options",
+          "Show recent additions",
+          "Include popular companies section",
+          "Add breadcrumb navigation"
+        ]
+      }
+    },
+    "recordings": {
+      "file": "/Frontend/src/pages/Student/Recordings.jsx",
+      "seo": {
+        "title": "Course Recordings - Access Video Lectures | PrepZon",
+        "description": "Access recorded video lectures and sessions on PrepZon. Learn at your own pace with high-quality educational content.",
+        "keywords": [
+          "video lectures",
+          "recorded sessions",
+          "online classes",
+          "video content",
+          "course recordings"
+        ],
+        "primary_keyword": "course video recordings",
+        "slug": "/student/recordings",
+        "canonical": "https://www.prepzon.com/student/recordings",
+        "score": 80,
+        "checklist": [
+          "Add video thumbnails with alt text",
+          "Show video duration",
+          "Include topic/subject",
+          "Add instructor name",
+          "Show upload date",
+          "Include view count",
+          "Add download option",
+          "Show video quality options",
+          "Include playback speed control",
+          "Add bookmarking feature"
+        ]
+      }
+    },
+    "my_courses": {
+      "file": "/Frontend/src/pages/Student/MyCourses.jsx",
+      "seo": {
+        "title": "My Courses - Your Enrolled Courses | PrepZon",
+        "description": "Access all your enrolled courses in one place. Continue learning and track your progress across multiple courses.",
+        "keywords": [
+          "enrolled courses",
+          "my courses",
+          "course progress",
+          "learning dashboard",
+          "course access"
+        ],
+        "primary_keyword": "enrolled courses dashboard",
+        "slug": "/student/my-courses",
+        "canonical": "https://www.prepzon.com/student/my-courses",
+        "score": 77,
+        "checklist": [
+          "Show course progress bars",
+          "Add 'Continue Learning' buttons",
+          "Include completion percentage",
+          "Show next lesson",
+          "Add course thumbnails",
+          "Include enrollment date",
+          "Show certificate status",
+          "Add course categories",
+          "Include instructor info",
+          "Show time spent on course"
+        ]
+      }
+    },
+    "orders": {
+      "file": "/Frontend/src/pages/Student/Orders.jsx",
+      "seo": {
+        "title": "My Orders - Purchase History & Invoices | PrepZon",
+        "description": "View your order history, download invoices, and manage your purchases on PrepZon. Track all your transactions in one place.",
+        "keywords": [
+          "order history",
+          "purchase history",
+          "invoices",
+          "transaction history",
+          "payment records"
+        ],
+        "primary_keyword": "order history management",
+        "slug": "/student/orders",
+        "canonical": "https://www.prepzon.com/student/orders",
+        "score": 72,
+        "checklist": [
+          "Show order date",
+          "Include order amount",
+          "Add order status",
+          "Include download invoice button",
+          "Show payment method",
+          "Add refund status",
+          "Include product details",
+          "Show transaction ID",
+          "Add support contact",
+          "Include filter/search options"
+        ]
+      }
+    },
+    "exam_interface": {
+      "file": "/Frontend/src/pages/Student/ExamInterface.jsx",
+      "seo": {
+        "title": "Exam Interface - Take Your Test | PrepZon",
+        "description": "Take your exam with PrepZon's user-friendly test interface. Features include timer, question navigation, and instant submission.",
+        "keywords": [
+          "exam interface",
+          "test taking",
+          "online exam",
+          "test interface",
+          "exam platform"
+        ],
+        "primary_keyword": "online exam interface",
+        "slug": "/student/exam/:testId",
+        "canonical": "https://www.prepzon.com/student/exam",
+        "score": 68,
+        "checklist": [
+          "Add clear timer display",
+          "Include question counter",
+          "Add mark for review option",
+          "Show answered/unanswered status",
+          "Include question palette",
+          "Add submit confirmation",
+          "Show section navigation",
+          "Include instructions panel",
+          "Add calculator (if needed)",
+          "Include help/support button"
+        ]
+      }
+    },
+    "terms": {
+      "file": "/Frontend/src/pages/Terms.jsx",
+      "seo": {
+        "title": "Terms & Conditions - PrepZon Platform Rules",
+        "description": "Read PrepZon's terms and conditions. Understand the rules, guidelines, and policies governing the use of our platform.",
+        "keywords": [
+          "terms and conditions",
+          "terms of service",
+          "user agreement",
+          "platform rules",
+          "legal terms"
+        ],
+        "primary_keyword": "terms and conditions",
+        "slug": "/terms",
+        "canonical": "https://www.prepzon.com/terms",
+        "score": 65,
+        "checklist": [
+          "Add table of contents",
+          "Include last updated date",
+          "Use clear section headers",
+          "Add anchor links",
+          "Include contact information",
+          "Add acceptance checkbox",
+          "Use simple language",
+          "Include definitions section",
+          "Add dispute resolution",
+          "Include governing law"
+        ]
+      }
+    },
+    "privacy_policy": {
+      "file": "/Frontend/src/pages/PrivacyPolicy.jsx",
+      "seo": {
+        "title": "Privacy Policy - How We Protect Your Data | PrepZon",
+        "description": "Learn how PrepZon protects your privacy and personal data. Read our comprehensive privacy policy and data protection practices.",
+        "keywords": [
+          "privacy policy",
+          "data protection",
+          "user privacy",
+          "data security",
+          "GDPR compliance"
+        ],
+        "primary_keyword": "privacy policy",
+        "slug": "/privacy-policy",
+        "canonical": "https://www.prepzon.com/privacy-policy",
+        "score": 70,
+        "checklist": [
+          "Add table of contents",
+          "Include data collection info",
+          "Explain data usage",
+          "Add cookie policy",
+          "Include third-party services",
+          "Add data retention policy",
+          "Include user rights",
+          "Add contact for privacy concerns",
+          "Include GDPR compliance",
+          "Add last updated date"
+        ]
+      }
+    }
+  },
+  "admin_pages": {
+    "admin_dashboard": {
+      "file": "/Frontend/src/pages/Admin/Dashboard.jsx",
+      "seo": {
+        "title": "Admin Dashboard - Manage PrepZon Platform",
+        "description": "Admin dashboard for managing PrepZon platform. Monitor users, tests, courses, and system analytics.",
+        "keywords": [
+          "admin dashboard",
+          "platform management",
+          "admin panel",
+          "system monitoring"
+        ],
+        "primary_keyword": "admin dashboard",
+        "slug": "/admin",
+        "robots": "noindex, nofollow"
+      }
+    },
+    "company_test_management": {
+      "file": "/Frontend/src/pages/Admin/MockTest/CompanyTestManagement.jsx",
+      "seo": {
+        "title": "Company Test Management - Admin Panel",
+        "description": "Manage company tests, patterns, and question banks from the admin panel.",
+        "keywords": [
+          "company management",
+          "test management",
+          "admin tools"
+        ],
+        "slug": "/admin/mocktest",
+        "robots": "noindex, nofollow"
+      }
+    }
+  },
+  "global_seo_strategy": {
+    "site_structure": {
+      "hierarchy": [
+        "Level 1: Home (/)",
+        "Level 2: Public Pages (/mock-tests, /about, /contact, /terms, /privacy-policy)",
+        "Level 3: Student Portal (/student/*)",
+        "Level 4: Admin Portal (/admin/*) - Private"
+      ],
+      "navigation_improvements": [
+        "Add breadcrumb navigation on all pages",
+        "Implement mega menu for better UX",
+        "Add footer sitemap links",
+        "Include related pages section",
+        "Add 'You might also like' recommendations"
+      ]
+    },
+    "keyword_clusters": {
+      "primary_cluster": {
+        "main_keyword": "online mock test platform",
+        "related_keywords": [
+          "mock tests online",
+          "practice tests",
+          "exam preparation",
+          "online testing platform"
+        ],
+        "target_pages": [
+          "/",
+          "/mock-tests"
+        ]
+      },
+      "secondary_cluster": {
+        "main_keyword": "online courses",
+        "related_keywords": [
+          "video lectures",
+          "online learning",
+          "course platform",
+          "e-learning"
+        ],
+        "target_pages": [
+          "/student/courses",
+          "/student/my-courses"
+        ]
+      },
+      "tertiary_cluster": {
+        "main_keyword": "company-specific tests",
+        "related_keywords": [
+          "placement tests",
+          "recruitment exams",
+          "company exam patterns"
+        ],
+        "target_pages": [
+          "/student/mock-tests",
+          "/student/mock-tests/:companyId"
+        ]
+      }
+    },
+    "duplicate_content_fixes": [
+      "Ensure unique titles for all pages",
+      "Add unique meta descriptions",
+      "Use canonical URLs consistently",
+      "Avoid duplicate H1 tags",
+      "Create unique content for similar pages"
+    ],
+    "canonical_routing_plan": {
+      "rules": [
+        "All pages should have canonical URLs",
+        "Prefer www or non-www consistently",
+        "Use HTTPS for all URLs",
+        "Avoid trailing slashes inconsistency",
+        "Handle duplicate routes properly"
+      ]
+    }
+  }
+}
