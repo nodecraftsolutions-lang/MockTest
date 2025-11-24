@@ -1,0 +1,23 @@
+# robots.txt for PrepZon MockTest Platform
+# https://www.robotstxt.org/
+
+User-agent: *
+Allow: /
+Allow: /mock-tests
+Allow: /about
+Allow: /terms
+Allow: /privacy-policy
+Allow: /contact
+
+# Block authentication and admin pages
+Disallow: /auth
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /student
+Disallow: /student/*
+
+# Block API endpoints
+Disallow: /api/
+
+# Sitemaps
+Sitemap: https://www.prepzon.com/sitemap.xml
