@@ -4,6 +4,7 @@ import { BookOpen, Users, Award, Clock, ChevronDown, Star, ArrowRight, Play, Che
 import api from '../api/axios';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
+import SEO from '../components/SEO';
 
 const ImageSlider = () => {
   const images = [
@@ -525,6 +526,19 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="PrepZon - Mock Tests, Courses & Exam Preparation Platform"
+        description="Ace your exams with PrepZon! Access company-specific mock tests, online courses, live recordings, and leaderboards. Join thousands of students preparing for their dream jobs."
+        keywords="mock tests online, exam preparation platform, company-specific tests, online learning courses, test practice platform, competitive exam prep, student dashboard, exam analytics, free mock tests, paid practice tests, career preparation, PrepZon platform"
+        canonical="https://www.prepzon.com/"
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          "name": "PrepZon Home",
+          "description": "Online mock test and course platform for students and professionals",
+          "url": "https://www.prepzon.com/"
+        }}
+      />
       {/* Hero Section with new content and img4.png */}
       <section id="home">
         <div className="relative overflow-hidden">
