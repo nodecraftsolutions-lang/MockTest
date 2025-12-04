@@ -22,9 +22,9 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     questionText: "",
     questionHtml: "",
     questionType: "single",
-    section: sections[0]?.sectionName || "",
-    marks: sections[0]?.marksPerQuestion || 1,
-    negativeMarks: sections[0]?.negativeMarking || 0,
+    section: sections.length > 0 ? sections[0].sectionName : "",
+    marks: sections.length > 0 ? sections[0].marksPerQuestion : 1,
+    negativeMarks: sections.length > 0 ? sections[0].negativeMarking : 0,
     difficulty: "Medium",
     imageUrl: "",
     explanation: "",
@@ -264,6 +264,29 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
       setLoading(false);
     }
   };
+
+  // Early return if no sections
+  if (!sections || sections.length === 0) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+          <div className="text-center">
+            <AlertCircle className="w-16 h-16 text-yellow-600 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-gray-900 mb-2">No Sections Available</h3>
+            <p className="text-gray-600 mb-6">
+              Please configure test sections before adding questions.
+            </p>
+            <button
+              onClick={onClose}
+              className="px-6 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
