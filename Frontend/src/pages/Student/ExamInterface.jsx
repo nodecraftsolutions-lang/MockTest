@@ -8,6 +8,7 @@ import api from "../../api/axios";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { useToast } from "../../context/ToastContext";
 import { useAuth } from "../../context/AuthContext";
+import { createSanitizedHtml } from "../../utils/sanitize";
 
 const ExamInterface = () => {
   const { testId } = useParams();
@@ -623,14 +624,35 @@ const ExamInterface = () => {
               </button>
             </div>
 
-            <p className="text-gray-900 mb-4 sm:mb-6 leading-relaxed text-base sm:text-lg font-medium">
-              {currentQ.questionText.split('\n').map((line, index) => (
-                <span key={index}>
-                  {line}
-                  <br />
-                </span>
-              ))}
-            </p>
+            {/* Question Text */}
+            <div className="text-gray-900 mb-4 sm:mb-6 leading-relaxed text-base sm:text-lg">
+              {currentQ.questionHtml ? (
+                <div 
+                  className="prose max-w-none"
+                  dangerouslySetInnerHTML={createSanitizedHtml(currentQ.questionHtml)}
+                />
+              ) : (
+                <p className="font-medium">
+                  {currentQ.questionText.split('\n').map((line, index) => (
+                    <span key={index}>
+                      {line}
+                      <br />
+                    </span>
+                  ))}
+                </p>
+              )}
+            </div>
+
+            {/* Question Image */}
+            {currentQ.imageUrl && (
+              <div className="mb-4 sm:mb-6">
+                <img 
+                  src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${currentQ.imageUrl}`}
+                  alt="Question" 
+                  className="max-w-full rounded-lg border-2 border-gray-200 shadow-md"
+                />
+              </div>
+            )}
 
             <div className="space-y-2 sm:space-y-3">
               {currentQ.options.map((opt, i) => {
@@ -641,7 +663,7 @@ const ExamInterface = () => {
                 return (
                   <label
                     key={i}
-                    className={`flex items-center p-3 sm:p-4 border rounded-xl cursor-pointer transition-all shadow-sm
+                    className={`flex items-start p-3 sm:p-4 border rounded-xl cursor-pointer transition-all shadow-sm
                       ${isSelected
                         ? "border-primary-500 bg-primary-50 scale-[1.02]"
                         : "border-gray-200 hover:border-primary-300 hover:bg-primary-50/30"
@@ -652,12 +674,19 @@ const ExamInterface = () => {
                       name={`q-${currentQ._id}`}
                       checked={isSelected}
                       onChange={() => handleAnswer(currentQ._id, opt)}
-                      className="mr-2 sm:mr-3 accent-primary-600 w-4 h-4"
+                      className="mr-2 sm:mr-3 accent-primary-600 w-4 h-4 mt-1"
                     />
-                    <span className="text-gray-800 text-sm sm:text-base flex-1">
+                    <div className="text-gray-800 text-sm sm:text-base flex-1">
                       <span className="font-semibold mr-1 sm:mr-2">{String.fromCharCode(65 + i)}.</span>
-                      {opt.text}
-                    </span>
+                      {opt.html ? (
+                        <div 
+                          className="inline prose prose-sm max-w-none"
+                          dangerouslySetInnerHTML={createSanitizedHtml(opt.html)}
+                        />
+                      ) : (
+                        <span>{opt.text}</span>
+                      )}
+                    </div>
                   </label>
                 );
               })}

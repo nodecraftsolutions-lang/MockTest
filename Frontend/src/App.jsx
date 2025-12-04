@@ -13,6 +13,7 @@ import CompanyTestManagement from './pages/Admin/MockTest/CompanyTestManagement'
 import CreateCompany from './pages/Admin/MockTest/CreateCompany';
 import TestCreation from './pages/Admin/MockTest/TestCreation';
 import QuestionBankUpload from './pages/Admin/MockTest/QuestionBankUpload';
+import QuestionManagement from './pages/Admin/MockTest/QuestionManagement';
 
 // Course Pages
 import CourseCreation from './pages/Admin/Course/CourseCreation';
@@ -146,6 +147,7 @@ function App() {
               <Route path="mocktest/question-bank-upload" element={<QuestionBankUpload />} />
               <Route path="mocktest/create-company" element={<CreateCompany />} />
               <Route path="mocktest/test-creation" element={<TestCreation />} />
+              <Route path="mocktest/questions/:testId" element={<QuestionManagement />} />
               <Route path="course/create" element={<CourseCreation />} />
               <Route path="course/sessions" element={<CourseSessions />} />
               <Route path="course/list" element={<CoursesList />} />

@@ -135,28 +135,13 @@ const TestCreation = () => {
         setResponseMsg({
           type: "success",
           text: "Test created successfully!",
+          testId: res.data.data.test._id
         });
         
-        // Reset form
-        setFormData({
-          title: "",
-          description: "",
-          companyId: "",
-          type: "free",
-          price: 0,
-          currency: "INR",
-          duration: 30,
-          sections: [
-            {
-              sectionName: "Aptitude",
-              questionCount: 10,
-              duration: 10,
-              marksPerQuestion: 1,
-              negativeMarking: 0.25
-            }
-          ]
-        });
-        setActiveSection("basic");
+        // Navigate to question management after 1.5 seconds
+        setTimeout(() => {
+          navigate(`/admin/mocktest/questions/${res.data.data.test._id}`);
+        }, 1500);
       }
     } catch (err) {
       const errorMsg = err.response?.data?.message || "❌ Failed to create test";

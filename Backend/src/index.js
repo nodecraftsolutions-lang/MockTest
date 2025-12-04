@@ -53,6 +53,9 @@ app.options('*', cors(corsOptions));
 // ✅ Serve static files from the React app build
 app.use(express.static(path.join(__dirname, '../../Frontend/dist')));
 
+// ✅ Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // ✅ Basic body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
