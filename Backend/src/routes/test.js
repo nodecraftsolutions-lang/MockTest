@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
 const { auth, adminAuth, optionalAuth } = require('../middlewares/auth');
-const { questionCreationLimiter, imageUploadLimiter } = require('../middlewares/rateLimiter');
+const { questionCreationLimiter, imageUploadLimiter, questionReadLimiter } = require('../middlewares/rateLimiter');
 const Test = require('../models/Test');
 const Company = require('../models/Company');
 const Attempt = require('../models/Attempt');
@@ -421,7 +421,7 @@ router.post('/:id/launch', auth, async (req, res) => {
 // Note: req.student is set by auth middleware for all authenticated users (both students and admins)
 // The role property differentiates between regular students and admin users
 // ---------------------------------------------
-router.get('/:id/questions', auth, async (req, res) => {
+router.get('/:id/questions', questionReadLimiter, auth, async (req, res) => {
   try {
     const { attemptId } = req.query;
     const { id } = req.params;
