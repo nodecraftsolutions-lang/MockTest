@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
 const { auth, adminAuth, optionalAuth } = require('../middlewares/auth');
+const { questionCreationLimiter, imageUploadLimiter } = require('../middlewares/rateLimiter');
 const Test = require('../models/Test');
 const Company = require('../models/Company');
 const Attempt = require('../models/Attempt');
@@ -918,7 +919,7 @@ router.post('/company/:companyId', auth, async (req, res) => {
 // ---------------------------------------------
 // POST /api/v1/tests/:id/questions - Add question to test
 // ---------------------------------------------
-router.post('/:id/questions', adminAuth, async (req, res) => {
+router.post('/:id/questions', questionCreationLimiter, adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { 
@@ -997,7 +998,7 @@ router.post('/:id/questions', adminAuth, async (req, res) => {
 // ---------------------------------------------
 // PUT /api/v1/tests/:id/questions/:questionId - Update question
 // ---------------------------------------------
-router.put('/:id/questions/:questionId', adminAuth, async (req, res) => {
+router.put('/:id/questions/:questionId', questionCreationLimiter, adminAuth, async (req, res) => {
   try {
     const { id, questionId } = req.params;
     const updateData = req.body;
@@ -1041,7 +1042,7 @@ router.put('/:id/questions/:questionId', adminAuth, async (req, res) => {
 // ---------------------------------------------
 // DELETE /api/v1/tests/:id/questions/:questionId - Delete question
 // ---------------------------------------------
-router.delete('/:id/questions/:questionId', adminAuth, async (req, res) => {
+router.delete('/:id/questions/:questionId', questionCreationLimiter, adminAuth, async (req, res) => {
   try {
     const { id, questionId } = req.params;
 
@@ -1085,7 +1086,7 @@ router.delete('/:id/questions/:questionId', adminAuth, async (req, res) => {
 // ---------------------------------------------
 // GET /api/v1/tests/:id/questions - Get all questions for a test
 // ---------------------------------------------
-router.get('/:id/questions', adminAuth, async (req, res) => {
+router.get('/:id/questions', questionCreationLimiter, adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -1111,7 +1112,7 @@ router.get('/:id/questions', adminAuth, async (req, res) => {
 // ---------------------------------------------
 // POST /api/v1/tests/upload-question-image - Upload question image
 // ---------------------------------------------
-router.post('/upload-question-image', adminAuth, imageUpload.single('image'), async (req, res) => {
+router.post('/upload-question-image', imageUploadLimiter, adminAuth, imageUpload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No image file uploaded' });
