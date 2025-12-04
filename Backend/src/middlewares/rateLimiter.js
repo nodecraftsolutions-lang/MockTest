@@ -18,7 +18,17 @@ const imageUploadLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Rate limiter for reading questions (more lenient for exam access)
+const questionReadLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 200, // Allow 200 requests per 5 minutes (enough for exam access)
+  message: 'Too many requests from this IP, please try again in a few minutes',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 module.exports = {
   questionCreationLimiter,
-  imageUploadLimiter
+  imageUploadLimiter,
+  questionReadLimiter
 };
