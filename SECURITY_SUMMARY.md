@@ -3,8 +3,8 @@
 ## Overview
 This document summarizes the security measures implemented for the new rich text question editor feature in the Mock Test platform.
 
-## Date: December 2024
-## Version: 2.0
+## Date: December 4, 2025
+## Version: 2.1 - Updated for Question Management API Fix
 
 ---
 
@@ -51,11 +51,11 @@ This document summarizes the security measures implemented for the new rich text
 - Rate limiters applied to all 5 new endpoints
 
 **Protected Endpoints**:
-1. `POST /api/v1/tests/:id/questions` - Add question
-2. `PUT /api/v1/tests/:id/questions/:questionId` - Update question
-3. `DELETE /api/v1/tests/:id/questions/:questionId` - Delete question
-4. `GET /api/v1/tests/:id/questions` - Get questions
-5. `POST /api/v1/tests/upload-question-image` - Upload image
+1. `POST /api/v1/tests/:id/questions` - Add question (100 req/15min)
+2. `PUT /api/v1/tests/:id/questions/:questionId` - Update question (100 req/15min)
+3. `DELETE /api/v1/tests/:id/questions/:questionId` - Delete question (100 req/15min)
+4. `GET /api/v1/tests/:id/questions` - Get questions (200 req/5min) - **UPDATED**
+5. `POST /api/v1/tests/upload-question-image` - Upload image (50 req/15min)
 
 **Files Modified**:
 - `Backend/src/middlewares/rateLimiter.js` - New rate limiter middleware
@@ -235,12 +235,23 @@ mongodb+srv://Vamsi:Vamsi123@cluster0.kxrk338.mongodb.net/
 ## CodeQL Security Scan Results
 
 ### Initial Scan Issues
-- 4 alerts: Missing rate limiting on endpoints
+- 1 alert: Missing rate limiting on GET /tests/:id/questions endpoint
 
 ### Final Scan Results
 - **0 alerts** ✅
 - All issues resolved
 - No new vulnerabilities introduced
+
+### Issues Fixed in This Update
+1. **Route Consolidation Security Enhancement**
+   - Merged duplicate routes that could cause routing confusion
+   - Added proper authentication checks for both admin and student access
+   - Clarified authentication structure with inline documentation
+   
+2. **Rate Limiting Addition**
+   - Added `questionReadLimiter` (200 requests per 5 minutes)
+   - More lenient than creation endpoints to support exam access
+   - Prevents abuse while maintaining usability for students taking exams
 
 ---
 
@@ -386,6 +397,7 @@ For security concerns or to report vulnerabilities:
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: December 2024  
+**Document Version**: 2.1  
+**Last Updated**: December 4, 2025  
+**Update Notes**: Added rate limiting to question read endpoint, consolidated duplicate routes, enhanced authentication checks  
 **Next Review Date**: March 2025

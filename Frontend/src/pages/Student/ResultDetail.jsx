@@ -18,6 +18,7 @@ import LoadingSpinner from "../../components/LoadingSpinner";
 import { useToast } from "../../context/ToastContext";
 import { useResponsive } from "../../hooks/useResponsive";
 import { ResponsiveContainer, ResponsiveGrid } from "../../components/ResponsiveWrapper";
+import { createSanitizedHtml } from "../../utils/sanitize";
 
 const ResultDetail = () => {
   const { attemptId } = useParams();
@@ -305,10 +306,36 @@ const AnswerAnalysis = ({ attempt, showAnswers, setShowAnswers }) => {
                   {answer.isCorrect ? "Correct" : "Incorrect"}
                 </span>
               </div>
-              <p
-                className="text-gray-700 mb-3 text-sm"
-                dangerouslySetInnerHTML={{ __html: answer.question?.text }}
-              />
+              
+              {/* Question Text with HTML Support */}
+              {answer.question?.html ? (
+                <div
+                  className="prose max-w-none text-gray-700 mb-3 text-sm"
+                  dangerouslySetInnerHTML={createSanitizedHtml(answer.question.html)}
+                />
+              ) : (
+                <p
+                  className="text-gray-700 mb-3 text-sm"
+                  dangerouslySetInnerHTML={{ __html: answer.question?.text }}
+                />
+              )}
+              
+              {/* Question Image */}
+              {answer.question?.imageUrl && (
+                <div className="mb-3">
+                  <img 
+                    src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${answer.question.imageUrl}`}
+                    alt="Question" 
+                    style={{
+                      width: answer.question.imageWidth ? `${answer.question.imageWidth}%` : '100%',
+                      height: 'auto',
+                      maxWidth: '100%'
+                    }}
+                    className="rounded-lg border-2 border-gray-200 shadow-sm"
+                  />
+                </div>
+              )}
+              
               <div className="space-y-2">
                 {answer.question?.options?.map((option, optIndex) => {
                   const isSelected = answer.selectedOptions?.includes(option.text);
@@ -330,13 +357,20 @@ const AnswerAnalysis = ({ attempt, showAnswers, setShowAnswers }) => {
                   return (
                     <div
                       key={optIndex}
-                      className={`p-2 rounded-lg border flex items-center justify-between text-sm ${optionClass}`}
+                      className={`p-2 rounded-lg border flex items-start justify-between text-sm ${optionClass}`}
                     >
-                      <div className="flex items-center">
-                        <span className="mr-2">{String.fromCharCode(65 + optIndex)}.</span>
-                        <span>{option.text}</span>
+                      <div className="flex items-start flex-1">
+                        <span className="mr-2 font-semibold">{String.fromCharCode(65 + optIndex)}.</span>
+                        {option.html ? (
+                          <div 
+                            className="prose prose-sm max-w-none flex-1"
+                            dangerouslySetInnerHTML={createSanitizedHtml(option.html)}
+                          />
+                        ) : (
+                          <span className="flex-1">{option.text}</span>
+                        )}
                       </div>
-                      <div className="flex items-center">
+                      <div className="flex items-center ml-2 flex-shrink-0">
                         {isCorrect && (
                           <span className="text-xs font-bold text-green-800 mr-2">
                             (Correct)
@@ -352,12 +386,21 @@ const AnswerAnalysis = ({ attempt, showAnswers, setShowAnswers }) => {
                   );
                 })}
               </div>
-              {answer.question?.explanation && (
+              
+              {/* Explanation with HTML Support */}
+              {(answer.question?.explanationHtml || answer.question?.explanation) && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
                   <h5 className="font-bold text-blue-900 mb-1 text-sm">Explanation:</h5>
-                  <p className="text-blue-800 text-xs">
-                    {answer.question.explanation}
-                  </p>
+                  {answer.question.explanationHtml ? (
+                    <div 
+                      className="prose prose-sm max-w-none text-blue-800"
+                      dangerouslySetInnerHTML={createSanitizedHtml(answer.question.explanationHtml)}
+                    />
+                  ) : (
+                    <p className="text-blue-800 text-xs">
+                      {answer.question.explanation}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
