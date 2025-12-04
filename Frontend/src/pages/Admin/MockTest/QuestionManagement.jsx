@@ -107,7 +107,7 @@ const QuestionManagement = () => {
             dangerouslySetInnerHTML={createSanitizedHtml(option.html)}
           />
         ) : (
-          <span>{option.text}</span>
+          <span>{option.text || '(No text)'}</span>
         )}
         {option.imageUrl && (
           <div className="mt-2">

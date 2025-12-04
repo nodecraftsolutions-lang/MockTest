@@ -74,7 +74,7 @@ const PreviewMode = ({ questionData }) => {
 
         {/* Options */}
         <div className="space-y-3">
-          {questionData.options.filter(opt => opt.text.trim() || opt.html.trim() || opt.imageUrl).map((opt, i) => (
+          {questionData.options.filter(opt => (opt.text && opt.text.trim()) || (opt.html && opt.html.trim()) || opt.imageUrl).map((opt, i) => (
             <label
               key={i}
               className={`flex items-start p-4 border rounded-xl cursor-pointer transition-all shadow-sm
@@ -777,7 +777,7 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     }
 
     const validOptions = questionData.options.filter(opt => 
-      opt.text.trim() || opt.html.trim() || opt.imageUrl
+      (opt.text && opt.text.trim()) || (opt.html && opt.html.trim()) || opt.imageUrl
     );
     if (validOptions.length < 2) {
       showError('At least 2 options are required');
@@ -805,7 +805,7 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     try {
       // Filter out empty options
       const validOptions = questionData.options.filter(opt => 
-        opt.text.trim() || opt.html.trim() || opt.imageUrl
+        (opt.text && opt.text.trim()) || (opt.html && opt.html.trim()) || opt.imageUrl
       );
 
       // Calculate correct answer

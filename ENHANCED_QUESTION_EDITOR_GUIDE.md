@@ -37,12 +37,15 @@ The MockTest platform now features a significantly enhanced question editor with
 4. Click **Edit** to return to editing mode
 
 #### What Preview Shows
-- Question text with full formatting
-- Question image at configured size
+- Question text with full formatting (or "No question text entered yet..." if empty)
+- Question image at configured size (if uploaded)
 - All options with their text/formatting and images
+- Options with no content show as "(Empty option)"
 - Correct answer indicators (green highlighting)
 - Explanation section (if provided)
 - Section, difficulty, and marks information
+
+**Note**: Preview mode shows placeholders for empty fields to help you identify what needs to be filled in before saving.
 
 ### 3. Enhanced Rich Text Editor
 
