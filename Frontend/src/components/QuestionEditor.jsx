@@ -17,6 +17,21 @@ import api from "../api/axios";
 import { useToast } from "../context/ToastContext";
 import { createSanitizedHtml } from "../utils/sanitize";
 
+// Image dimension constants
+const IMAGE_DEFAULTS = {
+  QUESTION_WIDTH: 100,
+  QUESTION_HEIGHT: 300,
+  OPTION_WIDTH: 50,
+  OPTION_HEIGHT: 200,
+  ALIGN: 'left',
+  MIN_WIDTH: 10,
+  MAX_WIDTH: 100,
+  WIDTH_STEP: 5,
+  MIN_HEIGHT: 50,
+  MAX_HEIGHT: 800,
+  HEIGHT_STEP: 50,
+};
+
 // Preview Mode Component
 const PreviewMode = ({ questionData }) => {
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -324,7 +339,7 @@ const EditMode = ({
                 />
                 <button
                   type="button"
-                  onClick={() => setQuestionData(prev => ({ ...prev, imageUrl: "", imageWidth: 100, imageHeight: 300, imageAlign: "left" }))}
+                  onClick={() => setQuestionData(prev => ({ ...prev, imageUrl: "", imageWidth: IMAGE_DEFAULTS.QUESTION_WIDTH, imageHeight: IMAGE_DEFAULTS.QUESTION_HEIGHT, imageAlign: IMAGE_DEFAULTS.ALIGN }))}
                   className="text-red-500 hover:text-red-700 flex-shrink-0"
                 >
                   <X className="w-5 h-5" />
@@ -343,7 +358,7 @@ const EditMode = ({
                       type="button"
                       onClick={() => setQuestionData(prev => ({ 
                         ...prev, 
-                        imageWidth: Math.max(10, prev.imageWidth - 10) 
+                        imageWidth: Math.max(IMAGE_DEFAULTS.MIN_WIDTH, prev.imageWidth - IMAGE_DEFAULTS.WIDTH_STEP) 
                       }))}
                       className="p-2 bg-gray-200 rounded-lg hover:bg-gray-300"
                     >
@@ -351,9 +366,9 @@ const EditMode = ({
                     </button>
                     <input
                       type="range"
-                      min="10"
-                      max="100"
-                      step="5"
+                      min={IMAGE_DEFAULTS.MIN_WIDTH}
+                      max={IMAGE_DEFAULTS.MAX_WIDTH}
+                      step={IMAGE_DEFAULTS.WIDTH_STEP}
                       value={questionData.imageWidth}
                       onChange={(e) => setQuestionData(prev => ({ 
                         ...prev, 
@@ -365,7 +380,7 @@ const EditMode = ({
                       type="button"
                       onClick={() => setQuestionData(prev => ({ 
                         ...prev, 
-                        imageWidth: Math.min(100, prev.imageWidth + 10) 
+                        imageWidth: Math.min(IMAGE_DEFAULTS.MAX_WIDTH, prev.imageWidth + IMAGE_DEFAULTS.WIDTH_STEP) 
                       }))}
                       className="p-2 bg-gray-200 rounded-lg hover:bg-gray-300"
                     >
@@ -384,7 +399,7 @@ const EditMode = ({
                       type="button"
                       onClick={() => setQuestionData(prev => ({ 
                         ...prev, 
-                        imageHeight: Math.max(50, prev.imageHeight - 50) 
+                        imageHeight: Math.max(IMAGE_DEFAULTS.MIN_HEIGHT, prev.imageHeight - IMAGE_DEFAULTS.HEIGHT_STEP) 
                       }))}
                       className="p-2 bg-gray-200 rounded-lg hover:bg-gray-300"
                     >
@@ -392,9 +407,9 @@ const EditMode = ({
                     </button>
                     <input
                       type="range"
-                      min="50"
-                      max="800"
-                      step="50"
+                      min={IMAGE_DEFAULTS.MIN_HEIGHT}
+                      max={IMAGE_DEFAULTS.MAX_HEIGHT}
+                      step={IMAGE_DEFAULTS.HEIGHT_STEP}
                       value={questionData.imageHeight}
                       onChange={(e) => setQuestionData(prev => ({ 
                         ...prev, 
@@ -406,7 +421,7 @@ const EditMode = ({
                       type="button"
                       onClick={() => setQuestionData(prev => ({ 
                         ...prev, 
-                        imageHeight: Math.min(800, prev.imageHeight + 50) 
+                        imageHeight: Math.min(IMAGE_DEFAULTS.MAX_HEIGHT, prev.imageHeight + IMAGE_DEFAULTS.HEIGHT_STEP) 
                       }))}
                       className="p-2 bg-gray-200 rounded-lg hover:bg-gray-300"
                     >
@@ -544,7 +559,7 @@ const EditMode = ({
                             type="button"
                             onClick={() => {
                               const newOptions = [...questionData.options];
-                              newOptions[index] = { ...newOptions[index], imageUrl: "", imageWidth: 50, imageHeight: 200, imageAlign: "left" };
+                              newOptions[index] = { ...newOptions[index], imageUrl: "", imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH, imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT, imageAlign: IMAGE_DEFAULTS.ALIGN };
                               setQuestionData(prev => ({ ...prev, options: newOptions }));
                             }}
                             className="text-red-500 hover:text-red-700"
@@ -567,7 +582,7 @@ const EditMode = ({
                                   const newOptions = [...questionData.options];
                                   newOptions[index] = { 
                                     ...newOptions[index], 
-                                    imageWidth: Math.max(10, newOptions[index].imageWidth - 10) 
+                                    imageWidth: Math.max(IMAGE_DEFAULTS.MIN_WIDTH, newOptions[index].imageWidth - IMAGE_DEFAULTS.WIDTH_STEP) 
                                   };
                                   setQuestionData(prev => ({ ...prev, options: newOptions }));
                                 }}
@@ -577,9 +592,9 @@ const EditMode = ({
                               </button>
                               <input
                                 type="range"
-                                min="10"
-                                max="100"
-                                step="5"
+                                min={IMAGE_DEFAULTS.MIN_WIDTH}
+                                max={IMAGE_DEFAULTS.MAX_WIDTH}
+                                step={IMAGE_DEFAULTS.WIDTH_STEP}
                                 value={option.imageWidth}
                                 onChange={(e) => {
                                   const newOptions = [...questionData.options];
@@ -597,7 +612,7 @@ const EditMode = ({
                                   const newOptions = [...questionData.options];
                                   newOptions[index] = { 
                                     ...newOptions[index], 
-                                    imageWidth: Math.min(100, newOptions[index].imageWidth + 10) 
+                                    imageWidth: Math.min(IMAGE_DEFAULTS.MAX_WIDTH, newOptions[index].imageWidth + IMAGE_DEFAULTS.WIDTH_STEP) 
                                   };
                                   setQuestionData(prev => ({ ...prev, options: newOptions }));
                                 }}
@@ -620,7 +635,7 @@ const EditMode = ({
                                   const newOptions = [...questionData.options];
                                   newOptions[index] = { 
                                     ...newOptions[index], 
-                                    imageHeight: Math.max(50, newOptions[index].imageHeight - 50) 
+                                    imageHeight: Math.max(IMAGE_DEFAULTS.MIN_HEIGHT, newOptions[index].imageHeight - IMAGE_DEFAULTS.HEIGHT_STEP) 
                                   };
                                   setQuestionData(prev => ({ ...prev, options: newOptions }));
                                 }}
@@ -630,9 +645,9 @@ const EditMode = ({
                               </button>
                               <input
                                 type="range"
-                                min="50"
-                                max="600"
-                                step="50"
+                                min={IMAGE_DEFAULTS.MIN_HEIGHT}
+                                max={IMAGE_DEFAULTS.MAX_HEIGHT}
+                                step={IMAGE_DEFAULTS.HEIGHT_STEP}
                                 value={option.imageHeight}
                                 onChange={(e) => {
                                   const newOptions = [...questionData.options];
@@ -650,7 +665,7 @@ const EditMode = ({
                                   const newOptions = [...questionData.options];
                                   newOptions[index] = { 
                                     ...newOptions[index], 
-                                    imageHeight: Math.min(600, newOptions[index].imageHeight + 50) 
+                                    imageHeight: Math.min(IMAGE_DEFAULTS.MAX_HEIGHT, newOptions[index].imageHeight + IMAGE_DEFAULTS.HEIGHT_STEP) 
                                   };
                                   setQuestionData(prev => ({ ...prev, options: newOptions }));
                                 }}
@@ -795,16 +810,16 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     negativeMarks: sections.length > 0 ? sections[0].negativeMarking : 0,
     difficulty: "Medium",
     imageUrl: "",
-    imageWidth: 100,
-    imageHeight: 300,
-    imageAlign: "left",
+    imageWidth: IMAGE_DEFAULTS.QUESTION_WIDTH,
+    imageHeight: IMAGE_DEFAULTS.QUESTION_HEIGHT,
+    imageAlign: IMAGE_DEFAULTS.ALIGN,
     explanation: "",
     explanationHtml: "",
     options: [
-      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50, imageHeight: 200, imageAlign: "left" },
-      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50, imageHeight: 200, imageAlign: "left" },
-      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50, imageHeight: 200, imageAlign: "left" },
-      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50, imageHeight: 200, imageAlign: "left" }
+      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH, imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT, imageAlign: IMAGE_DEFAULTS.ALIGN },
+      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH, imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT, imageAlign: IMAGE_DEFAULTS.ALIGN },
+      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH, imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT, imageAlign: IMAGE_DEFAULTS.ALIGN },
+      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH, imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT, imageAlign: IMAGE_DEFAULTS.ALIGN }
     ],
     tags: []
   });
@@ -980,7 +995,7 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     if (questionData.options.length < 6) {
       setQuestionData(prev => ({
         ...prev,
-        options: [...prev.options, { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50, imageHeight: 200, imageAlign: "left" }]
+        options: [...prev.options, { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH, imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT, imageAlign: IMAGE_DEFAULTS.ALIGN }]
       }));
     }
   };
@@ -1063,16 +1078,16 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
           negativeMarks: sections[0]?.negativeMarking || 0,
           difficulty: "Medium",
           imageUrl: "",
-          imageWidth: 100,
-          imageHeight: 300,
-          imageAlign: "left",
+          imageWidth: IMAGE_DEFAULTS.QUESTION_WIDTH,
+          imageHeight: IMAGE_DEFAULTS.QUESTION_HEIGHT,
+          imageAlign: IMAGE_DEFAULTS.ALIGN,
           explanation: "",
           explanationHtml: "",
           options: [
-            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50, imageHeight: 200, imageAlign: "left" },
-            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50, imageHeight: 200, imageAlign: "left" },
-            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50, imageHeight: 200, imageAlign: "left" },
-            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50, imageHeight: 200, imageAlign: "left" }
+            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH, imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT, imageAlign: IMAGE_DEFAULTS.ALIGN },
+            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH, imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT, imageAlign: IMAGE_DEFAULTS.ALIGN },
+            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH, imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT, imageAlign: IMAGE_DEFAULTS.ALIGN },
+            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH, imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT, imageAlign: IMAGE_DEFAULTS.ALIGN }
           ],
           tags: []
         });
