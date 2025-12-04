@@ -12,6 +12,7 @@ import {
 import api from "../../../api/axios";
 import { useToast } from "../../../context/ToastContext";
 import QuestionEditor from "../../../components/QuestionEditor";
+import { createSanitizedHtml } from "../../../utils/sanitize";
 
 const QuestionManagement = () => {
   const { testId } = useParams();
@@ -88,7 +89,7 @@ const QuestionManagement = () => {
       return (
         <div 
           className="prose max-w-none"
-          dangerouslySetInnerHTML={{ __html: question.questionHtml }}
+          dangerouslySetInnerHTML={createSanitizedHtml(question.questionHtml)}
         />
       );
     }
@@ -100,7 +101,7 @@ const QuestionManagement = () => {
       return (
         <div 
           className="prose prose-sm max-w-none"
-          dangerouslySetInnerHTML={{ __html: option.html }}
+          dangerouslySetInnerHTML={createSanitizedHtml(option.html)}
         />
       );
     }
@@ -295,7 +296,7 @@ const QuestionManagement = () => {
                           {question.explanationHtml ? (
                             <div 
                               className="prose prose-sm max-w-none text-blue-900"
-                              dangerouslySetInnerHTML={{ __html: question.explanationHtml }}
+                              dangerouslySetInnerHTML={createSanitizedHtml(question.explanationHtml)}
                             />
                           ) : (
                             <p className="text-sm text-blue-900">{question.explanation}</p>

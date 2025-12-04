@@ -8,6 +8,7 @@ import api from "../../api/axios";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { useToast } from "../../context/ToastContext";
 import { useAuth } from "../../context/AuthContext";
+import { createSanitizedHtml } from "../../utils/sanitize";
 
 const ExamInterface = () => {
   const { testId } = useParams();
@@ -628,7 +629,7 @@ const ExamInterface = () => {
               {currentQ.questionHtml ? (
                 <div 
                   className="prose max-w-none"
-                  dangerouslySetInnerHTML={{ __html: currentQ.questionHtml }}
+                  dangerouslySetInnerHTML={createSanitizedHtml(currentQ.questionHtml)}
                 />
               ) : (
                 <p className="font-medium">
@@ -680,7 +681,7 @@ const ExamInterface = () => {
                       {opt.html ? (
                         <div 
                           className="inline prose prose-sm max-w-none"
-                          dangerouslySetInnerHTML={{ __html: opt.html }}
+                          dangerouslySetInnerHTML={createSanitizedHtml(opt.html)}
                         />
                       ) : (
                         <span>{opt.text}</span>
