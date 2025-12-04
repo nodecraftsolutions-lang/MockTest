@@ -649,7 +649,12 @@ const ExamInterface = () => {
                 <img 
                   src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${currentQ.imageUrl}`}
                   alt="Question" 
-                  className="max-w-full rounded-lg border-2 border-gray-200 shadow-md"
+                  style={{
+                    width: currentQ.imageWidth ? `${currentQ.imageWidth}%` : '100%',
+                    height: 'auto',
+                    maxWidth: '100%'
+                  }}
+                  className="rounded-lg border-2 border-gray-200 shadow-md"
                 />
               </div>
             )}
@@ -685,6 +690,20 @@ const ExamInterface = () => {
                         />
                       ) : (
                         <span>{opt.text}</span>
+                      )}
+                      {opt.imageUrl && (
+                        <div className="mt-2">
+                          <img 
+                            src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${opt.imageUrl}`}
+                            alt={`Option ${String.fromCharCode(65 + i)}`}
+                            style={{
+                              width: opt.imageWidth ? `${opt.imageWidth}%` : '50%',
+                              height: 'auto',
+                              maxWidth: '100%'
+                            }}
+                            className="rounded border border-gray-300"
+                          />
+                        </div>
                       )}
                     </div>
                   </label>

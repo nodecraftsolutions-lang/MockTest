@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   Plus, Edit, Trash2, BookOpen, Search, Filter,
-  Eye, Settings, Clock, FileText, AlertCircle, CheckCircle
+  Eye, Settings, Clock, FileText, AlertCircle, CheckCircle, ListPlus
 } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
@@ -490,6 +490,14 @@ const ManageTests = () => {
                     
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => navigate(`/admin/mocktest/questions/${test._id}`)}
+                          className="text-green-600 hover:text-green-900"
+                          title="Manage Questions"
+                        >
+                          <ListPlus className="w-4 h-4" />
+                        </button>
+                        
                         <button
                           onClick={() => openEditModal(test)}
                           className="text-primary-600 hover:text-primary-900"

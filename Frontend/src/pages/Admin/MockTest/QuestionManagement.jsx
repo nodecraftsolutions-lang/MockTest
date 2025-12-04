@@ -97,15 +97,34 @@ const QuestionManagement = () => {
   };
 
   const renderOptionContent = (option) => {
-    if (option.html) {
-      return (
-        <div 
-          className="prose prose-sm max-w-none"
-          dangerouslySetInnerHTML={createSanitizedHtml(option.html)}
-        />
-      );
-    }
-    return <span>{option.text}</span>;
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    
+    return (
+      <div>
+        {option.html ? (
+          <div 
+            className="prose prose-sm max-w-none"
+            dangerouslySetInnerHTML={createSanitizedHtml(option.html)}
+          />
+        ) : (
+          <span>{option.text || '(No text)'}</span>
+        )}
+        {option.imageUrl && (
+          <div className="mt-2">
+            <img 
+              src={`${apiUrl}${option.imageUrl}`}
+              alt="Option"
+              style={{
+                width: option.imageWidth ? `${option.imageWidth}%` : '50%',
+                height: 'auto',
+                maxWidth: '100%'
+              }}
+              className="rounded border border-gray-300"
+            />
+          </div>
+        )}
+      </div>
+    );
   };
 
   if (loading) {
@@ -260,7 +279,12 @@ const QuestionManagement = () => {
                           <img 
                             src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${question.imageUrl}`}
                             alt="Question" 
-                            className="max-w-md rounded-lg border-2 border-gray-200"
+                            style={{
+                              width: question.imageWidth ? `${question.imageWidth}%` : '100%',
+                              height: 'auto',
+                              maxWidth: '100%'
+                            }}
+                            className="rounded-lg border-2 border-gray-200"
                           />
                         </div>
                       )}
