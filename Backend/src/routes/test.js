@@ -418,6 +418,8 @@ router.post('/:id/launch', auth, async (req, res) => {
 // ---------------------------------------------
 // GET /api/v1/tests/:id/questions
 // Handles both student (with attemptId) and admin requests
+// Note: req.student is set by auth middleware for all authenticated users (both students and admins)
+// The role property differentiates between regular students and admin users
 // ---------------------------------------------
 router.get('/:id/questions', auth, async (req, res) => {
   try {
@@ -425,6 +427,7 @@ router.get('/:id/questions', auth, async (req, res) => {
     const { id } = req.params;
 
     // Admin request - no attemptId, return all questions with full details
+    // Check user role (admins have role === 'admin', regular students have role !== 'admin')
     if (!attemptId && req.student.role === 'admin') {
       const test = await Test.findById(id).select('generatedQuestions sections title');
       if (!test) {

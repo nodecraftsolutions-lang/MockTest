@@ -823,7 +823,7 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
         [{ 'direction': 'rtl' }],
         [{ 'align': [] }],
         ['blockquote', 'code-block'],
-        ['link', 'image', 'video'],
+        ['link', 'image'],
         ['clean']
       ],
     },
@@ -837,7 +837,7 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     'list', 'bullet', 'indent',
     'direction', 'align',
     'blockquote', 'code-block',
-    'link', 'image', 'video'
+    'link', 'image'
   ];
 
   const handleQuestionHtmlChange = (content, delta, source, editor) => {
