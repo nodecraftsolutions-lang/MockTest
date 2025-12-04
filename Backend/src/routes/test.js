@@ -417,35 +417,62 @@ router.post('/:id/launch', auth, async (req, res) => {
 
 // ---------------------------------------------
 // GET /api/v1/tests/:id/questions
+// Handles both student (with attemptId) and admin requests
 // ---------------------------------------------
 router.get('/:id/questions', auth, async (req, res) => {
   try {
     const { attemptId } = req.query;
-    if (!attemptId) return res.status(400).json({ success: false, message: 'Attempt ID is required' });
+    const { id } = req.params;
+
+    // Admin request - no attemptId, return all questions with full details
+    if (!attemptId && req.student.role === 'admin') {
+      const test = await Test.findById(id).select('generatedQuestions sections title');
+      if (!test) {
+        return res.status(404).json({ success: false, message: 'Test not found' });
+      }
+
+      return res.json({
+        success: true,
+        data: {
+          questions: test.generatedQuestions,
+          sections: test.sections,
+          totalQuestions: test.generatedQuestions.length
+        }
+      });
+    }
+
+    // Student request - requires attemptId
+    if (!attemptId) {
+      return res.status(400).json({ success: false, message: 'Attempt ID is required' });
+    }
 
     const attempt = await Attempt.findById(attemptId);
     if (!attempt) return res.status(404).json({ success: false, message: 'Attempt not found' });
     if (attempt.studentId.toString() !== req.student.id.toString())
       return res.status(403).json({ success: false, message: 'This attempt does not belong to you' });
-    if (attempt.testId.toString() !== req.params.id.toString())
+    if (attempt.testId.toString() !== id.toString())
       return res.status(400).json({ success: false, message: 'Attempt does not match test' });
     if (attempt.status !== 'in-progress')
       return res.status(400).json({ success: false, message: 'Attempt is not active' });
 
-    const test = await Test.findById(req.params.id).select('generatedQuestions sections instructions isGenerated');
+    const test = await Test.findById(id).select('generatedQuestions sections instructions isGenerated');
     if (!test) return res.status(404).json({ success: false, message: 'Test not found' });
 
     if (!test.generatedQuestions || test.generatedQuestions.length === 0) {
-  await test.generateQuestions();
-  await test.reload();
-}
-
+      await test.generateQuestions();
+      await test.reload();
+    }
 
     const questions = test.generatedQuestions.map(q => ({
       _id: q._id,
       questionText: q.questionText,
+      questionHtml: q.questionHtml,
       questionType: q.questionType,
-      options: q.options.map(opt => ({ text: opt.text })),
+      options: q.options.map(opt => ({ 
+        text: opt.text,
+        html: opt.html
+      })),
+      imageUrl: q.imageUrl,
       section: q.section,
       difficulty: q.difficulty,
       marks: q.marks,
@@ -1080,32 +1107,6 @@ router.delete('/:id/questions/:questionId', questionCreationLimiter, adminAuth, 
   } catch (error) {
     console.error('Delete question error:', error);
     res.status(500).json({ success: false, message: 'Failed to delete question' });
-  }
-});
-
-// ---------------------------------------------
-// GET /api/v1/tests/:id/questions - Get all questions for a test
-// ---------------------------------------------
-router.get('/:id/questions', questionCreationLimiter, adminAuth, async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const test = await Test.findById(id).select('generatedQuestions sections title');
-    if (!test) {
-      return res.status(404).json({ success: false, message: 'Test not found' });
-    }
-
-    res.json({
-      success: true,
-      data: {
-        questions: test.generatedQuestions,
-        sections: test.sections,
-        totalQuestions: test.generatedQuestions.length
-      }
-    });
-  } catch (error) {
-    console.error('Get questions error:', error);
-    res.status(500).json({ success: false, message: 'Failed to get questions' });
   }
 });
 

@@ -808,23 +808,25 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     tags: []
   });
 
-  // Rich text editor modules configuration
+  // Rich text editor modules configuration with enhanced features
   const modules = {
-    toolbar: [
-      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-      [{ 'font': [] }],
-      [{ 'size': ['small', false, 'large', 'huge'] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ 'color': [] }, { 'background': [] }],
-      [{ 'script': 'sub' }, { 'script': 'super' }],
-      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-      [{ 'indent': '-1' }, { 'indent': '+1' }],
-      [{ 'direction': 'rtl' }],
-      [{ 'align': [] }],
-      ['blockquote', 'code-block'],
-      ['link', 'image'],
-      ['clean']
-    ],
+    toolbar: {
+      container: [
+        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+        [{ 'font': [] }],
+        [{ 'size': ['small', false, 'large', 'huge'] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'color': [] }, { 'background': [] }],
+        [{ 'script': 'sub' }, { 'script': 'super' }],
+        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+        [{ 'indent': '-1' }, { 'indent': '+1' }],
+        [{ 'direction': 'rtl' }],
+        [{ 'align': [] }],
+        ['blockquote', 'code-block'],
+        ['link', 'image', 'video'],
+        ['clean']
+      ],
+    },
   };
 
   const formats = [
@@ -835,7 +837,7 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     'list', 'bullet', 'indent',
     'direction', 'align',
     'blockquote', 'code-block',
-    'link', 'image'
+    'link', 'image', 'video'
   ];
 
   const handleQuestionHtmlChange = (content, delta, source, editor) => {
