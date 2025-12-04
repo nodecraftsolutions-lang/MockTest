@@ -68,6 +68,27 @@ MockTest/
    - View recent activity
    - Track progress and statistics
 
+## Enhanced Question Editor (NEW!)
+
+We've significantly enhanced the question editor with powerful new features:
+
+### Key Features
+1. **Image Upload with Flexible Resizing**: Add images to questions and options with adjustable dimensions (10-100%)
+2. **Live Preview Mode**: See exactly how questions appear to students before saving
+3. **Option Images**: Each option can now have its own image with size controls
+4. **Rich Text Formatting**: Full formatting support for questions, options, and explanations
+5. **Direct Question Management**: Add questions directly to tests from the Tests page
+
+### Quick Start
+1. Navigate to **Admin → Tests**
+2. Click the **Manage Questions** icon (green list icon) for any test
+3. Click **Add Question**
+4. Create your question with images and formatting
+5. Click **Preview** to see student view
+6. **Save** when satisfied
+
+📖 **[Read the Complete Enhanced Question Editor Guide](./ENHANCED_QUESTION_EDITOR_GUIDE.md)**
+
 ## New Consolidated Admin Interface
 
 We've introduced a new consolidated admin interface at `/admin/mocktest` that simplifies the workflow for creating mock tests:
@@ -78,12 +99,13 @@ We've introduced a new consolidated admin interface at `/admin/mocktest` that si
 3. **Reduced Navigation**: Fewer page changes needed to complete tasks
 4. **Better Overview**: See all company data at a glance
 
-### Workflow
+### Updated Workflow
 1. Create a company with its default test pattern
 2. Create tests for the company
-3. Upload questions to section-specific question banks
-4. Generate test questions from the banks
-5. Students can now take the tests
+3. **Add questions directly to tests using the enhanced question editor**
+4. Students can now take the tests
+
+**Note**: Question bank upload has been streamlined - questions are now added directly to tests through the editor.
 
 ## Technology Stack
 

@@ -493,11 +493,12 @@ const Sidebar = ({ type = "student", onStateChange }) => {
                     icon={ListStartIcon} 
                     label="Generate Test Questions" 
                   />
-                  <MockTestSubItem 
+                  {/* Question Bank Upload removed - Questions are now added directly to tests via the question editor */}
+                  {/* <MockTestSubItem 
                     to="/admin/mocktest/question-bank-upload" 
                     icon={Upload} 
                     label="Question Bank Upload" 
-                  />
+                  /> */}
                 </DropdownContent>
               </div>
               
