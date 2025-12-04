@@ -116,8 +116,13 @@ const QuestionManagement = () => {
               alt="Option"
               style={{
                 width: option.imageWidth ? `${option.imageWidth}%` : '50%',
-                height: 'auto',
-                maxWidth: '100%'
+                height: option.imageHeight ? `${option.imageHeight}px` : 'auto',
+                maxWidth: '100%',
+                float: option.imageAlign || 'none',
+                margin: option.imageAlign === 'left' ? '0 1rem 1rem 0' : 
+                        option.imageAlign === 'right' ? '0 0 1rem 1rem' : 
+                        '0 auto',
+                display: option.imageAlign === 'center' ? 'block' : 'inline'
               }}
               className="rounded border border-gray-300"
             />
@@ -281,8 +286,13 @@ const QuestionManagement = () => {
                             alt="Question" 
                             style={{
                               width: question.imageWidth ? `${question.imageWidth}%` : '100%',
-                              height: 'auto',
-                              maxWidth: '100%'
+                              height: question.imageHeight ? `${question.imageHeight}px` : 'auto',
+                              maxWidth: '100%',
+                              float: question.imageAlign || 'none',
+                              margin: question.imageAlign === 'left' ? '0 1rem 1rem 0' : 
+                                      question.imageAlign === 'right' ? '0 0 1rem 1rem' : 
+                                      '0 auto',
+                              display: question.imageAlign === 'center' ? 'block' : 'inline'
                             }}
                             className="rounded-lg border-2 border-gray-200"
                           />
