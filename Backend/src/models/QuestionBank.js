@@ -6,6 +6,10 @@ const questionSchema = new mongoose.Schema({
     required: [true, 'Question text is required'],
     trim: true
   },
+  questionHtml: {
+    type: String,
+    trim: true  // Rich HTML content for question
+  },
   questionType: {
     type: String,
     enum: ['single', 'multiple', 'numerical'],
@@ -16,6 +20,10 @@ const questionSchema = new mongoose.Schema({
       type: String,
       required: true,
       trim: true
+    },
+    html: {
+      type: String,
+      trim: true  // Rich HTML content for option
     },
     isCorrect: {
       type: Boolean,
@@ -29,6 +37,10 @@ const questionSchema = new mongoose.Schema({
   explanation: {
     type: String,
     trim: true
+  },
+  explanationHtml: {
+    type: String,
+    trim: true  // Rich HTML content for explanation
   },
   marks: {
     type: Number,
@@ -44,15 +56,24 @@ const questionSchema = new mongoose.Schema({
     type: String,
     trim: true
   }],
+  imageUrl: {
+    type: String,
+    trim: true  // Single image URL for question
+  },
   mediaUrls: [{
     type: String,
     validate: {
       validator: function (v) {
-        return /^https?:\/\/.+\.(jpg|jpeg|png|gif|svg|pdf)$/i.test(v);
+        return /^https?:\/\/.+\.(jpg|jpeg|png|gif|svg|pdf)$/i.test(v) || v.startsWith('/uploads/');
       },
       message: 'Please provide a valid media URL'
     }
   }],
+  difficulty: {
+    type: String,
+    enum: ['Easy', 'Medium', 'Hard'],
+    default: 'Medium'
+  },
   isActive: {
     type: Boolean,
     default: true

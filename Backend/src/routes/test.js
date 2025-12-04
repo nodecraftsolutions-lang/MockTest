@@ -4,6 +4,7 @@ const multer = require('multer');
 const csv = require('csv-parser');
 const fs = require('fs');
 const path = require('path');
+const mongoose = require('mongoose');
 const { auth, adminAuth, optionalAuth } = require('../middlewares/auth');
 const Test = require('../models/Test');
 const Company = require('../models/Company');
@@ -15,7 +16,7 @@ const Enrollment = require('../models/Enrollment'); // add at top with other mod
 
 const router = express.Router();
 
-// Multer config
+// Multer config for question bank files
 // ---------------------------------------------
 const upload = multer({
   dest: 'uploads/questions/',
@@ -25,6 +26,33 @@ const upload = multer({
     const ext = path.extname(file.originalname).toLowerCase();
     if (allowed.test(ext)) return cb(null, true);
     cb(new Error('Only CSV, JSON, or Excel files are allowed'));
+  }
+});
+
+// Multer config for question images
+// ---------------------------------------------
+const imageStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = 'uploads/question-images/';
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'question-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const imageUpload = multer({
+  storage: imageStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    const allowed = /jpeg|jpg|png|gif|webp/;
+    const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
+    if (allowed.test(ext)) return cb(null, true);
+    cb(new Error('Only image files (JPEG, JPG, PNG, GIF, WEBP) are allowed'));
   }
 });
 
@@ -884,6 +912,226 @@ router.post('/company/:companyId', auth, async (req, res) => {
       success: false,
       message: 'Failed to enroll to company tests'
     });
+  }
+});
+
+// ---------------------------------------------
+// POST /api/v1/tests/:id/questions - Add question to test
+// ---------------------------------------------
+router.post('/:id/questions', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      questionText, 
+      questionHtml, 
+      questionType, 
+      options, 
+      correctAnswer, 
+      explanation,
+      explanationHtml,
+      section, 
+      marks, 
+      negativeMarks, 
+      difficulty,
+      imageUrl,
+      tags 
+    } = req.body;
+
+    const test = await Test.findById(id);
+    if (!test) {
+      return res.status(404).json({ success: false, message: 'Test not found' });
+    }
+
+    // Validate section exists in test
+    const sectionExists = test.sections.some(s => s.sectionName === section);
+    if (!sectionExists) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Section "${section}" not found in test` 
+      });
+    }
+
+    // Create question object
+    const newQuestion = {
+      questionId: new mongoose.Types.ObjectId(),
+      questionText: questionText || '',
+      questionHtml: questionHtml || '',
+      questionType: questionType || 'single',
+      options: options || [],
+      correctAnswer,
+      explanation: explanation || '',
+      explanationHtml: explanationHtml || '',
+      imageUrl: imageUrl || '',
+      section,
+      marks: marks || 1,
+      negativeMarks: negativeMarks || 0,
+      difficulty: difficulty || 'Medium',
+      tags: tags || []
+    };
+
+    // Add question to test
+    test.generatedQuestions.push(newQuestion);
+    
+    // Update totals
+    test.totalQuestions = test.generatedQuestions.length;
+    test.totalMarks = test.generatedQuestions.reduce((sum, q) => sum + (q.marks || 1), 0);
+    test.isGenerated = true;
+
+    await test.save();
+
+    res.json({
+      success: true,
+      message: 'Question added successfully',
+      data: {
+        question: newQuestion,
+        totalQuestions: test.totalQuestions,
+        totalMarks: test.totalMarks
+      }
+    });
+  } catch (error) {
+    console.error('Add question error:', error);
+    res.status(500).json({ success: false, message: 'Failed to add question' });
+  }
+});
+
+// ---------------------------------------------
+// PUT /api/v1/tests/:id/questions/:questionId - Update question
+// ---------------------------------------------
+router.put('/:id/questions/:questionId', adminAuth, async (req, res) => {
+  try {
+    const { id, questionId } = req.params;
+    const updateData = req.body;
+
+    const test = await Test.findById(id);
+    if (!test) {
+      return res.status(404).json({ success: false, message: 'Test not found' });
+    }
+
+    const questionIndex = test.generatedQuestions.findIndex(
+      q => q.questionId.toString() === questionId
+    );
+
+    if (questionIndex === -1) {
+      return res.status(404).json({ success: false, message: 'Question not found' });
+    }
+
+    // Update question fields
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key] !== undefined) {
+        test.generatedQuestions[questionIndex][key] = updateData[key];
+      }
+    });
+
+    // Recalculate totals
+    test.totalMarks = test.generatedQuestions.reduce((sum, q) => sum + (q.marks || 1), 0);
+
+    await test.save();
+
+    res.json({
+      success: true,
+      message: 'Question updated successfully',
+      data: { question: test.generatedQuestions[questionIndex] }
+    });
+  } catch (error) {
+    console.error('Update question error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update question' });
+  }
+});
+
+// ---------------------------------------------
+// DELETE /api/v1/tests/:id/questions/:questionId - Delete question
+// ---------------------------------------------
+router.delete('/:id/questions/:questionId', adminAuth, async (req, res) => {
+  try {
+    const { id, questionId } = req.params;
+
+    const test = await Test.findById(id);
+    if (!test) {
+      return res.status(404).json({ success: false, message: 'Test not found' });
+    }
+
+    const questionIndex = test.generatedQuestions.findIndex(
+      q => q.questionId.toString() === questionId
+    );
+
+    if (questionIndex === -1) {
+      return res.status(404).json({ success: false, message: 'Question not found' });
+    }
+
+    // Remove question
+    test.generatedQuestions.splice(questionIndex, 1);
+
+    // Update totals
+    test.totalQuestions = test.generatedQuestions.length;
+    test.totalMarks = test.generatedQuestions.reduce((sum, q) => sum + (q.marks || 1), 0);
+    test.isGenerated = test.generatedQuestions.length > 0;
+
+    await test.save();
+
+    res.json({
+      success: true,
+      message: 'Question deleted successfully',
+      data: {
+        totalQuestions: test.totalQuestions,
+        totalMarks: test.totalMarks
+      }
+    });
+  } catch (error) {
+    console.error('Delete question error:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete question' });
+  }
+});
+
+// ---------------------------------------------
+// GET /api/v1/tests/:id/questions - Get all questions for a test
+// ---------------------------------------------
+router.get('/:id/questions', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const test = await Test.findById(id).select('generatedQuestions sections title');
+    if (!test) {
+      return res.status(404).json({ success: false, message: 'Test not found' });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        questions: test.generatedQuestions,
+        sections: test.sections,
+        totalQuestions: test.generatedQuestions.length
+      }
+    });
+  } catch (error) {
+    console.error('Get questions error:', error);
+    res.status(500).json({ success: false, message: 'Failed to get questions' });
+  }
+});
+
+// ---------------------------------------------
+// POST /api/v1/tests/upload-question-image - Upload question image
+// ---------------------------------------------
+router.post('/upload-question-image', adminAuth, imageUpload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No image file uploaded' });
+    }
+
+    // Return the file path
+    const imageUrl = `/uploads/question-images/${req.file.filename}`;
+
+    res.json({
+      success: true,
+      message: 'Image uploaded successfully',
+      data: {
+        imageUrl,
+        filename: req.file.filename,
+        size: req.file.size
+      }
+    });
+  } catch (error) {
+    console.error('Upload image error:', error);
+    res.status(500).json({ success: false, message: 'Failed to upload image' });
   }
 });
 

@@ -90,14 +90,22 @@ const testSchema = new mongoose.Schema({
   generatedQuestions: [{
     questionId: { type: mongoose.Schema.Types.ObjectId, required: true },
     questionText: String,
+    questionHtml: String,  // Rich HTML content for question
     questionType: String,
-    options: [{ text: String, isCorrect: Boolean }],
+    options: [{ 
+      text: String, 
+      html: String,  // Rich HTML content for option
+      isCorrect: Boolean 
+    }],
     correctAnswer: mongoose.Schema.Types.Mixed,
     explanation: String,
+    explanationHtml: String,  // Rich HTML content for explanation
+    imageUrl: String,  // Image URL for question
     section: String,   // which section this belongs to
     marks: Number,
     negativeMarks: Number,
-    tags: [String]
+    tags: [String],
+    difficulty: String
   }],
   isGenerated: { type: Boolean, default: false },
   instructions: [{ type: String, trim: true }],
