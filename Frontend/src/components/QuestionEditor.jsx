@@ -32,6 +32,37 @@ const IMAGE_DEFAULTS = {
   HEIGHT_STEP: 50,
 };
 
+// Helper function to create default option
+const createDefaultOption = () => ({
+  text: "",
+  html: "",
+  isCorrect: false,
+  imageUrl: "",
+  imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH,
+  imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT,
+  imageAlign: IMAGE_DEFAULTS.ALIGN
+});
+
+// Helper function to get image styles for rendering
+const getImageStyles = (align, width, height, isPercentage = true) => ({
+  width: width ? (isPercentage ? `${width}%` : `${width}px`) : '100%',
+  height: height ? `${height}px` : 'auto',
+  maxWidth: '100%',
+  float: align || 'none',
+  margin: align === 'left' ? '0 1rem 1rem 0' : 
+          align === 'right' ? '0 0 1rem 1rem' : 
+          '0 auto',
+  display: align === 'center' ? 'block' : 'inline'
+});
+
+// Helper function to reset image properties
+const resetImageProperties = (isOption = false) => ({
+  imageUrl: "",
+  imageWidth: isOption ? IMAGE_DEFAULTS.OPTION_WIDTH : IMAGE_DEFAULTS.QUESTION_WIDTH,
+  imageHeight: isOption ? IMAGE_DEFAULTS.OPTION_HEIGHT : IMAGE_DEFAULTS.QUESTION_HEIGHT,
+  imageAlign: IMAGE_DEFAULTS.ALIGN
+});
+
 // Preview Mode Component
 const PreviewMode = ({ questionData }) => {
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -77,16 +108,7 @@ const PreviewMode = ({ questionData }) => {
             <img 
               src={`${apiUrl}${questionData.imageUrl}`}
               alt="Question" 
-              style={{
-                width: questionData.imageWidth ? `${questionData.imageWidth}%` : '100%',
-                height: questionData.imageHeight ? `${questionData.imageHeight}px` : 'auto',
-                maxWidth: '100%',
-                float: questionData.imageAlign || 'none',
-                margin: questionData.imageAlign === 'left' ? '0 1rem 1rem 0' : 
-                        questionData.imageAlign === 'right' ? '0 0 1rem 1rem' : 
-                        '0 auto',
-                display: questionData.imageAlign === 'center' ? 'block' : 'inline'
-              }}
+              style={getImageStyles(questionData.imageAlign, questionData.imageWidth, questionData.imageHeight)}
               className="rounded-lg border-2 border-gray-200 shadow-md"
             />
           </div>
@@ -124,16 +146,7 @@ const PreviewMode = ({ questionData }) => {
                     <img 
                       src={`${apiUrl}${opt.imageUrl}`}
                       alt={`Option ${String.fromCharCode(65 + i)}`}
-                      style={{
-                        width: opt.imageWidth ? `${opt.imageWidth}%` : '50%',
-                        height: opt.imageHeight ? `${opt.imageHeight}px` : 'auto',
-                        maxWidth: '100%',
-                        float: opt.imageAlign || 'none',
-                        margin: opt.imageAlign === 'left' ? '0 1rem 1rem 0' : 
-                                opt.imageAlign === 'right' ? '0 0 1rem 1rem' : 
-                                '0 auto',
-                        display: opt.imageAlign === 'center' ? 'block' : 'inline'
-                      }}
+                      style={getImageStyles(opt.imageAlign, opt.imageWidth, opt.imageHeight)}
                       className="rounded-lg border border-gray-300"
                     />
                   </div>
@@ -325,21 +338,12 @@ const EditMode = ({
                 <img 
                   src={`${apiUrl}${questionData.imageUrl}`}
                   alt="Question" 
-                  style={{
-                    width: questionData.imageWidth ? `${questionData.imageWidth}%` : '100%',
-                    height: questionData.imageHeight ? `${questionData.imageHeight}px` : 'auto',
-                    maxWidth: '100%',
-                    float: questionData.imageAlign || 'none',
-                    margin: questionData.imageAlign === 'left' ? '0 1rem 1rem 0' : 
-                            questionData.imageAlign === 'right' ? '0 0 1rem 1rem' : 
-                            '0 auto',
-                    display: questionData.imageAlign === 'center' ? 'block' : 'inline'
-                  }}
+                  style={getImageStyles(questionData.imageAlign, questionData.imageWidth, questionData.imageHeight)}
                   className="rounded-lg border-2 border-gray-300 shadow-sm"
                 />
                 <button
                   type="button"
-                  onClick={() => setQuestionData(prev => ({ ...prev, imageUrl: "", imageWidth: IMAGE_DEFAULTS.QUESTION_WIDTH, imageHeight: IMAGE_DEFAULTS.QUESTION_HEIGHT, imageAlign: IMAGE_DEFAULTS.ALIGN }))}
+                  onClick={() => setQuestionData(prev => ({ ...prev, ...resetImageProperties(false) }))}
                   className="text-red-500 hover:text-red-700 flex-shrink-0"
                 >
                   <X className="w-5 h-5" />
@@ -543,23 +547,14 @@ const EditMode = ({
                           <img 
                             src={`${apiUrl}${option.imageUrl}`}
                             alt={`Option ${String.fromCharCode(65 + index)}`}
-                            style={{
-                              width: option.imageWidth ? `${option.imageWidth}%` : '50%',
-                              height: option.imageHeight ? `${option.imageHeight}px` : 'auto',
-                              maxWidth: '100%',
-                              float: option.imageAlign || 'none',
-                              margin: option.imageAlign === 'left' ? '0 1rem 1rem 0' : 
-                                      option.imageAlign === 'right' ? '0 0 1rem 1rem' : 
-                                      '0 auto',
-                              display: option.imageAlign === 'center' ? 'block' : 'inline'
-                            }}
+                            style={getImageStyles(option.imageAlign, option.imageWidth, option.imageHeight)}
                             className="rounded border border-gray-300"
                           />
                           <button
                             type="button"
                             onClick={() => {
                               const newOptions = [...questionData.options];
-                              newOptions[index] = { ...newOptions[index], imageUrl: "", imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH, imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT, imageAlign: IMAGE_DEFAULTS.ALIGN };
+                              newOptions[index] = { ...newOptions[index], ...resetImageProperties(true) };
                               setQuestionData(prev => ({ ...prev, options: newOptions }));
                             }}
                             className="text-red-500 hover:text-red-700"
@@ -816,10 +811,10 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     explanation: "",
     explanationHtml: "",
     options: [
-      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH, imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT, imageAlign: IMAGE_DEFAULTS.ALIGN },
-      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH, imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT, imageAlign: IMAGE_DEFAULTS.ALIGN },
-      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH, imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT, imageAlign: IMAGE_DEFAULTS.ALIGN },
-      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH, imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT, imageAlign: IMAGE_DEFAULTS.ALIGN }
+      createDefaultOption(),
+      createDefaultOption(),
+      createDefaultOption(),
+      createDefaultOption()
     ],
     tags: []
   });
@@ -995,7 +990,7 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     if (questionData.options.length < 6) {
       setQuestionData(prev => ({
         ...prev,
-        options: [...prev.options, { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH, imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT, imageAlign: IMAGE_DEFAULTS.ALIGN }]
+        options: [...prev.options, createDefaultOption()]
       }));
     }
   };
@@ -1084,10 +1079,10 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
           explanation: "",
           explanationHtml: "",
           options: [
-            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH, imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT, imageAlign: IMAGE_DEFAULTS.ALIGN },
-            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH, imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT, imageAlign: IMAGE_DEFAULTS.ALIGN },
-            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH, imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT, imageAlign: IMAGE_DEFAULTS.ALIGN },
-            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH, imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT, imageAlign: IMAGE_DEFAULTS.ALIGN }
+            createDefaultOption(),
+            createDefaultOption(),
+            createDefaultOption(),
+            createDefaultOption()
           ],
           tags: []
         });

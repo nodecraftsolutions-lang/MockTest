@@ -14,6 +14,18 @@ import { useToast } from "../../../context/ToastContext";
 import QuestionEditor from "../../../components/QuestionEditor";
 import { createSanitizedHtml } from "../../../utils/sanitize";
 
+// Helper function to get image styles for rendering
+const getImageStyles = (align, width, height, isPercentage = true) => ({
+  width: width ? (isPercentage ? `${width}%` : `${width}px`) : '100%',
+  height: height ? `${height}px` : 'auto',
+  maxWidth: '100%',
+  float: align || 'none',
+  margin: align === 'left' ? '0 1rem 1rem 0' : 
+          align === 'right' ? '0 0 1rem 1rem' : 
+          '0 auto',
+  display: align === 'center' ? 'block' : 'inline'
+});
+
 const QuestionManagement = () => {
   const { testId } = useParams();
   const navigate = useNavigate();
@@ -114,16 +126,7 @@ const QuestionManagement = () => {
             <img 
               src={`${apiUrl}${option.imageUrl}`}
               alt="Option"
-              style={{
-                width: option.imageWidth ? `${option.imageWidth}%` : '50%',
-                height: option.imageHeight ? `${option.imageHeight}px` : 'auto',
-                maxWidth: '100%',
-                float: option.imageAlign || 'none',
-                margin: option.imageAlign === 'left' ? '0 1rem 1rem 0' : 
-                        option.imageAlign === 'right' ? '0 0 1rem 1rem' : 
-                        '0 auto',
-                display: option.imageAlign === 'center' ? 'block' : 'inline'
-              }}
+              style={getImageStyles(option.imageAlign, option.imageWidth, option.imageHeight)}
               className="rounded border border-gray-300"
             />
           </div>
@@ -284,16 +287,7 @@ const QuestionManagement = () => {
                           <img 
                             src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${question.imageUrl}`}
                             alt="Question" 
-                            style={{
-                              width: question.imageWidth ? `${question.imageWidth}%` : '100%',
-                              height: question.imageHeight ? `${question.imageHeight}px` : 'auto',
-                              maxWidth: '100%',
-                              float: question.imageAlign || 'none',
-                              margin: question.imageAlign === 'left' ? '0 1rem 1rem 0' : 
-                                      question.imageAlign === 'right' ? '0 0 1rem 1rem' : 
-                                      '0 auto',
-                              display: question.imageAlign === 'center' ? 'block' : 'inline'
-                            }}
+                            style={getImageStyles(question.imageAlign, question.imageWidth, question.imageHeight)}
                             className="rounded-lg border-2 border-gray-200"
                           />
                         </div>
