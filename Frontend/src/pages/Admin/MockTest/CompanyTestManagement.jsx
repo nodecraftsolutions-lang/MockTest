@@ -748,20 +748,20 @@ const CompanyTestManagement = () => {
                                       {test.isGenerated ? (
                                         <span className="flex items-center text-green-600 text-sm">
                                           <CheckCircle className="w-4 h-4 mr-1" />
-                                          Generated
+                                          {test.totalQuestions || 0} Questions
                                         </span>
                                       ) : (
                                         <span className="flex items-center text-yellow-600 text-sm">
                                           <AlertCircle className="w-4 h-4 mr-1" />
-                                          Not Generated
+                                          No Questions
                                         </span>
                                       )}
                                     </div>
                                     <div className="flex space-x-1">
                                       <button
-                                        onClick={() => generateTestQuestions(test._id)}
+                                        onClick={() => navigate(`/admin/mocktest/questions/${test._id}`)}
                                         className="p-1 text-gray-400 hover:text-green-600 rounded"
-                                        title="Generate Questions"
+                                        title="Manage Questions"
                                       >
                                         <Zap className="w-4 h-4" />
                                       </button>

@@ -5,6 +5,62 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Rich Text Editor Styles */
+.ql-editor {
+  min-height: 150px;
+  font-size: 16px;
+}
+
+.ql-editor p,
+.ql-editor ol,
+.ql-editor ul,
+.ql-editor pre,
+.ql-editor blockquote,
+.ql-editor h1,
+.ql-editor h2,
+.ql-editor h3,
+.ql-editor h4,
+.ql-editor h5,
+.ql-editor h6 {
+  margin: 0;
+  padding: 0;
+  counter-reset: list-1 list-2 list-3 list-4 list-5 list-6 list-7 list-8 list-9;
+}
+
+.ql-editor table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.ql-editor table td,
+.ql-editor table th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+/* Prose styles for displaying rich content */
+.prose {
+  max-width: 100%;
+}
+
+.prose table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+}
+
+.prose table td,
+.prose table th {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.prose table th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+}
+
 @keyframes slide {
   0% { transform: translateX(0%); }
   20% { transform: translateX(0%); }
