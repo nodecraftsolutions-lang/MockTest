@@ -7,16 +7,564 @@ import {
   X, 
   Plus,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  Edit,
+  ZoomIn,
+  ZoomOut
 } from "lucide-react";
 import api from "../api/axios";
 import { useToast } from "../context/ToastContext";
+import { createSanitizedHtml } from "../utils/sanitize";
+
+// Preview Mode Component
+const PreviewMode = ({ questionData }) => {
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  
+  return (
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl">
+      <div className="bg-white rounded-2xl shadow-xl p-8 mb-6">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">
+              Question Preview
+            </h2>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                {questionData.section}
+              </span>
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                {questionData.difficulty}
+              </span>
+              <span className="text-xs text-gray-600">{questionData.marks} marks</span>
+              {questionData.negativeMarks > 0 && (
+                <span className="text-xs text-red-600">-{questionData.negativeMarks} for wrong answer</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Question Text */}
+        <div className="text-gray-900 mb-6 leading-relaxed text-lg">
+          {questionData.questionHtml ? (
+            <div 
+              className="prose max-w-none"
+              dangerouslySetInnerHTML={createSanitizedHtml(questionData.questionHtml)}
+            />
+          ) : (
+            <p className="font-medium text-gray-500 italic">No question text entered yet...</p>
+          )}
+        </div>
+
+        {/* Question Image */}
+        {questionData.imageUrl && (
+          <div className="mb-6">
+            <img 
+              src={`${apiUrl}${questionData.imageUrl}`}
+              alt="Question" 
+              style={{
+                width: questionData.imageWidth ? `${questionData.imageWidth}%` : '100%',
+                height: 'auto',
+                maxWidth: '100%'
+              }}
+              className="rounded-lg border-2 border-gray-200 shadow-md"
+            />
+          </div>
+        )}
+
+        {/* Options */}
+        <div className="space-y-3">
+          {questionData.options.filter(opt => opt.text.trim() || opt.html.trim() || opt.imageUrl).map((opt, i) => (
+            <label
+              key={i}
+              className={`flex items-start p-4 border rounded-xl cursor-pointer transition-all shadow-sm
+                ${opt.isCorrect
+                  ? "border-green-500 bg-green-50"
+                  : "border-gray-200 hover:border-blue-300 hover:bg-blue-50/30"
+                }`}
+            >
+              <input
+                type={questionData.questionType === 'multiple' ? "checkbox" : "radio"}
+                checked={opt.isCorrect}
+                readOnly
+                className="mr-3 accent-blue-600 w-4 h-4 mt-1"
+              />
+              <div className="text-gray-800 text-base flex-1">
+                <span className="font-semibold mr-2">{String.fromCharCode(65 + i)}.</span>
+                {opt.html ? (
+                  <div 
+                    className="inline prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={createSanitizedHtml(opt.html)}
+                  />
+                ) : (
+                  <span>{opt.text || '(Empty option)'}</span>
+                )}
+                {opt.imageUrl && (
+                  <div className="mt-2">
+                    <img 
+                      src={`${apiUrl}${opt.imageUrl}`}
+                      alt={`Option ${String.fromCharCode(65 + i)}`}
+                      style={{
+                        width: opt.imageWidth ? `${opt.imageWidth}%` : '50%',
+                        height: 'auto',
+                        maxWidth: '100%'
+                      }}
+                      className="rounded-lg border border-gray-300"
+                    />
+                  </div>
+                )}
+              </div>
+            </label>
+          ))}
+        </div>
+
+        {questionData.options.filter(opt => opt.text.trim() || opt.html.trim() || opt.imageUrl).length === 0 && (
+          <p className="text-gray-400 italic text-center py-4">No options added yet...</p>
+        )}
+      </div>
+
+      {/* Explanation Preview */}
+      {(questionData.explanationHtml || questionData.explanation) && (
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+            <AlertCircle className="w-5 h-5 mr-2 text-blue-600" />
+            Explanation (Shown after test submission)
+          </h3>
+          <div className="text-gray-700 leading-relaxed">
+            {questionData.explanationHtml ? (
+              <div 
+                className="prose max-w-none"
+                dangerouslySetInnerHTML={createSanitizedHtml(questionData.explanationHtml)}
+              />
+            ) : (
+              <p>{questionData.explanation}</p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Edit Mode Component
+const EditMode = ({ 
+  questionData, 
+  setQuestionData, 
+  sections, 
+  handleSectionChange,
+  handleQuestionHtmlChange,
+  handleImageUpload,
+  handleOptionHtmlChange,
+  handleCorrectAnswerToggle,
+  handleOptionImageUpload,
+  handleExplanationHtmlChange,
+  addOption,
+  removeOption,
+  uploadingImage,
+  uploadingOptionImage,
+  fileInputRef,
+  optionFileInputRefs,
+  modules,
+  formats
+}) => {
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+  return (
+    <>
+      {/* Question Type and Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Question Type *
+          </label>
+          <select
+            value={questionData.questionType}
+            onChange={(e) => setQuestionData(prev => ({ ...prev, questionType: e.target.value }))}
+            className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="single">Single Choice</option>
+            <option value="multiple">Multiple Choice</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Section *
+          </label>
+          <select
+            value={questionData.section}
+            onChange={(e) => handleSectionChange(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            {sections.map((section) => (
+              <option key={section.sectionName} value={section.sectionName}>
+                {section.sectionName}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Difficulty
+          </label>
+          <select
+            value={questionData.difficulty}
+            onChange={(e) => setQuestionData(prev => ({ ...prev, difficulty: e.target.value }))}
+            className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="Easy">Easy</option>
+            <option value="Medium">Medium</option>
+            <option value="Hard">Hard</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Marks Configuration */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Marks per Question
+          </label>
+          <input
+            type="number"
+            value={questionData.marks}
+            onChange={(e) => setQuestionData(prev => ({ ...prev, marks: Number(e.target.value) }))}
+            className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            min="0.25"
+            step="0.25"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Negative Marks
+          </label>
+          <input
+            type="number"
+            value={questionData.negativeMarks}
+            onChange={(e) => setQuestionData(prev => ({ ...prev, negativeMarks: Number(e.target.value) }))}
+            className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            min="0"
+            step="0.25"
+          />
+        </div>
+      </div>
+
+      {/* Question Text Editor */}
+      <div className="mb-6">
+        <label className="block text-sm font-semibold text-gray-700 mb-2">
+          Question Text * (Supports rich formatting, emojis, tables)
+        </label>
+        <div className="border border-gray-300 rounded-xl overflow-hidden">
+          <ReactQuill
+            theme="snow"
+            value={questionData.questionHtml}
+            onChange={handleQuestionHtmlChange}
+            modules={modules}
+            formats={formats}
+            placeholder="Enter your question here. You can use formatting, emojis (😊), and create tables..."
+            className="bg-white"
+            style={{ height: '200px', marginBottom: '42px' }}
+          />
+        </div>
+      </div>
+
+      {/* Image Upload with Resize Controls */}
+      <div className="mb-6">
+        <label className="block text-sm font-semibold text-gray-700 mb-2">
+          Question Image (Optional)
+        </label>
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+              accept="image/*"
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingImage}
+              className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition disabled:bg-gray-400"
+            >
+              <ImageIcon className="w-4 h-4 mr-2" />
+              {uploadingImage ? 'Uploading...' : 'Upload Image'}
+            </button>
+          </div>
+          
+          {questionData.imageUrl && (
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+              <div className="flex items-start gap-4">
+                <img 
+                  src={`${apiUrl}${questionData.imageUrl}`}
+                  alt="Question" 
+                  style={{
+                    width: questionData.imageWidth ? `${questionData.imageWidth}%` : '100%',
+                    height: 'auto',
+                    maxWidth: '100%'
+                  }}
+                  className="rounded-lg border-2 border-gray-300 shadow-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setQuestionData(prev => ({ ...prev, imageUrl: "", imageWidth: 100 }))}
+                  className="text-red-500 hover:text-red-700 flex-shrink-0"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              {/* Image Size Controls */}
+              <div className="mt-4">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Image Width: {questionData.imageWidth}%
+                </label>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setQuestionData(prev => ({ 
+                      ...prev, 
+                      imageWidth: Math.max(10, prev.imageWidth - 10) 
+                    }))}
+                    className="p-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                  >
+                    <ZoomOut className="w-4 h-4" />
+                  </button>
+                  <input
+                    type="range"
+                    min="10"
+                    max="100"
+                    step="5"
+                    value={questionData.imageWidth}
+                    onChange={(e) => setQuestionData(prev => ({ 
+                      ...prev, 
+                      imageWidth: Number(e.target.value) 
+                    }))}
+                    className="flex-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setQuestionData(prev => ({ 
+                      ...prev, 
+                      imageWidth: Math.min(100, prev.imageWidth + 10) 
+                    }))}
+                    className="p-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                  >
+                    <ZoomIn className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Options */}
+      <div className="mb-6">
+        <div className="flex justify-between items-center mb-3">
+          <label className="block text-sm font-semibold text-gray-700">
+            Options * (Select correct answer{questionData.questionType === 'multiple' ? 's' : ''})
+          </label>
+          <button
+            type="button"
+            onClick={addOption}
+            disabled={questionData.options.length >= 6}
+            className="flex items-center px-3 py-1 text-sm bg-green-500 text-white rounded-lg hover:bg-green-600 transition disabled:bg-gray-400"
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            Add Option
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {questionData.options.map((option, index) => (
+            <div key={index} className="border border-gray-300 rounded-xl p-4 bg-gray-50">
+              <div className="flex items-start gap-3">
+                <input
+                  type={questionData.questionType === 'single' ? 'radio' : 'checkbox'}
+                  checked={option.isCorrect}
+                  onChange={() => handleCorrectAnswerToggle(index)}
+                  className="mt-2 w-5 h-5 accent-blue-600"
+                />
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Option {String.fromCharCode(65 + index)}
+                  </label>
+                  <ReactQuill
+                    theme="snow"
+                    value={option.html}
+                    onChange={(content, delta, source, editor) => handleOptionHtmlChange(index, content, editor)}
+                    modules={modules}
+                    formats={formats}
+                    placeholder={`Enter option ${String.fromCharCode(65 + index)}...`}
+                    style={{ height: '100px', marginBottom: '42px' }}
+                  />
+                  
+                  {/* Option Image Upload */}
+                  <div className="mt-2">
+                    <input
+                      type="file"
+                      ref={el => optionFileInputRefs.current[index] = el}
+                      onChange={(e) => handleOptionImageUpload(index, e.target.files[0])}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => optionFileInputRefs.current[index]?.click()}
+                      disabled={uploadingOptionImage === index}
+                      className="flex items-center px-3 py-1 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:bg-gray-400"
+                    >
+                      <ImageIcon className="w-3 h-3 mr-1" />
+                      {uploadingOptionImage === index ? 'Uploading...' : 'Add Image'}
+                    </button>
+                    
+                    {option.imageUrl && (
+                      <div className="mt-3 bg-white border border-gray-200 rounded-lg p-3">
+                        <div className="flex items-start gap-3">
+                          <img 
+                            src={`${apiUrl}${option.imageUrl}`}
+                            alt={`Option ${String.fromCharCode(65 + index)}`}
+                            style={{
+                              width: option.imageWidth ? `${option.imageWidth}%` : '50%',
+                              height: 'auto',
+                              maxWidth: '100%'
+                            }}
+                            className="rounded border border-gray-300"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newOptions = [...questionData.options];
+                              newOptions[index] = { ...newOptions[index], imageUrl: "", imageWidth: 100 };
+                              setQuestionData(prev => ({ ...prev, options: newOptions }));
+                            }}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        
+                        {/* Option Image Size Controls */}
+                        <div className="mt-2">
+                          <label className="block text-xs font-medium text-gray-600 mb-1">
+                            Width: {option.imageWidth}%
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newOptions = [...questionData.options];
+                                newOptions[index] = { 
+                                  ...newOptions[index], 
+                                  imageWidth: Math.max(10, newOptions[index].imageWidth - 10) 
+                                };
+                                setQuestionData(prev => ({ ...prev, options: newOptions }));
+                              }}
+                              className="p-1 bg-gray-200 rounded hover:bg-gray-300"
+                            >
+                              <ZoomOut className="w-3 h-3" />
+                            </button>
+                            <input
+                              type="range"
+                              min="10"
+                              max="100"
+                              step="5"
+                              value={option.imageWidth}
+                              onChange={(e) => {
+                                const newOptions = [...questionData.options];
+                                newOptions[index] = { 
+                                  ...newOptions[index], 
+                                  imageWidth: Number(e.target.value) 
+                                };
+                                setQuestionData(prev => ({ ...prev, options: newOptions }));
+                              }}
+                              className="flex-1 h-2"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newOptions = [...questionData.options];
+                                newOptions[index] = { 
+                                  ...newOptions[index], 
+                                  imageWidth: Math.min(100, newOptions[index].imageWidth + 10) 
+                                };
+                                setQuestionData(prev => ({ ...prev, options: newOptions }));
+                              }}
+                              className="p-1 bg-gray-200 rounded hover:bg-gray-300"
+                            >
+                              <ZoomIn className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {questionData.options.length > 2 && (
+                  <button
+                    type="button"
+                    onClick={() => removeOption(index)}
+                    className="mt-2 text-red-500 hover:text-red-700"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Explanation Editor */}
+      <div className="mb-6">
+        <label className="block text-sm font-semibold text-gray-700 mb-2">
+          Explanation (Optional - Shown to students after test submission)
+        </label>
+        <div className="border border-gray-300 rounded-xl overflow-hidden">
+          <ReactQuill
+            theme="snow"
+            value={questionData.explanationHtml}
+            onChange={handleExplanationHtmlChange}
+            modules={modules}
+            formats={formats}
+            placeholder="Enter explanation for the correct answer..."
+            className="bg-white"
+            style={{ height: '150px', marginBottom: '42px' }}
+          />
+        </div>
+      </div>
+
+      {/* Info Box */}
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <div className="flex items-start">
+          <AlertCircle className="w-5 h-5 text-blue-600 mr-3 mt-0.5 flex-shrink-0" />
+          <div className="text-sm text-blue-800">
+            <p className="font-semibold mb-1">Rich Text Features Available:</p>
+            <ul className="list-disc list-inside space-y-1">
+              <li>Text formatting: bold, italic, underline, colors, fonts, sizes</li>
+              <li>Lists, quotes, code blocks, and text alignment</li>
+              <li>Emojis: Just copy-paste emojis directly (😊 🎯 ✨)</li>
+              <li>Images: Upload images for questions and options with adjustable sizes</li>
+              <li>Preview: Click the Preview button to see how students will see this question</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
 
 const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
   const { showSuccess, showError } = useToast();
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingOptionImage, setUploadingOptionImage] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
   const fileInputRef = useRef(null);
+  const optionFileInputRefs = useRef([]);
 
   const [questionData, setQuestionData] = useState({
     questionText: "",
@@ -27,13 +575,15 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     negativeMarks: sections.length > 0 ? sections[0].negativeMarking : 0,
     difficulty: "Medium",
     imageUrl: "",
+    imageWidth: 100,
+    imageHeight: "auto",
     explanation: "",
     explanationHtml: "",
     options: [
-      { text: "", html: "", isCorrect: false },
-      { text: "", html: "", isCorrect: false },
-      { text: "", html: "", isCorrect: false },
-      { text: "", html: "", isCorrect: false }
+      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 },
+      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 },
+      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 },
+      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 }
     ],
     tags: []
   });
@@ -134,6 +684,48 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     }
   };
 
+  const handleOptionImageUpload = async (index, file) => {
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      showError('Please select an image file');
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showError('Image size should be less than 5MB');
+      return;
+    }
+
+    setUploadingOptionImage(index);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await api.post('/tests/upload-question-image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      if (response.data.success) {
+        const newOptions = [...questionData.options];
+        newOptions[index] = {
+          ...newOptions[index],
+          imageUrl: response.data.data.imageUrl
+        };
+        setQuestionData(prev => ({ ...prev, options: newOptions }));
+        showSuccess('Image uploaded successfully');
+      }
+    } catch (error) {
+      showError(error.response?.data?.message || 'Failed to upload image');
+    } finally {
+      setUploadingOptionImage(null);
+    }
+  };
+
   const handleSectionChange = (sectionName) => {
     const section = sections.find(s => s.sectionName === sectionName);
     if (section) {
@@ -166,7 +758,7 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     if (questionData.options.length < 6) {
       setQuestionData(prev => ({
         ...prev,
-        options: [...prev.options, { text: "", html: "", isCorrect: false }]
+        options: [...prev.options, { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 }]
       }));
     }
   };
@@ -184,7 +776,9 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
       return false;
     }
 
-    const validOptions = questionData.options.filter(opt => opt.text.trim() || opt.html.trim());
+    const validOptions = questionData.options.filter(opt => 
+      opt.text.trim() || opt.html.trim() || opt.imageUrl
+    );
     if (validOptions.length < 2) {
       showError('At least 2 options are required');
       return false;
@@ -211,7 +805,7 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     try {
       // Filter out empty options
       const validOptions = questionData.options.filter(opt => 
-        opt.text.trim() || opt.html.trim()
+        opt.text.trim() || opt.html.trim() || opt.imageUrl
       );
 
       // Calculate correct answer
@@ -247,13 +841,15 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
           negativeMarks: sections[0]?.negativeMarking || 0,
           difficulty: "Medium",
           imageUrl: "",
+          imageWidth: 100,
+          imageHeight: "auto",
           explanation: "",
           explanationHtml: "",
           options: [
-            { text: "", html: "", isCorrect: false },
-            { text: "", html: "", isCorrect: false },
-            { text: "", html: "", isCorrect: false },
-            { text: "", html: "", isCorrect: false }
+            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 },
+            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 },
+            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 },
+            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 }
           ],
           tags: []
         });
@@ -293,249 +889,56 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
       <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full my-8">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-4 rounded-t-2xl flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-white">Add New Question</h2>
-          <button
-            onClick={onClose}
-            className="text-white hover:bg-white/20 rounded-lg p-2 transition"
-          >
-            <X className="w-6 h-6" />
-          </button>
+          <div className="flex items-center gap-4">
+            <h2 className="text-2xl font-bold text-white">
+              {showPreview ? 'Preview - Student View' : 'Add New Question'}
+            </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowPreview(!showPreview)}
+              className="flex items-center px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition"
+            >
+              {showPreview ? <Edit className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
+              {showPreview ? 'Edit' : 'Preview'}
+            </button>
+            <button
+              onClick={onClose}
+              className="text-white hover:bg-white/20 rounded-lg p-2 transition"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         <div className="p-6 max-h-[80vh] overflow-y-auto">
-          {/* Question Type and Section */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Question Type *
-              </label>
-              <select
-                value={questionData.questionType}
-                onChange={(e) => setQuestionData(prev => ({ ...prev, questionType: e.target.value }))}
-                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="single">Single Choice</option>
-                <option value="multiple">Multiple Choice</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Section *
-              </label>
-              <select
-                value={questionData.section}
-                onChange={(e) => handleSectionChange(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                {sections.map((section) => (
-                  <option key={section.sectionName} value={section.sectionName}>
-                    {section.sectionName}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Difficulty
-              </label>
-              <select
-                value={questionData.difficulty}
-                onChange={(e) => setQuestionData(prev => ({ ...prev, difficulty: e.target.value }))}
-                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="Easy">Easy</option>
-                <option value="Medium">Medium</option>
-                <option value="Hard">Hard</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Marks Configuration */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Marks per Question
-              </label>
-              <input
-                type="number"
-                value={questionData.marks}
-                onChange={(e) => setQuestionData(prev => ({ ...prev, marks: Number(e.target.value) }))}
-                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                min="0.25"
-                step="0.25"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Negative Marks
-              </label>
-              <input
-                type="number"
-                value={questionData.negativeMarks}
-                onChange={(e) => setQuestionData(prev => ({ ...prev, negativeMarks: Number(e.target.value) }))}
-                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                min="0"
-                step="0.25"
-              />
-            </div>
-          </div>
-
-          {/* Question Text Editor */}
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Question Text * (Supports rich formatting, emojis, tables)
-            </label>
-            <div className="border border-gray-300 rounded-xl overflow-hidden">
-              <ReactQuill
-                theme="snow"
-                value={questionData.questionHtml}
-                onChange={handleQuestionHtmlChange}
-                modules={modules}
-                formats={formats}
-                placeholder="Enter your question here. You can use formatting, emojis (😊), and create tables..."
-                className="bg-white"
-                style={{ height: '200px', marginBottom: '42px' }}
-              />
-            </div>
-          </div>
-
-          {/* Image Upload */}
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Question Image (Optional)
-            </label>
-            <div className="flex items-center gap-4">
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleImageUpload}
-                accept="image/*"
-                className="hidden"
-              />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingImage}
-                className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition disabled:bg-gray-400"
-              >
-                <ImageIcon className="w-4 h-4 mr-2" />
-                {uploadingImage ? 'Uploading...' : 'Upload Image'}
-              </button>
-              {questionData.imageUrl && (
-                <div className="flex items-center gap-2">
-                  <img 
-                    src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${questionData.imageUrl}`}
-                    alt="Question" 
-                    className="h-20 w-20 object-cover rounded-lg border-2 border-gray-300"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setQuestionData(prev => ({ ...prev, imageUrl: "" }))}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Options */}
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-3">
-              <label className="block text-sm font-semibold text-gray-700">
-                Options * (Select correct answer{questionData.questionType === 'multiple' ? 's' : ''})
-              </label>
-              <button
-                type="button"
-                onClick={addOption}
-                disabled={questionData.options.length >= 6}
-                className="flex items-center px-3 py-1 text-sm bg-green-500 text-white rounded-lg hover:bg-green-600 transition disabled:bg-gray-400"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Add Option
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {questionData.options.map((option, index) => (
-                <div key={index} className="border border-gray-300 rounded-xl p-4 bg-gray-50">
-                  <div className="flex items-start gap-3">
-                    <input
-                      type={questionData.questionType === 'single' ? 'radio' : 'checkbox'}
-                      checked={option.isCorrect}
-                      onChange={() => handleCorrectAnswerToggle(index)}
-                      className="mt-2 w-5 h-5 accent-blue-600"
-                    />
-                    <div className="flex-1">
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Option {String.fromCharCode(65 + index)}
-                      </label>
-                      <ReactQuill
-                        theme="snow"
-                        value={option.html}
-                        onChange={(content, delta, source, editor) => handleOptionHtmlChange(index, content, editor)}
-                        modules={modules}
-                        formats={formats}
-                        placeholder={`Enter option ${String.fromCharCode(65 + index)}...`}
-                        style={{ height: '100px', marginBottom: '42px' }}
-                      />
-                    </div>
-                    {questionData.options.length > 2 && (
-                      <button
-                        type="button"
-                        onClick={() => removeOption(index)}
-                        className="mt-2 text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Explanation Editor */}
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Explanation (Optional)
-            </label>
-            <div className="border border-gray-300 rounded-xl overflow-hidden">
-              <ReactQuill
-                theme="snow"
-                value={questionData.explanationHtml}
-                onChange={handleExplanationHtmlChange}
-                modules={modules}
-                formats={formats}
-                placeholder="Enter explanation for the correct answer..."
-                className="bg-white"
-                style={{ height: '150px', marginBottom: '42px' }}
-              />
-            </div>
-          </div>
-
-          {/* Info Box */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
-            <div className="flex items-start">
-              <AlertCircle className="w-5 h-5 text-blue-600 mr-3 mt-0.5" />
-              <div className="text-sm text-blue-800">
-                <p className="font-semibold mb-1">Rich Text Features Available:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Text formatting: bold, italic, underline, colors, fonts, sizes</li>
-                  <li>Lists, quotes, code blocks, and text alignment</li>
-                  <li>Emojis: Just copy-paste emojis directly (😊 🎯 ✨)</li>
-                  <li>Images: Upload images for questions</li>
-                  <li>Special symbols: Use your system's symbol picker or copy-paste</li>
-                </ul>
-              </div>
-            </div>
-          </div>
+          {showPreview ? (
+            <PreviewMode questionData={questionData} />
+          ) : (
+            <EditMode 
+              questionData={questionData}
+              setQuestionData={setQuestionData}
+              sections={sections}
+              handleSectionChange={handleSectionChange}
+              handleQuestionHtmlChange={handleQuestionHtmlChange}
+              handleImageUpload={handleImageUpload}
+              handleOptionHtmlChange={handleOptionHtmlChange}
+              handleCorrectAnswerToggle={handleCorrectAnswerToggle}
+              handleOptionImageUpload={handleOptionImageUpload}
+              handleExplanationHtmlChange={handleExplanationHtmlChange}
+              addOption={addOption}
+              removeOption={removeOption}
+              uploadingImage={uploadingImage}
+              uploadingOptionImage={uploadingOptionImage}
+              fileInputRef={fileInputRef}
+              optionFileInputRefs={optionFileInputRefs}
+              modules={modules}
+              formats={formats}
+            />
+          )}
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-3 mt-6">
             <button
               type="button"
               onClick={onClose}
