@@ -278,7 +278,7 @@ const EditMode = ({
       {/* Question Text Editor */}
       <div className="mb-6">
         <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Question Text * (Supports rich formatting, emojis, images, videos, formulas)
+          Question Text * (Supports rich formatting, emojis, images)
         </label>
         <div className="border border-gray-300 rounded-xl overflow-hidden">
           <ReactQuill
@@ -287,7 +287,7 @@ const EditMode = ({
             onChange={handleQuestionHtmlChange}
             modules={modules}
             formats={formats}
-            placeholder="Enter your question here. You can use formatting, emojis (😊), insert images, videos, formulas, and more..."
+            placeholder="Enter your question here. You can use formatting, emojis (😊), insert images, and more..."
             className="bg-white"
             style={{ height: '200px', marginBottom: '42px' }}
           />
@@ -776,10 +776,10 @@ const EditMode = ({
             <p className="font-semibold mb-1">Rich Text Features Available:</p>
             <ul className="list-disc list-inside space-y-1">
               <li>Text formatting: bold, italic, underline, strikethrough, colors, fonts, sizes</li>
-              <li>Lists: ordered, bullet, and checklist formats</li>
-              <li>Alignment: left, center, right, and justify text</li>
-              <li>Special features: quotes, code blocks, subscript, superscript, formulas</li>
-              <li>Media: Insert links, images, and videos directly in text</li>
+              <li>Lists: ordered and bullet point formats</li>
+              <li>Alignment: left, center, right, and justify text; RTL support</li>
+              <li>Special features: quotes, code blocks, subscript, superscript</li>
+              <li>Media: Insert links and images directly in text</li>
               <li>Emojis: Just copy-paste emojis directly (😊 🎯 ✨ 📚 💡)</li>
               <li>Images: Upload images with custom width & height controls</li>
               <li>Image positioning: Align images left, center, or right</li>
@@ -833,12 +833,12 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
       ['bold', 'italic', 'underline', 'strike'],
       [{ 'color': [] }, { 'background': [] }],
       [{ 'script': 'sub' }, { 'script': 'super' }],
-      [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
+      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
       [{ 'indent': '-1' }, { 'indent': '+1' }],
       [{ 'direction': 'rtl' }],
       [{ 'align': [] }],
       ['blockquote', 'code-block'],
-      ['link', 'image', 'video', 'formula'],
+      ['link', 'image'],
       ['clean']
     ],
   };
@@ -848,10 +848,10 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     'bold', 'italic', 'underline', 'strike',
     'color', 'background',
     'script',
-    'list', 'bullet', 'indent', 'check',
+    'list', 'bullet', 'indent',
     'direction', 'align',
     'blockquote', 'code-block',
-    'link', 'image', 'video', 'formula'
+    'link', 'image'
   ];
 
   const handleQuestionHtmlChange = (content, delta, source, editor) => {
