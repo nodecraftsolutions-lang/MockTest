@@ -16,6 +16,7 @@ import {
 import api from "../api/axios";
 import { useToast } from "../context/ToastContext";
 import { createSanitizedHtml } from "../utils/sanitize";
+import { getImageStyles } from "../utils/imageHelpers";
 
 // Image dimension constants
 const IMAGE_DEFAULTS = {
@@ -41,18 +42,6 @@ const createDefaultOption = () => ({
   imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH,
   imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT,
   imageAlign: IMAGE_DEFAULTS.ALIGN
-});
-
-// Helper function to get image styles for rendering
-const getImageStyles = (align, width, height, isPercentage = true) => ({
-  width: width ? (isPercentage ? `${width}%` : `${width}px`) : '100%',
-  height: height ? `${height}px` : 'auto',
-  maxWidth: '100%',
-  float: align || 'none',
-  margin: align === 'left' ? '0 1rem 1rem 0' : 
-          align === 'right' ? '0 0 1rem 1rem' : 
-          '0 auto',
-  display: align === 'center' ? 'block' : 'inline'
 });
 
 // Helper function to reset image properties
