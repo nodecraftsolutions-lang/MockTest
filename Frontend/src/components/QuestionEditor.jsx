@@ -16,6 +16,41 @@ import {
 import api from "../api/axios";
 import { useToast } from "../context/ToastContext";
 import { createSanitizedHtml } from "../utils/sanitize";
+import { getImageStyles } from "../utils/imageHelpers";
+
+// Image dimension constants
+const IMAGE_DEFAULTS = {
+  QUESTION_WIDTH: 100,
+  QUESTION_HEIGHT: 300,
+  OPTION_WIDTH: 50,
+  OPTION_HEIGHT: 200,
+  ALIGN: 'left',
+  MIN_WIDTH: 10,
+  MAX_WIDTH: 100,
+  WIDTH_STEP: 5,
+  MIN_HEIGHT: 50,
+  MAX_HEIGHT: 800,
+  HEIGHT_STEP: 50,
+};
+
+// Helper function to create default option
+const createDefaultOption = () => ({
+  text: "",
+  html: "",
+  isCorrect: false,
+  imageUrl: "",
+  imageWidth: IMAGE_DEFAULTS.OPTION_WIDTH,
+  imageHeight: IMAGE_DEFAULTS.OPTION_HEIGHT,
+  imageAlign: IMAGE_DEFAULTS.ALIGN
+});
+
+// Helper function to reset image properties
+const resetImageProperties = (isOption = false) => ({
+  imageUrl: "",
+  imageWidth: isOption ? IMAGE_DEFAULTS.OPTION_WIDTH : IMAGE_DEFAULTS.QUESTION_WIDTH,
+  imageHeight: isOption ? IMAGE_DEFAULTS.OPTION_HEIGHT : IMAGE_DEFAULTS.QUESTION_HEIGHT,
+  imageAlign: IMAGE_DEFAULTS.ALIGN
+});
 
 // Preview Mode Component
 const PreviewMode = ({ questionData }) => {
@@ -62,11 +97,7 @@ const PreviewMode = ({ questionData }) => {
             <img 
               src={`${apiUrl}${questionData.imageUrl}`}
               alt="Question" 
-              style={{
-                width: questionData.imageWidth ? `${questionData.imageWidth}%` : '100%',
-                height: 'auto',
-                maxWidth: '100%'
-              }}
+              style={getImageStyles(questionData.imageAlign, questionData.imageWidth, questionData.imageHeight)}
               className="rounded-lg border-2 border-gray-200 shadow-md"
             />
           </div>
@@ -104,11 +135,7 @@ const PreviewMode = ({ questionData }) => {
                     <img 
                       src={`${apiUrl}${opt.imageUrl}`}
                       alt={`Option ${String.fromCharCode(65 + i)}`}
-                      style={{
-                        width: opt.imageWidth ? `${opt.imageWidth}%` : '50%',
-                        height: 'auto',
-                        maxWidth: '100%'
-                      }}
+                      style={getImageStyles(opt.imageAlign, opt.imageWidth, opt.imageHeight)}
                       className="rounded-lg border border-gray-300"
                     />
                   </div>
@@ -253,7 +280,7 @@ const EditMode = ({
       {/* Question Text Editor */}
       <div className="mb-6">
         <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Question Text * (Supports rich formatting, emojis, tables)
+          Question Text * (Supports rich formatting, emojis, images)
         </label>
         <div className="border border-gray-300 rounded-xl overflow-hidden">
           <ReactQuill
@@ -262,7 +289,7 @@ const EditMode = ({
             onChange={handleQuestionHtmlChange}
             modules={modules}
             formats={formats}
-            placeholder="Enter your question here. You can use formatting, emojis (😊), and create tables..."
+            placeholder="Enter your question here. You can use formatting, emojis (😊), insert images, and more..."
             className="bg-white"
             style={{ height: '200px', marginBottom: '42px' }}
           />
@@ -300,60 +327,142 @@ const EditMode = ({
                 <img 
                   src={`${apiUrl}${questionData.imageUrl}`}
                   alt="Question" 
-                  style={{
-                    width: questionData.imageWidth ? `${questionData.imageWidth}%` : '100%',
-                    height: 'auto',
-                    maxWidth: '100%'
-                  }}
+                  style={getImageStyles(questionData.imageAlign, questionData.imageWidth, questionData.imageHeight)}
                   className="rounded-lg border-2 border-gray-300 shadow-sm"
                 />
                 <button
                   type="button"
-                  onClick={() => setQuestionData(prev => ({ ...prev, imageUrl: "", imageWidth: 100 }))}
+                  onClick={() => setQuestionData(prev => ({ ...prev, ...resetImageProperties(false) }))}
                   className="text-red-500 hover:text-red-700 flex-shrink-0"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
               
-              {/* Image Size Controls */}
-              <div className="mt-4">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Image Width: {questionData.imageWidth}%
-                </label>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setQuestionData(prev => ({ 
-                      ...prev, 
-                      imageWidth: Math.max(10, prev.imageWidth - 10) 
-                    }))}
-                    className="p-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-                  >
-                    <ZoomOut className="w-4 h-4" />
-                  </button>
-                  <input
-                    type="range"
-                    min="10"
-                    max="100"
-                    step="5"
-                    value={questionData.imageWidth}
-                    onChange={(e) => setQuestionData(prev => ({ 
-                      ...prev, 
-                      imageWidth: Number(e.target.value) 
-                    }))}
-                    className="flex-1"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setQuestionData(prev => ({ 
-                      ...prev, 
-                      imageWidth: Math.min(100, prev.imageWidth + 10) 
-                    }))}
-                    className="p-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-                  >
-                    <ZoomIn className="w-4 h-4" />
-                  </button>
+              {/* Image Size and Alignment Controls */}
+              <div className="mt-4 space-y-4">
+                {/* Width Control */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Image Width: {questionData.imageWidth}%
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setQuestionData(prev => ({ 
+                        ...prev, 
+                        imageWidth: Math.max(IMAGE_DEFAULTS.MIN_WIDTH, prev.imageWidth - IMAGE_DEFAULTS.WIDTH_STEP) 
+                      }))}
+                      className="p-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                    >
+                      <ZoomOut className="w-4 h-4" />
+                    </button>
+                    <input
+                      type="range"
+                      min={IMAGE_DEFAULTS.MIN_WIDTH}
+                      max={IMAGE_DEFAULTS.MAX_WIDTH}
+                      step={IMAGE_DEFAULTS.WIDTH_STEP}
+                      value={questionData.imageWidth}
+                      onChange={(e) => setQuestionData(prev => ({ 
+                        ...prev, 
+                        imageWidth: Number(e.target.value) 
+                      }))}
+                      className="flex-1"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setQuestionData(prev => ({ 
+                        ...prev, 
+                        imageWidth: Math.min(IMAGE_DEFAULTS.MAX_WIDTH, prev.imageWidth + IMAGE_DEFAULTS.WIDTH_STEP) 
+                      }))}
+                      className="p-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                    >
+                      <ZoomIn className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Height Control */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Image Height: {questionData.imageHeight}px
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setQuestionData(prev => ({ 
+                        ...prev, 
+                        imageHeight: Math.max(IMAGE_DEFAULTS.MIN_HEIGHT, prev.imageHeight - IMAGE_DEFAULTS.HEIGHT_STEP) 
+                      }))}
+                      className="p-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                    >
+                      <ZoomOut className="w-4 h-4" />
+                    </button>
+                    <input
+                      type="range"
+                      min={IMAGE_DEFAULTS.MIN_HEIGHT}
+                      max={IMAGE_DEFAULTS.MAX_HEIGHT}
+                      step={IMAGE_DEFAULTS.HEIGHT_STEP}
+                      value={questionData.imageHeight}
+                      onChange={(e) => setQuestionData(prev => ({ 
+                        ...prev, 
+                        imageHeight: Number(e.target.value) 
+                      }))}
+                      className="flex-1"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setQuestionData(prev => ({ 
+                        ...prev, 
+                        imageHeight: Math.min(IMAGE_DEFAULTS.MAX_HEIGHT, prev.imageHeight + IMAGE_DEFAULTS.HEIGHT_STEP) 
+                      }))}
+                      className="p-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                    >
+                      <ZoomIn className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Alignment Control */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Image Position/Alignment
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setQuestionData(prev => ({ ...prev, imageAlign: 'left' }))}
+                      className={`px-4 py-2 rounded-lg transition ${
+                        questionData.imageAlign === 'left' 
+                          ? 'bg-blue-500 text-white' 
+                          : 'bg-gray-200 hover:bg-gray-300'
+                      }`}
+                    >
+                      Left
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setQuestionData(prev => ({ ...prev, imageAlign: 'center' }))}
+                      className={`px-4 py-2 rounded-lg transition ${
+                        questionData.imageAlign === 'center' 
+                          ? 'bg-blue-500 text-white' 
+                          : 'bg-gray-200 hover:bg-gray-300'
+                      }`}
+                    >
+                      Center
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setQuestionData(prev => ({ ...prev, imageAlign: 'right' }))}
+                      className={`px-4 py-2 rounded-lg transition ${
+                        questionData.imageAlign === 'right' 
+                          ? 'bg-blue-500 text-white' 
+                          : 'bg-gray-200 hover:bg-gray-300'
+                      }`}
+                    >
+                      Right
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -427,18 +536,14 @@ const EditMode = ({
                           <img 
                             src={`${apiUrl}${option.imageUrl}`}
                             alt={`Option ${String.fromCharCode(65 + index)}`}
-                            style={{
-                              width: option.imageWidth ? `${option.imageWidth}%` : '50%',
-                              height: 'auto',
-                              maxWidth: '100%'
-                            }}
+                            style={getImageStyles(option.imageAlign, option.imageWidth, option.imageHeight)}
                             className="rounded border border-gray-300"
                           />
                           <button
                             type="button"
                             onClick={() => {
                               const newOptions = [...questionData.options];
-                              newOptions[index] = { ...newOptions[index], imageUrl: "", imageWidth: 100 };
+                              newOptions[index] = { ...newOptions[index], ...resetImageProperties(true) };
                               setQuestionData(prev => ({ ...prev, options: newOptions }));
                             }}
                             className="text-red-500 hover:text-red-700"
@@ -447,56 +552,166 @@ const EditMode = ({
                           </button>
                         </div>
                         
-                        {/* Option Image Size Controls */}
-                        <div className="mt-2">
-                          <label className="block text-xs font-medium text-gray-600 mb-1">
-                            Width: {option.imageWidth}%
-                          </label>
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const newOptions = [...questionData.options];
-                                newOptions[index] = { 
-                                  ...newOptions[index], 
-                                  imageWidth: Math.max(10, newOptions[index].imageWidth - 10) 
-                                };
-                                setQuestionData(prev => ({ ...prev, options: newOptions }));
-                              }}
-                              className="p-1 bg-gray-200 rounded hover:bg-gray-300"
-                            >
-                              <ZoomOut className="w-3 h-3" />
-                            </button>
-                            <input
-                              type="range"
-                              min="10"
-                              max="100"
-                              step="5"
-                              value={option.imageWidth}
-                              onChange={(e) => {
-                                const newOptions = [...questionData.options];
-                                newOptions[index] = { 
-                                  ...newOptions[index], 
-                                  imageWidth: Number(e.target.value) 
-                                };
-                                setQuestionData(prev => ({ ...prev, options: newOptions }));
-                              }}
-                              className="flex-1 h-2"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const newOptions = [...questionData.options];
-                                newOptions[index] = { 
-                                  ...newOptions[index], 
-                                  imageWidth: Math.min(100, newOptions[index].imageWidth + 10) 
-                                };
-                                setQuestionData(prev => ({ ...prev, options: newOptions }));
-                              }}
-                              className="p-1 bg-gray-200 rounded hover:bg-gray-300"
-                            >
-                              <ZoomIn className="w-3 h-3" />
-                            </button>
+                        {/* Option Image Size and Alignment Controls */}
+                        <div className="mt-3 space-y-3">
+                          {/* Width Control */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              Width: {option.imageWidth}%
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newOptions = [...questionData.options];
+                                  newOptions[index] = { 
+                                    ...newOptions[index], 
+                                    imageWidth: Math.max(IMAGE_DEFAULTS.MIN_WIDTH, newOptions[index].imageWidth - IMAGE_DEFAULTS.WIDTH_STEP) 
+                                  };
+                                  setQuestionData(prev => ({ ...prev, options: newOptions }));
+                                }}
+                                className="p-1 bg-gray-200 rounded hover:bg-gray-300"
+                              >
+                                <ZoomOut className="w-3 h-3" />
+                              </button>
+                              <input
+                                type="range"
+                                min={IMAGE_DEFAULTS.MIN_WIDTH}
+                                max={IMAGE_DEFAULTS.MAX_WIDTH}
+                                step={IMAGE_DEFAULTS.WIDTH_STEP}
+                                value={option.imageWidth}
+                                onChange={(e) => {
+                                  const newOptions = [...questionData.options];
+                                  newOptions[index] = { 
+                                    ...newOptions[index], 
+                                    imageWidth: Number(e.target.value) 
+                                  };
+                                  setQuestionData(prev => ({ ...prev, options: newOptions }));
+                                }}
+                                className="flex-1 h-2"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newOptions = [...questionData.options];
+                                  newOptions[index] = { 
+                                    ...newOptions[index], 
+                                    imageWidth: Math.min(IMAGE_DEFAULTS.MAX_WIDTH, newOptions[index].imageWidth + IMAGE_DEFAULTS.WIDTH_STEP) 
+                                  };
+                                  setQuestionData(prev => ({ ...prev, options: newOptions }));
+                                }}
+                                className="p-1 bg-gray-200 rounded hover:bg-gray-300"
+                              >
+                                <ZoomIn className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Height Control */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              Height: {option.imageHeight}px
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newOptions = [...questionData.options];
+                                  newOptions[index] = { 
+                                    ...newOptions[index], 
+                                    imageHeight: Math.max(IMAGE_DEFAULTS.MIN_HEIGHT, newOptions[index].imageHeight - IMAGE_DEFAULTS.HEIGHT_STEP) 
+                                  };
+                                  setQuestionData(prev => ({ ...prev, options: newOptions }));
+                                }}
+                                className="p-1 bg-gray-200 rounded hover:bg-gray-300"
+                              >
+                                <ZoomOut className="w-3 h-3" />
+                              </button>
+                              <input
+                                type="range"
+                                min={IMAGE_DEFAULTS.MIN_HEIGHT}
+                                max={IMAGE_DEFAULTS.MAX_HEIGHT}
+                                step={IMAGE_DEFAULTS.HEIGHT_STEP}
+                                value={option.imageHeight}
+                                onChange={(e) => {
+                                  const newOptions = [...questionData.options];
+                                  newOptions[index] = { 
+                                    ...newOptions[index], 
+                                    imageHeight: Number(e.target.value) 
+                                  };
+                                  setQuestionData(prev => ({ ...prev, options: newOptions }));
+                                }}
+                                className="flex-1 h-2"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newOptions = [...questionData.options];
+                                  newOptions[index] = { 
+                                    ...newOptions[index], 
+                                    imageHeight: Math.min(IMAGE_DEFAULTS.MAX_HEIGHT, newOptions[index].imageHeight + IMAGE_DEFAULTS.HEIGHT_STEP) 
+                                  };
+                                  setQuestionData(prev => ({ ...prev, options: newOptions }));
+                                }}
+                                className="p-1 bg-gray-200 rounded hover:bg-gray-300"
+                              >
+                                <ZoomIn className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Alignment Control */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              Position/Alignment
+                            </label>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newOptions = [...questionData.options];
+                                  newOptions[index] = { ...newOptions[index], imageAlign: 'left' };
+                                  setQuestionData(prev => ({ ...prev, options: newOptions }));
+                                }}
+                                className={`px-3 py-1 text-xs rounded transition ${
+                                  option.imageAlign === 'left' 
+                                    ? 'bg-blue-500 text-white' 
+                                    : 'bg-gray-200 hover:bg-gray-300'
+                                }`}
+                              >
+                                Left
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newOptions = [...questionData.options];
+                                  newOptions[index] = { ...newOptions[index], imageAlign: 'center' };
+                                  setQuestionData(prev => ({ ...prev, options: newOptions }));
+                                }}
+                                className={`px-3 py-1 text-xs rounded transition ${
+                                  option.imageAlign === 'center' 
+                                    ? 'bg-blue-500 text-white' 
+                                    : 'bg-gray-200 hover:bg-gray-300'
+                                }`}
+                              >
+                                Center
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newOptions = [...questionData.options];
+                                  newOptions[index] = { ...newOptions[index], imageAlign: 'right' };
+                                  setQuestionData(prev => ({ ...prev, options: newOptions }));
+                                }}
+                                className={`px-3 py-1 text-xs rounded transition ${
+                                  option.imageAlign === 'right' 
+                                    ? 'bg-blue-500 text-white' 
+                                    : 'bg-gray-200 hover:bg-gray-300'
+                                }`}
+                              >
+                                Right
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -544,10 +759,14 @@ const EditMode = ({
           <div className="text-sm text-blue-800">
             <p className="font-semibold mb-1">Rich Text Features Available:</p>
             <ul className="list-disc list-inside space-y-1">
-              <li>Text formatting: bold, italic, underline, colors, fonts, sizes</li>
-              <li>Lists, quotes, code blocks, and text alignment</li>
-              <li>Emojis: Just copy-paste emojis directly (😊 🎯 ✨)</li>
-              <li>Images: Upload images for questions and options with adjustable sizes</li>
+              <li>Text formatting: bold, italic, underline, strikethrough, colors, fonts, sizes</li>
+              <li>Lists: ordered and bullet point formats</li>
+              <li>Alignment: left, center, right, and justify text; RTL support</li>
+              <li>Special features: quotes, code blocks, subscript, superscript</li>
+              <li>Media: Insert links and images directly in text</li>
+              <li>Emojis: Just copy-paste emojis directly (😊 🎯 ✨ 📚 💡)</li>
+              <li>Images: Upload images with custom width & height controls</li>
+              <li>Image positioning: Align images left, center, or right</li>
               <li>Preview: Click the Preview button to see how students will see this question</li>
             </ul>
           </div>
@@ -575,15 +794,16 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     negativeMarks: sections.length > 0 ? sections[0].negativeMarking : 0,
     difficulty: "Medium",
     imageUrl: "",
-    imageWidth: 100,
-    imageHeight: "auto",
+    imageWidth: IMAGE_DEFAULTS.QUESTION_WIDTH,
+    imageHeight: IMAGE_DEFAULTS.QUESTION_HEIGHT,
+    imageAlign: IMAGE_DEFAULTS.ALIGN,
     explanation: "",
     explanationHtml: "",
     options: [
-      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 },
-      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 },
-      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 },
-      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 }
+      createDefaultOption(),
+      createDefaultOption(),
+      createDefaultOption(),
+      createDefaultOption()
     ],
     tags: []
   });
@@ -599,9 +819,10 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
       [{ 'script': 'sub' }, { 'script': 'super' }],
       [{ 'list': 'ordered' }, { 'list': 'bullet' }],
       [{ 'indent': '-1' }, { 'indent': '+1' }],
+      [{ 'direction': 'rtl' }],
       [{ 'align': [] }],
       ['blockquote', 'code-block'],
-      ['link'],
+      ['link', 'image'],
       ['clean']
     ],
   };
@@ -612,9 +833,9 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     'color', 'background',
     'script',
     'list', 'bullet', 'indent',
-    'align',
+    'direction', 'align',
     'blockquote', 'code-block',
-    'link'
+    'link', 'image'
   ];
 
   const handleQuestionHtmlChange = (content, delta, source, editor) => {
@@ -758,7 +979,7 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     if (questionData.options.length < 6) {
       setQuestionData(prev => ({
         ...prev,
-        options: [...prev.options, { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 }]
+        options: [...prev.options, createDefaultOption()]
       }));
     }
   };
@@ -841,15 +1062,16 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
           negativeMarks: sections[0]?.negativeMarking || 0,
           difficulty: "Medium",
           imageUrl: "",
-          imageWidth: 100,
-          imageHeight: "auto",
+          imageWidth: IMAGE_DEFAULTS.QUESTION_WIDTH,
+          imageHeight: IMAGE_DEFAULTS.QUESTION_HEIGHT,
+          imageAlign: IMAGE_DEFAULTS.ALIGN,
           explanation: "",
           explanationHtml: "",
           options: [
-            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 },
-            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 },
-            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 },
-            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 }
+            createDefaultOption(),
+            createDefaultOption(),
+            createDefaultOption(),
+            createDefaultOption()
           ],
           tags: []
         });

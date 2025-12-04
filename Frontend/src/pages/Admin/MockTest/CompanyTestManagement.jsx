@@ -743,7 +743,7 @@ const CompanyTestManagement = () => {
                                     )}
                                   </div>
                                   
-                                  <div className="flex justify-between items-center">
+                                  <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
                                     <div className="flex items-center">
                                       {test.isGenerated ? (
                                         <span className="flex items-center text-green-600 text-sm">
@@ -757,16 +757,17 @@ const CompanyTestManagement = () => {
                                         </span>
                                       )}
                                     </div>
-                                    <div className="flex space-x-1">
+                                    <div className="flex space-x-2">
                                       <button
                                         onClick={() => navigate(`/admin/mocktest/questions/${test._id}`)}
-                                        className="p-1 text-gray-400 hover:text-green-600 rounded"
-                                        title="Manage Questions"
+                                        className="flex items-center px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                                        title="Add/Manage Questions"
                                       >
-                                        <Zap className="w-4 h-4" />
+                                        <Plus className="w-4 h-4 mr-1" />
+                                        Questions
                                       </button>
                                       <button
-                                        className="p-1 text-gray-400 hover:text-blue-600 rounded"
+                                        className="p-1.5 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50"
                                         title="Preview Test"
                                       >
                                         <Eye className="w-4 h-4" />

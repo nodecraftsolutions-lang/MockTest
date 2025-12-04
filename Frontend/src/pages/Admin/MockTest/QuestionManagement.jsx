@@ -13,6 +13,7 @@ import api from "../../../api/axios";
 import { useToast } from "../../../context/ToastContext";
 import QuestionEditor from "../../../components/QuestionEditor";
 import { createSanitizedHtml } from "../../../utils/sanitize";
+import { getImageStyles } from "../../../utils/imageHelpers";
 
 const QuestionManagement = () => {
   const { testId } = useParams();
@@ -114,11 +115,7 @@ const QuestionManagement = () => {
             <img 
               src={`${apiUrl}${option.imageUrl}`}
               alt="Option"
-              style={{
-                width: option.imageWidth ? `${option.imageWidth}%` : '50%',
-                height: 'auto',
-                maxWidth: '100%'
-              }}
+              style={getImageStyles(option.imageAlign, option.imageWidth, option.imageHeight)}
               className="rounded border border-gray-300"
             />
           </div>
@@ -279,11 +276,7 @@ const QuestionManagement = () => {
                           <img 
                             src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${question.imageUrl}`}
                             alt="Question" 
-                            style={{
-                              width: question.imageWidth ? `${question.imageWidth}%` : '100%',
-                              height: 'auto',
-                              maxWidth: '100%'
-                            }}
+                            style={getImageStyles(question.imageAlign, question.imageWidth, question.imageHeight)}
                             className="rounded-lg border-2 border-gray-200"
                           />
                         </div>
