@@ -64,8 +64,13 @@ const PreviewMode = ({ questionData }) => {
               alt="Question" 
               style={{
                 width: questionData.imageWidth ? `${questionData.imageWidth}%` : '100%',
-                height: 'auto',
-                maxWidth: '100%'
+                height: questionData.imageHeight ? `${questionData.imageHeight}px` : 'auto',
+                maxWidth: '100%',
+                float: questionData.imageAlign || 'none',
+                margin: questionData.imageAlign === 'left' ? '0 1rem 1rem 0' : 
+                        questionData.imageAlign === 'right' ? '0 0 1rem 1rem' : 
+                        '0 auto',
+                display: questionData.imageAlign === 'center' ? 'block' : 'inline'
               }}
               className="rounded-lg border-2 border-gray-200 shadow-md"
             />
@@ -106,8 +111,13 @@ const PreviewMode = ({ questionData }) => {
                       alt={`Option ${String.fromCharCode(65 + i)}`}
                       style={{
                         width: opt.imageWidth ? `${opt.imageWidth}%` : '50%',
-                        height: 'auto',
-                        maxWidth: '100%'
+                        height: opt.imageHeight ? `${opt.imageHeight}px` : 'auto',
+                        maxWidth: '100%',
+                        float: opt.imageAlign || 'none',
+                        margin: opt.imageAlign === 'left' ? '0 1rem 1rem 0' : 
+                                opt.imageAlign === 'right' ? '0 0 1rem 1rem' : 
+                                '0 auto',
+                        display: opt.imageAlign === 'center' ? 'block' : 'inline'
                       }}
                       className="rounded-lg border border-gray-300"
                     />
@@ -253,7 +263,7 @@ const EditMode = ({
       {/* Question Text Editor */}
       <div className="mb-6">
         <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Question Text * (Supports rich formatting, emojis, tables)
+          Question Text * (Supports rich formatting, emojis, images, videos, formulas)
         </label>
         <div className="border border-gray-300 rounded-xl overflow-hidden">
           <ReactQuill
@@ -262,7 +272,7 @@ const EditMode = ({
             onChange={handleQuestionHtmlChange}
             modules={modules}
             formats={formats}
-            placeholder="Enter your question here. You can use formatting, emojis (😊), and create tables..."
+            placeholder="Enter your question here. You can use formatting, emojis (😊), insert images, videos, formulas, and more..."
             className="bg-white"
             style={{ height: '200px', marginBottom: '42px' }}
           />
@@ -302,58 +312,149 @@ const EditMode = ({
                   alt="Question" 
                   style={{
                     width: questionData.imageWidth ? `${questionData.imageWidth}%` : '100%',
-                    height: 'auto',
-                    maxWidth: '100%'
+                    height: questionData.imageHeight ? `${questionData.imageHeight}px` : 'auto',
+                    maxWidth: '100%',
+                    float: questionData.imageAlign || 'none',
+                    margin: questionData.imageAlign === 'left' ? '0 1rem 1rem 0' : 
+                            questionData.imageAlign === 'right' ? '0 0 1rem 1rem' : 
+                            '0 auto',
+                    display: questionData.imageAlign === 'center' ? 'block' : 'inline'
                   }}
                   className="rounded-lg border-2 border-gray-300 shadow-sm"
                 />
                 <button
                   type="button"
-                  onClick={() => setQuestionData(prev => ({ ...prev, imageUrl: "", imageWidth: 100 }))}
+                  onClick={() => setQuestionData(prev => ({ ...prev, imageUrl: "", imageWidth: 100, imageHeight: 300, imageAlign: "left" }))}
                   className="text-red-500 hover:text-red-700 flex-shrink-0"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
               
-              {/* Image Size Controls */}
-              <div className="mt-4">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Image Width: {questionData.imageWidth}%
-                </label>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setQuestionData(prev => ({ 
-                      ...prev, 
-                      imageWidth: Math.max(10, prev.imageWidth - 10) 
-                    }))}
-                    className="p-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-                  >
-                    <ZoomOut className="w-4 h-4" />
-                  </button>
-                  <input
-                    type="range"
-                    min="10"
-                    max="100"
-                    step="5"
-                    value={questionData.imageWidth}
-                    onChange={(e) => setQuestionData(prev => ({ 
-                      ...prev, 
-                      imageWidth: Number(e.target.value) 
-                    }))}
-                    className="flex-1"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setQuestionData(prev => ({ 
-                      ...prev, 
-                      imageWidth: Math.min(100, prev.imageWidth + 10) 
-                    }))}
-                    className="p-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-                  >
-                    <ZoomIn className="w-4 h-4" />
-                  </button>
+              {/* Image Size and Alignment Controls */}
+              <div className="mt-4 space-y-4">
+                {/* Width Control */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Image Width: {questionData.imageWidth}%
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setQuestionData(prev => ({ 
+                        ...prev, 
+                        imageWidth: Math.max(10, prev.imageWidth - 10) 
+                      }))}
+                      className="p-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                    >
+                      <ZoomOut className="w-4 h-4" />
+                    </button>
+                    <input
+                      type="range"
+                      min="10"
+                      max="100"
+                      step="5"
+                      value={questionData.imageWidth}
+                      onChange={(e) => setQuestionData(prev => ({ 
+                        ...prev, 
+                        imageWidth: Number(e.target.value) 
+                      }))}
+                      className="flex-1"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setQuestionData(prev => ({ 
+                        ...prev, 
+                        imageWidth: Math.min(100, prev.imageWidth + 10) 
+                      }))}
+                      className="p-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                    >
+                      <ZoomIn className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Height Control */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Image Height: {questionData.imageHeight}px
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setQuestionData(prev => ({ 
+                        ...prev, 
+                        imageHeight: Math.max(50, prev.imageHeight - 50) 
+                      }))}
+                      className="p-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                    >
+                      <ZoomOut className="w-4 h-4" />
+                    </button>
+                    <input
+                      type="range"
+                      min="50"
+                      max="800"
+                      step="50"
+                      value={questionData.imageHeight}
+                      onChange={(e) => setQuestionData(prev => ({ 
+                        ...prev, 
+                        imageHeight: Number(e.target.value) 
+                      }))}
+                      className="flex-1"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setQuestionData(prev => ({ 
+                        ...prev, 
+                        imageHeight: Math.min(800, prev.imageHeight + 50) 
+                      }))}
+                      className="p-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                    >
+                      <ZoomIn className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Alignment Control */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Image Position/Alignment
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setQuestionData(prev => ({ ...prev, imageAlign: 'left' }))}
+                      className={`px-4 py-2 rounded-lg transition ${
+                        questionData.imageAlign === 'left' 
+                          ? 'bg-blue-500 text-white' 
+                          : 'bg-gray-200 hover:bg-gray-300'
+                      }`}
+                    >
+                      Left
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setQuestionData(prev => ({ ...prev, imageAlign: 'center' }))}
+                      className={`px-4 py-2 rounded-lg transition ${
+                        questionData.imageAlign === 'center' 
+                          ? 'bg-blue-500 text-white' 
+                          : 'bg-gray-200 hover:bg-gray-300'
+                      }`}
+                    >
+                      Center
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setQuestionData(prev => ({ ...prev, imageAlign: 'right' }))}
+                      className={`px-4 py-2 rounded-lg transition ${
+                        questionData.imageAlign === 'right' 
+                          ? 'bg-blue-500 text-white' 
+                          : 'bg-gray-200 hover:bg-gray-300'
+                      }`}
+                    >
+                      Right
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -429,8 +530,13 @@ const EditMode = ({
                             alt={`Option ${String.fromCharCode(65 + index)}`}
                             style={{
                               width: option.imageWidth ? `${option.imageWidth}%` : '50%',
-                              height: 'auto',
-                              maxWidth: '100%'
+                              height: option.imageHeight ? `${option.imageHeight}px` : 'auto',
+                              maxWidth: '100%',
+                              float: option.imageAlign || 'none',
+                              margin: option.imageAlign === 'left' ? '0 1rem 1rem 0' : 
+                                      option.imageAlign === 'right' ? '0 0 1rem 1rem' : 
+                                      '0 auto',
+                              display: option.imageAlign === 'center' ? 'block' : 'inline'
                             }}
                             className="rounded border border-gray-300"
                           />
@@ -438,7 +544,7 @@ const EditMode = ({
                             type="button"
                             onClick={() => {
                               const newOptions = [...questionData.options];
-                              newOptions[index] = { ...newOptions[index], imageUrl: "", imageWidth: 100 };
+                              newOptions[index] = { ...newOptions[index], imageUrl: "", imageWidth: 50, imageHeight: 200, imageAlign: "left" };
                               setQuestionData(prev => ({ ...prev, options: newOptions }));
                             }}
                             className="text-red-500 hover:text-red-700"
@@ -447,56 +553,166 @@ const EditMode = ({
                           </button>
                         </div>
                         
-                        {/* Option Image Size Controls */}
-                        <div className="mt-2">
-                          <label className="block text-xs font-medium text-gray-600 mb-1">
-                            Width: {option.imageWidth}%
-                          </label>
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const newOptions = [...questionData.options];
-                                newOptions[index] = { 
-                                  ...newOptions[index], 
-                                  imageWidth: Math.max(10, newOptions[index].imageWidth - 10) 
-                                };
-                                setQuestionData(prev => ({ ...prev, options: newOptions }));
-                              }}
-                              className="p-1 bg-gray-200 rounded hover:bg-gray-300"
-                            >
-                              <ZoomOut className="w-3 h-3" />
-                            </button>
-                            <input
-                              type="range"
-                              min="10"
-                              max="100"
-                              step="5"
-                              value={option.imageWidth}
-                              onChange={(e) => {
-                                const newOptions = [...questionData.options];
-                                newOptions[index] = { 
-                                  ...newOptions[index], 
-                                  imageWidth: Number(e.target.value) 
-                                };
-                                setQuestionData(prev => ({ ...prev, options: newOptions }));
-                              }}
-                              className="flex-1 h-2"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const newOptions = [...questionData.options];
-                                newOptions[index] = { 
-                                  ...newOptions[index], 
-                                  imageWidth: Math.min(100, newOptions[index].imageWidth + 10) 
-                                };
-                                setQuestionData(prev => ({ ...prev, options: newOptions }));
-                              }}
-                              className="p-1 bg-gray-200 rounded hover:bg-gray-300"
-                            >
-                              <ZoomIn className="w-3 h-3" />
-                            </button>
+                        {/* Option Image Size and Alignment Controls */}
+                        <div className="mt-3 space-y-3">
+                          {/* Width Control */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              Width: {option.imageWidth}%
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newOptions = [...questionData.options];
+                                  newOptions[index] = { 
+                                    ...newOptions[index], 
+                                    imageWidth: Math.max(10, newOptions[index].imageWidth - 10) 
+                                  };
+                                  setQuestionData(prev => ({ ...prev, options: newOptions }));
+                                }}
+                                className="p-1 bg-gray-200 rounded hover:bg-gray-300"
+                              >
+                                <ZoomOut className="w-3 h-3" />
+                              </button>
+                              <input
+                                type="range"
+                                min="10"
+                                max="100"
+                                step="5"
+                                value={option.imageWidth}
+                                onChange={(e) => {
+                                  const newOptions = [...questionData.options];
+                                  newOptions[index] = { 
+                                    ...newOptions[index], 
+                                    imageWidth: Number(e.target.value) 
+                                  };
+                                  setQuestionData(prev => ({ ...prev, options: newOptions }));
+                                }}
+                                className="flex-1 h-2"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newOptions = [...questionData.options];
+                                  newOptions[index] = { 
+                                    ...newOptions[index], 
+                                    imageWidth: Math.min(100, newOptions[index].imageWidth + 10) 
+                                  };
+                                  setQuestionData(prev => ({ ...prev, options: newOptions }));
+                                }}
+                                className="p-1 bg-gray-200 rounded hover:bg-gray-300"
+                              >
+                                <ZoomIn className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Height Control */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              Height: {option.imageHeight}px
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newOptions = [...questionData.options];
+                                  newOptions[index] = { 
+                                    ...newOptions[index], 
+                                    imageHeight: Math.max(50, newOptions[index].imageHeight - 50) 
+                                  };
+                                  setQuestionData(prev => ({ ...prev, options: newOptions }));
+                                }}
+                                className="p-1 bg-gray-200 rounded hover:bg-gray-300"
+                              >
+                                <ZoomOut className="w-3 h-3" />
+                              </button>
+                              <input
+                                type="range"
+                                min="50"
+                                max="600"
+                                step="50"
+                                value={option.imageHeight}
+                                onChange={(e) => {
+                                  const newOptions = [...questionData.options];
+                                  newOptions[index] = { 
+                                    ...newOptions[index], 
+                                    imageHeight: Number(e.target.value) 
+                                  };
+                                  setQuestionData(prev => ({ ...prev, options: newOptions }));
+                                }}
+                                className="flex-1 h-2"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newOptions = [...questionData.options];
+                                  newOptions[index] = { 
+                                    ...newOptions[index], 
+                                    imageHeight: Math.min(600, newOptions[index].imageHeight + 50) 
+                                  };
+                                  setQuestionData(prev => ({ ...prev, options: newOptions }));
+                                }}
+                                className="p-1 bg-gray-200 rounded hover:bg-gray-300"
+                              >
+                                <ZoomIn className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Alignment Control */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              Position/Alignment
+                            </label>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newOptions = [...questionData.options];
+                                  newOptions[index] = { ...newOptions[index], imageAlign: 'left' };
+                                  setQuestionData(prev => ({ ...prev, options: newOptions }));
+                                }}
+                                className={`px-3 py-1 text-xs rounded transition ${
+                                  option.imageAlign === 'left' 
+                                    ? 'bg-blue-500 text-white' 
+                                    : 'bg-gray-200 hover:bg-gray-300'
+                                }`}
+                              >
+                                Left
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newOptions = [...questionData.options];
+                                  newOptions[index] = { ...newOptions[index], imageAlign: 'center' };
+                                  setQuestionData(prev => ({ ...prev, options: newOptions }));
+                                }}
+                                className={`px-3 py-1 text-xs rounded transition ${
+                                  option.imageAlign === 'center' 
+                                    ? 'bg-blue-500 text-white' 
+                                    : 'bg-gray-200 hover:bg-gray-300'
+                                }`}
+                              >
+                                Center
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newOptions = [...questionData.options];
+                                  newOptions[index] = { ...newOptions[index], imageAlign: 'right' };
+                                  setQuestionData(prev => ({ ...prev, options: newOptions }));
+                                }}
+                                className={`px-3 py-1 text-xs rounded transition ${
+                                  option.imageAlign === 'right' 
+                                    ? 'bg-blue-500 text-white' 
+                                    : 'bg-gray-200 hover:bg-gray-300'
+                                }`}
+                              >
+                                Right
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -544,10 +760,14 @@ const EditMode = ({
           <div className="text-sm text-blue-800">
             <p className="font-semibold mb-1">Rich Text Features Available:</p>
             <ul className="list-disc list-inside space-y-1">
-              <li>Text formatting: bold, italic, underline, colors, fonts, sizes</li>
-              <li>Lists, quotes, code blocks, and text alignment</li>
-              <li>Emojis: Just copy-paste emojis directly (😊 🎯 ✨)</li>
-              <li>Images: Upload images for questions and options with adjustable sizes</li>
+              <li>Text formatting: bold, italic, underline, strikethrough, colors, fonts, sizes</li>
+              <li>Lists: ordered, bullet, and checklist formats</li>
+              <li>Alignment: left, center, right, and justify text</li>
+              <li>Special features: quotes, code blocks, subscript, superscript, formulas</li>
+              <li>Media: Insert links, images, and videos directly in text</li>
+              <li>Emojis: Just copy-paste emojis directly (😊 🎯 ✨ 📚 💡)</li>
+              <li>Images: Upload images with custom width & height controls</li>
+              <li>Image positioning: Align images left, center, or right</li>
               <li>Preview: Click the Preview button to see how students will see this question</li>
             </ul>
           </div>
@@ -576,14 +796,15 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     difficulty: "Medium",
     imageUrl: "",
     imageWidth: 100,
-    imageHeight: "auto",
+    imageHeight: 300,
+    imageAlign: "left",
     explanation: "",
     explanationHtml: "",
     options: [
-      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 },
-      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 },
-      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 },
-      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 }
+      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50, imageHeight: 200, imageAlign: "left" },
+      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50, imageHeight: 200, imageAlign: "left" },
+      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50, imageHeight: 200, imageAlign: "left" },
+      { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50, imageHeight: 200, imageAlign: "left" }
     ],
     tags: []
   });
@@ -597,11 +818,12 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
       ['bold', 'italic', 'underline', 'strike'],
       [{ 'color': [] }, { 'background': [] }],
       [{ 'script': 'sub' }, { 'script': 'super' }],
-      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+      [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
       [{ 'indent': '-1' }, { 'indent': '+1' }],
+      [{ 'direction': 'rtl' }],
       [{ 'align': [] }],
       ['blockquote', 'code-block'],
-      ['link'],
+      ['link', 'image', 'video', 'formula'],
       ['clean']
     ],
   };
@@ -611,10 +833,10 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     'bold', 'italic', 'underline', 'strike',
     'color', 'background',
     'script',
-    'list', 'bullet', 'indent',
-    'align',
+    'list', 'bullet', 'indent', 'check',
+    'direction', 'align',
     'blockquote', 'code-block',
-    'link'
+    'link', 'image', 'video', 'formula'
   ];
 
   const handleQuestionHtmlChange = (content, delta, source, editor) => {
@@ -758,7 +980,7 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     if (questionData.options.length < 6) {
       setQuestionData(prev => ({
         ...prev,
-        options: [...prev.options, { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 }]
+        options: [...prev.options, { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50, imageHeight: 200, imageAlign: "left" }]
       }));
     }
   };
@@ -842,14 +1064,15 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
           difficulty: "Medium",
           imageUrl: "",
           imageWidth: 100,
-          imageHeight: "auto",
+          imageHeight: 300,
+          imageAlign: "left",
           explanation: "",
           explanationHtml: "",
           options: [
-            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 },
-            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 },
-            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 },
-            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50 }
+            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50, imageHeight: 200, imageAlign: "left" },
+            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50, imageHeight: 200, imageAlign: "left" },
+            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50, imageHeight: 200, imageAlign: "left" },
+            { text: "", html: "", isCorrect: false, imageUrl: "", imageWidth: 50, imageHeight: 200, imageAlign: "left" }
           ],
           tags: []
         });
