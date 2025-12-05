@@ -258,9 +258,19 @@ router.get('/attempts/:id', auth, async (req, res) => {
           ...answer.toObject(),
           question: {
             text: question.questionText,
+            html: question.questionHtml,
+            imageUrl: question.imageUrl,
+            imageWidth: question.imageWidth,
+            imageHeight: question.imageHeight,
+            imageAlign: question.imageAlign,
             options: question.options,
             correctAnswer: correctAnswerText,
             explanation: question.explanation,
+            explanationHtml: question.explanationHtml,
+            explanationImageUrl: question.explanationImageUrl,
+            explanationImageWidth: question.explanationImageWidth,
+            explanationImageHeight: question.explanationImageHeight,
+            explanationImageAlign: question.explanationImageAlign,
             questionType: question.questionType || 'single'
           }
         };

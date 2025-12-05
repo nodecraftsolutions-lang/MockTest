@@ -28,6 +28,23 @@ const questionSchema = new mongoose.Schema({
     isCorrect: {
       type: Boolean,
       default: false
+    },
+    imageUrl: {
+      type: String,
+      trim: true  // Image URL for option
+    },
+    imageWidth: {
+      type: Number,
+      default: 50  // Width percentage
+    },
+    imageHeight: {
+      type: Number,
+      default: 200  // Height in pixels
+    },
+    imageAlign: {
+      type: String,
+      enum: ['left', 'center', 'right'],
+      default: 'left'
     }
   }],
   correctAnswer: {
@@ -41,6 +58,23 @@ const questionSchema = new mongoose.Schema({
   explanationHtml: {
     type: String,
     trim: true  // Rich HTML content for explanation
+  },
+  explanationImageUrl: {
+    type: String,
+    trim: true  // Image URL for explanation
+  },
+  explanationImageWidth: {
+    type: Number,
+    default: 100  // Width percentage
+  },
+  explanationImageHeight: {
+    type: Number,
+    default: 300  // Height in pixels
+  },
+  explanationImageAlign: {
+    type: String,
+    enum: ['left', 'center', 'right'],
+    default: 'left'
   },
   marks: {
     type: Number,
@@ -59,6 +93,19 @@ const questionSchema = new mongoose.Schema({
   imageUrl: {
     type: String,
     trim: true  // Single image URL for question
+  },
+  imageWidth: {
+    type: Number,
+    default: 100  // Width percentage
+  },
+  imageHeight: {
+    type: Number,
+    default: 300  // Height in pixels
+  },
+  imageAlign: {
+    type: String,
+    enum: ['left', 'center', 'right'],
+    default: 'left'
   },
   mediaUrls: [{
     type: String,

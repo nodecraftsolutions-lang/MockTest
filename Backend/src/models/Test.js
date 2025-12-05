@@ -95,12 +95,23 @@ const testSchema = new mongoose.Schema({
     options: [{ 
       text: String, 
       html: String,  // Rich HTML content for option
-      isCorrect: Boolean 
+      isCorrect: Boolean,
+      imageUrl: String,  // Image URL for option
+      imageWidth: Number,  // Width percentage
+      imageHeight: Number,  // Height in pixels
+      imageAlign: String  // 'left', 'center', 'right'
     }],
     correctAnswer: mongoose.Schema.Types.Mixed,
     explanation: String,
     explanationHtml: String,  // Rich HTML content for explanation
+    explanationImageUrl: String,  // Image URL for explanation
+    explanationImageWidth: Number,  // Width percentage
+    explanationImageHeight: Number,  // Height in pixels
+    explanationImageAlign: String,  // 'left', 'center', 'right'
     imageUrl: String,  // Image URL for question
+    imageWidth: Number,  // Width percentage
+    imageHeight: Number,  // Height in pixels
+    imageAlign: String,  // 'left', 'center', 'right'
     section: String,   // which section this belongs to
     marks: Number,
     negativeMarks: Number,
