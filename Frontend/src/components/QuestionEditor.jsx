@@ -52,6 +52,14 @@ const resetImageProperties = (isOption = false) => ({
   imageAlign: IMAGE_DEFAULTS.ALIGN
 });
 
+// Helper function to reset explanation image properties
+const resetExplanationImageProperties = () => ({
+  explanationImageUrl: "",
+  explanationImageWidth: IMAGE_DEFAULTS.QUESTION_WIDTH,
+  explanationImageHeight: IMAGE_DEFAULTS.QUESTION_HEIGHT,
+  explanationImageAlign: IMAGE_DEFAULTS.ALIGN
+});
+
 // Preview Mode Component
 const PreviewMode = ({ questionData }) => {
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -803,7 +811,7 @@ const EditMode = ({
               />
               <button
                 type="button"
-                onClick={() => setQuestionData(prev => ({ ...prev, ...resetImageProperties(false), explanationImageUrl: "" }))}
+                onClick={() => setQuestionData(prev => ({ ...prev, ...resetExplanationImageProperties() }))}
                 className="text-red-500 hover:text-red-700 p-2"
                 title="Remove image"
               >

@@ -19,6 +19,7 @@ import { useToast } from "../../context/ToastContext";
 import { useResponsive } from "../../hooks/useResponsive";
 import { ResponsiveContainer, ResponsiveGrid } from "../../components/ResponsiveWrapper";
 import { createSanitizedHtml } from "../../utils/sanitize";
+import { getImageMarginStyle } from "../../utils/imageHelpers";
 
 const ResultDetail = () => {
   const { attemptId } = useParams();
@@ -330,7 +331,7 @@ const AnswerAnalysis = ({ attempt, showAnswers, setShowAnswers }) => {
                       width: answer.question.imageWidth ? `${answer.question.imageWidth}%` : '100%',
                       height: 'auto',
                       maxWidth: '100%',
-                      margin: answer.question.imageAlign === 'center' ? '0 auto' : (answer.question.imageAlign === 'right' ? '0 0 0 auto' : '0')
+                      margin: getImageMarginStyle(answer.question.imageAlign)
                     }}
                     className="rounded-lg border-2 border-gray-200 shadow-sm"
                   />
@@ -394,7 +395,7 @@ const AnswerAnalysis = ({ attempt, showAnswers, setShowAnswers }) => {
                               width: option.imageWidth ? `${option.imageWidth}%` : '50%',
                               height: 'auto',
                               maxWidth: '100%',
-                              margin: option.imageAlign === 'center' ? '0 auto' : (option.imageAlign === 'right' ? '0 0 0 auto' : '0')
+                              margin: getImageMarginStyle(option.imageAlign)
                             }}
                             className="rounded border border-gray-300"
                           />
@@ -428,7 +429,7 @@ const AnswerAnalysis = ({ attempt, showAnswers, setShowAnswers }) => {
                           width: answer.question.explanationImageWidth ? `${answer.question.explanationImageWidth}%` : '100%',
                           height: 'auto',
                           maxWidth: '100%',
-                          margin: answer.question.explanationImageAlign === 'center' ? '0 auto' : (answer.question.explanationImageAlign === 'right' ? '0 0 0 auto' : '0')
+                          margin: getImageMarginStyle(answer.question.explanationImageAlign)
                         }}
                         className="rounded-lg border border-blue-300 shadow-sm"
                       />
