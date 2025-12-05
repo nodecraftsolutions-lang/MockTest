@@ -652,7 +652,8 @@ const ExamInterface = () => {
                   style={{
                     width: currentQ.imageWidth ? `${currentQ.imageWidth}%` : '100%',
                     height: 'auto',
-                    maxWidth: '100%'
+                    maxWidth: '100%',
+                    margin: currentQ.imageAlign === 'center' ? '0 auto' : (currentQ.imageAlign === 'right' ? '0 0 0 auto' : '0')
                   }}
                   className="rounded-lg border-2 border-gray-200 shadow-md"
                 />
@@ -699,7 +700,8 @@ const ExamInterface = () => {
                             style={{
                               width: opt.imageWidth ? `${opt.imageWidth}%` : '50%',
                               height: 'auto',
-                              maxWidth: '100%'
+                              maxWidth: '100%',
+                              margin: opt.imageAlign === 'center' ? '0 auto' : (opt.imageAlign === 'right' ? '0 0 0 auto' : '0')
                             }}
                             className="rounded border border-gray-300"
                           />

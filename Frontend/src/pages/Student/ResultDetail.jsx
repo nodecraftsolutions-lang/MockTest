@@ -329,7 +329,8 @@ const AnswerAnalysis = ({ attempt, showAnswers, setShowAnswers }) => {
                     style={{
                       width: answer.question.imageWidth ? `${answer.question.imageWidth}%` : '100%',
                       height: 'auto',
-                      maxWidth: '100%'
+                      maxWidth: '100%',
+                      margin: answer.question.imageAlign === 'center' ? '0 auto' : (answer.question.imageAlign === 'right' ? '0 0 0 auto' : '0')
                     }}
                     className="rounded-lg border-2 border-gray-200 shadow-sm"
                   />
