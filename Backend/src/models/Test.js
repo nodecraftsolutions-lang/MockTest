@@ -1,5 +1,16 @@
 const mongoose = require('mongoose');
 
+// Default image dimensions
+const DEFAULT_IMAGE_DIMENSIONS = {
+  QUESTION_WIDTH: 100,
+  QUESTION_HEIGHT: 300,
+  OPTION_WIDTH: 50,
+  OPTION_HEIGHT: 200,
+  EXPLANATION_WIDTH: 100,
+  EXPLANATION_HEIGHT: 300,
+  ALIGN: 'left'
+};
+
 // ---------------------------
 // Test Section Schema
 // ---------------------------
@@ -274,13 +285,13 @@ testSchema.methods.generateQuestions = async function () {
         explanation: q.explanation || '',
         explanationHtml: q.explanationHtml || '',
         explanationImageUrl: q.explanationImageUrl || '',
-        explanationImageWidth: q.explanationImageWidth || 100,
-        explanationImageHeight: q.explanationImageHeight || 300,
-        explanationImageAlign: q.explanationImageAlign || 'left',
+        explanationImageWidth: q.explanationImageWidth || DEFAULT_IMAGE_DIMENSIONS.EXPLANATION_WIDTH,
+        explanationImageHeight: q.explanationImageHeight || DEFAULT_IMAGE_DIMENSIONS.EXPLANATION_HEIGHT,
+        explanationImageAlign: q.explanationImageAlign || DEFAULT_IMAGE_DIMENSIONS.ALIGN,
         imageUrl: q.imageUrl || '',
-        imageWidth: q.imageWidth || 100,
-        imageHeight: q.imageHeight || 300,
-        imageAlign: q.imageAlign || 'left',
+        imageWidth: q.imageWidth || DEFAULT_IMAGE_DIMENSIONS.QUESTION_WIDTH,
+        imageHeight: q.imageHeight || DEFAULT_IMAGE_DIMENSIONS.QUESTION_HEIGHT,
+        imageAlign: q.imageAlign || DEFAULT_IMAGE_DIMENSIONS.ALIGN,
         section: sectionName,
         marks: marksPerQuestion,
         negativeMarks: negativeMarking,

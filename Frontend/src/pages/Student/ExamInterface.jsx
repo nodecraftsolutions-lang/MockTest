@@ -212,6 +212,13 @@ const ExamInterface = () => {
 
   const handleAnswer = (qId, optionIndex) => {
     const currentQ = questions[currentIndex];
+    
+    // Bounds checking for option index
+    if (optionIndex < 0 || optionIndex >= currentQ.options.length) {
+      console.error('Invalid option index:', optionIndex);
+      return;
+    }
+    
     const option = currentQ.options[optionIndex];
     const optionId = getOptionIdentifier(option, optionIndex);
     

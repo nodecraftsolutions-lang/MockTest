@@ -678,6 +678,12 @@ router.post('/attempts/:id/submit', auth, async (req, res) => {
     const processed = [];
     const sectionWiseScore = {};
 
+    // Helper function to apply negative marking
+    const applyNegativeMarking = (q) => {
+      const neg = q.negativeMarks || 0;
+      return -neg;
+    };
+
     test.generatedQuestions.forEach((q) => {
       const studentAnswer = answers[q._id];
       const section = q.section || 'General';
@@ -718,9 +724,8 @@ router.post('/attempts/:id/submit', auth, async (req, res) => {
             sectionWiseScore[section].correctAnswers++;
             sectionWiseScore[section].score += marksAwarded;
           } else {
-            const neg = q.negativeMarks || 0;
-            marksAwarded = -neg;
-            score -= neg;
+            marksAwarded = applyNegativeMarking(q);
+            score -= q.negativeMarks || 0;
             incorrect++;
           }
         } else {
@@ -741,16 +746,14 @@ router.post('/attempts/:id/submit', auth, async (req, res) => {
               sectionWiseScore[section].correctAnswers++;
               sectionWiseScore[section].score += marksAwarded;
             } else {
-              const neg = q.negativeMarks || 0;
-              marksAwarded = -neg;
-              score -= neg;
+              marksAwarded = applyNegativeMarking(q);
+              score -= q.negativeMarks || 0;
               incorrect++;
             }
           } else {
             // No correct option marked - student gets it wrong
-            const neg = q.negativeMarks || 0;
-            marksAwarded = -neg;
-            score -= neg;
+            marksAwarded = applyNegativeMarking(q);
+            score -= q.negativeMarks || 0;
             incorrect++;
           }
         }
