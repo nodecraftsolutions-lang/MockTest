@@ -498,21 +498,11 @@ const EditMode = ({
                   className="mt-2 w-5 h-5 accent-blue-600"
                 />
                 <div className="flex-1">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">
-                    Option {String.fromCharCode(65 + index)}
-                  </label>
-                  <ReactQuill
-                    theme="snow"
-                    value={option.html}
-                    onChange={(content, delta, source, editor) => handleOptionHtmlChange(index, content, editor)}
-                    modules={modules}
-                    formats={formats}
-                    placeholder={`Enter option ${String.fromCharCode(65 + index)}...`}
-                    style={{ height: '100px', marginBottom: '42px' }}
-                  />
-                  
-                  {/* Option Image Upload */}
-                  <div className="mt-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-medium text-gray-600">
+                      Option {String.fromCharCode(65 + index)}
+                    </label>
+                    {/* Option Image Upload Button - Moved to top for better visibility */}
                     <input
                       type="file"
                       ref={el => optionFileInputRefs.current[index] = el}
@@ -524,14 +514,26 @@ const EditMode = ({
                       type="button"
                       onClick={() => optionFileInputRefs.current[index]?.click()}
                       disabled={uploadingOptionImage === index}
-                      className="flex items-center px-3 py-1 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:bg-gray-400"
+                      className="flex items-center px-3 py-1 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:bg-gray-400"
                     >
                       <ImageIcon className="w-3 h-3 mr-1" />
-                      {uploadingOptionImage === index ? 'Uploading...' : 'Add Image'}
+                      {uploadingOptionImage === index ? 'Uploading...' : 'Upload Image'}
                     </button>
-                    
+                  </div>
+                  <ReactQuill
+                    theme="snow"
+                    value={option.html}
+                    onChange={(content, delta, source, editor) => handleOptionHtmlChange(index, content, editor)}
+                    modules={modules}
+                    formats={formats}
+                    placeholder={`Enter option ${String.fromCharCode(65 + index)}... (Use toolbar for formatting)`}
+                    style={{ height: '100px', marginBottom: '42px' }}
+                  />
+                  
+                  {/* Option Image Preview and Controls */}
+                  <div className="mt-2">
                     {option.imageUrl && (
-                      <div className="mt-3 bg-white border border-gray-200 rounded-lg p-3">
+                      <div className="mt-2 bg-white border border-gray-200 rounded-lg p-3">
                         <div className="flex items-start gap-3">
                           <img 
                             src={`${apiUrl}${option.imageUrl}`}
@@ -757,15 +759,15 @@ const EditMode = ({
         <div className="flex items-start">
           <AlertCircle className="w-5 h-5 text-blue-600 mr-3 mt-0.5 flex-shrink-0" />
           <div className="text-sm text-blue-800">
-            <p className="font-semibold mb-1">Rich Text Features Available:</p>
+            <p className="font-semibold mb-1">Rich Text Features Available (for Question, Options & Explanation):</p>
             <ul className="list-disc list-inside space-y-1">
               <li>Text formatting: bold, italic, underline, strikethrough, colors, fonts, sizes</li>
               <li>Lists: ordered and bullet point formats</li>
               <li>Alignment: left, center, right, and justify text; RTL support</li>
               <li>Special features: quotes, code blocks, subscript, superscript</li>
-              <li>Media: Insert links and images directly in text</li>
+              <li>Media: Insert links and images directly in text using the toolbar</li>
               <li>Emojis: Just copy-paste emojis directly (😊 🎯 ✨ 📚 💡)</li>
-              <li>Images: Upload images with custom width & height controls</li>
+              <li>Images: Upload images with custom width & height controls (via toolbar or upload button)</li>
               <li>Image positioning: Align images left, center, or right</li>
               <li>Preview: Click the Preview button to see how students will see this question</li>
             </ul>
