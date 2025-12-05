@@ -340,7 +340,9 @@ const AnswerAnalysis = ({ attempt, showAnswers, setShowAnswers }) => {
               
               <div className="space-y-2">
                 {answer.question?.options?.map((option, optIndex) => {
-                  const isSelected = answer.selectedOptions?.includes(option.text);
+                  // Support both text-based and index-based option identifiers
+                  const optionId = option.text && option.text.trim() ? option.text : `option_${optIndex}`;
+                  const isSelected = answer.selectedOptions?.includes(optionId);
                   const isCorrect = option.isCorrect;
                   
                   // Determine the styling based on correctness and selection
