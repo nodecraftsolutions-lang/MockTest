@@ -503,24 +503,22 @@ const EditMode = ({
                       Option {String.fromCharCode(65 + index)}
                     </label>
                     {/* Option Image Upload Button - Moved to top for better visibility */}
-                    <div>
-                      <input
-                        type="file"
-                        ref={el => optionFileInputRefs.current[index] = el}
-                        onChange={(e) => handleOptionImageUpload(index, e.target.files[0])}
-                        accept="image/*"
-                        className="hidden"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => optionFileInputRefs.current[index]?.click()}
-                        disabled={uploadingOptionImage === index}
-                        className="flex items-center px-3 py-1 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:bg-gray-400"
-                      >
-                        <ImageIcon className="w-3 h-3 mr-1" />
-                        {uploadingOptionImage === index ? 'Uploading...' : 'Upload Image'}
-                      </button>
-                    </div>
+                    <input
+                      type="file"
+                      ref={el => optionFileInputRefs.current[index] = el}
+                      onChange={(e) => handleOptionImageUpload(index, e.target.files[0])}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => optionFileInputRefs.current[index]?.click()}
+                      disabled={uploadingOptionImage === index}
+                      className="flex items-center px-3 py-1 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:bg-gray-400"
+                    >
+                      <ImageIcon className="w-3 h-3 mr-1" />
+                      {uploadingOptionImage === index ? 'Uploading...' : 'Upload Image'}
+                    </button>
                   </div>
                   <ReactQuill
                     theme="snow"
@@ -528,7 +526,7 @@ const EditMode = ({
                     onChange={(content, delta, source, editor) => handleOptionHtmlChange(index, content, editor)}
                     modules={modules}
                     formats={formats}
-                    placeholder={`Enter option ${String.fromCharCode(65 + index)}... (Use toolbar to format text, insert images, emojis, etc.)`}
+                    placeholder={`Enter option ${String.fromCharCode(65 + index)}... (Use toolbar for formatting)`}
                     style={{ height: '100px', marginBottom: '42px' }}
                   />
                   
