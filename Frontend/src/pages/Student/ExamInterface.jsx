@@ -215,7 +215,7 @@ const ExamInterface = () => {
     
     // Bounds checking for option index
     if (optionIndex < 0 || optionIndex >= currentQ.options.length) {
-      console.error('Invalid option index:', optionIndex);
+      console.error(`Invalid option index: ${optionIndex} for question with ${currentQ.options.length} options (question ID: ${qId})`);
       return;
     }
     

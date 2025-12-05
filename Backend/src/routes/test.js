@@ -725,7 +725,7 @@ router.post('/attempts/:id/submit', auth, async (req, res) => {
             sectionWiseScore[section].score += marksAwarded;
           } else {
             marksAwarded = applyNegativeMarking(q);
-            score -= q.negativeMarks || 0;
+            score += marksAwarded; // marksAwarded is already negative
             incorrect++;
           }
         } else {
@@ -747,13 +747,13 @@ router.post('/attempts/:id/submit', auth, async (req, res) => {
               sectionWiseScore[section].score += marksAwarded;
             } else {
               marksAwarded = applyNegativeMarking(q);
-              score -= q.negativeMarks || 0;
+              score += marksAwarded; // marksAwarded is already negative
               incorrect++;
             }
           } else {
             // No correct option marked - student gets it wrong
             marksAwarded = applyNegativeMarking(q);
-            score -= q.negativeMarks || 0;
+            score += marksAwarded; // marksAwarded is already negative
             incorrect++;
           }
         }
