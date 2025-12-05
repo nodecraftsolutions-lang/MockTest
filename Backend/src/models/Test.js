@@ -267,14 +267,25 @@ testSchema.methods.generateQuestions = async function () {
       generatedQuestions.push({
         questionId: q._id,
         questionText: q.questionText,
+        questionHtml: q.questionHtml || '',
         questionType: q.questionType,
         options: q.options,
         correctAnswer: q.correctAnswer,
-        explanation: q.explanation,
+        explanation: q.explanation || '',
+        explanationHtml: q.explanationHtml || '',
+        explanationImageUrl: q.explanationImageUrl || '',
+        explanationImageWidth: q.explanationImageWidth || 100,
+        explanationImageHeight: q.explanationImageHeight || 300,
+        explanationImageAlign: q.explanationImageAlign || 'left',
+        imageUrl: q.imageUrl || '',
+        imageWidth: q.imageWidth || 100,
+        imageHeight: q.imageHeight || 300,
+        imageAlign: q.imageAlign || 'left',
         section: sectionName,
         marks: marksPerQuestion,
         negativeMarks: negativeMarking,
-        tags: q.tags || []
+        tags: q.tags || [],
+        difficulty: q.difficulty || 'Medium'
       });
     });
   }

@@ -696,7 +696,12 @@ router.post('/attempts/:id/submit', auth, async (req, res) => {
         if (q.questionType === 'multiple') {
           // For multiple choice questions, check if all selected options are correct
           // and all correct options are selected
-          const correctOptions = q.options.filter(o => o.isCorrect).map(o => o.text);
+          const correctOptions = q.options.map((o, idx) => {
+            if (!o.isCorrect) return null;
+            // Support both text-based and index-based identifiers
+            return o.text && o.text.trim() ? o.text : `option_${idx}`;
+          }).filter(Boolean);
+          
           const selectedOptions = Array.isArray(studentAnswer) ? studentAnswer : [studentAnswer];
           
           // Check if selected options match correct options exactly
@@ -720,15 +725,29 @@ router.post('/attempts/:id/submit', auth, async (req, res) => {
           }
         } else {
           // For single choice questions
-          const correctOpt = q.options.find(o => o.isCorrect);
-          if (correctOpt && correctOpt.text === studentAnswer) {
-            isCorrect = true;
-            marksAwarded = q.marks || 1;
-            score += marksAwarded;
-            correct++;
-            sectionWiseScore[section].correctAnswers++;
-            sectionWiseScore[section].score += marksAwarded;
+          const correctOptIndex = q.options.findIndex(o => o.isCorrect);
+          if (correctOptIndex !== -1) {
+            const correctOpt = q.options[correctOptIndex];
+            // Support both text-based and index-based identifiers
+            const correctId = correctOpt.text && correctOpt.text.trim() 
+              ? correctOpt.text 
+              : `option_${correctOptIndex}`;
+            
+            if (correctId === studentAnswer) {
+              isCorrect = true;
+              marksAwarded = q.marks || 1;
+              score += marksAwarded;
+              correct++;
+              sectionWiseScore[section].correctAnswers++;
+              sectionWiseScore[section].score += marksAwarded;
+            } else {
+              const neg = q.negativeMarks || 0;
+              marksAwarded = -neg;
+              score -= neg;
+              incorrect++;
+            }
           } else {
+            // No correct option marked - student gets it wrong
             const neg = q.negativeMarks || 0;
             marksAwarded = -neg;
             score -= neg;

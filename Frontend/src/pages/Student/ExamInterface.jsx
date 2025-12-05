@@ -200,8 +200,20 @@ const ExamInterface = () => {
     }
   };
 
-  const handleAnswer = (qId, option) => {
+  // Helper to get option identifier - use text if available, otherwise use a consistent identifier
+  const getOptionIdentifier = (option, index) => {
+    // If text exists and is not empty, use it
+    if (option.text && option.text.trim()) {
+      return option.text;
+    }
+    // Otherwise, use index (we'll need to handle this on backend too)
+    return `option_${index}`;
+  };
+
+  const handleAnswer = (qId, optionIndex) => {
     const currentQ = questions[currentIndex];
+    const option = currentQ.options[optionIndex];
+    const optionId = getOptionIdentifier(option, optionIndex);
     
     if (currentQ.questionType === 'multiple') {
       // For multiple choice questions, allow selecting multiple options
@@ -209,12 +221,12 @@ const ExamInterface = () => {
         const currentAnswers = prev[qId] || [];
         let newAnswers;
         
-        if (currentAnswers.includes(option.text)) {
+        if (currentAnswers.includes(optionId)) {
           // Remove option if already selected
-          newAnswers = currentAnswers.filter(ans => ans !== option.text);
+          newAnswers = currentAnswers.filter(ans => ans !== optionId);
         } else {
           // Add option if not selected
-          newAnswers = [...currentAnswers, option.text];
+          newAnswers = [...currentAnswers, optionId];
         }
         
         return {
@@ -226,7 +238,7 @@ const ExamInterface = () => {
       // For single choice questions, only one option can be selected
       setAnswers((prev) => ({
         ...prev,
-        [qId]: option.text
+        [qId]: optionId
       }));
     }
     
@@ -663,9 +675,10 @@ const ExamInterface = () => {
 
             <div className="space-y-2 sm:space-y-3">
               {currentQ.options.map((opt, i) => {
+                const optionId = getOptionIdentifier(opt, i);
                 const isSelected = currentQ.questionType === 'multiple' 
-                  ? (answers[currentQ._id] || []).includes(opt.text)
-                  : answers[currentQ._id] === opt.text;
+                  ? (answers[currentQ._id] || []).includes(optionId)
+                  : answers[currentQ._id] === optionId;
                   
                 return (
                   <label
@@ -680,7 +693,7 @@ const ExamInterface = () => {
                       type={currentQ.questionType === 'multiple' ? "checkbox" : "radio"}
                       name={`q-${currentQ._id}`}
                       checked={isSelected}
-                      onChange={() => handleAnswer(currentQ._id, opt)}
+                      onChange={() => handleAnswer(currentQ._id, i)}
                       className="mr-2 sm:mr-3 accent-primary-600 w-4 h-4 mt-1"
                     />
                     <div className="text-gray-800 text-sm sm:text-base flex-1">
