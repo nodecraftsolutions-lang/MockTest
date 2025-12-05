@@ -19,6 +19,7 @@ import { useToast } from "../../context/ToastContext";
 import { useResponsive } from "../../hooks/useResponsive";
 import { ResponsiveContainer, ResponsiveGrid } from "../../components/ResponsiveWrapper";
 import { createSanitizedHtml } from "../../utils/sanitize";
+import { getImageMarginStyle } from "../../utils/imageHelpers";
 
 const ResultDetail = () => {
   const { attemptId } = useParams();
@@ -329,7 +330,8 @@ const AnswerAnalysis = ({ attempt, showAnswers, setShowAnswers }) => {
                     style={{
                       width: answer.question.imageWidth ? `${answer.question.imageWidth}%` : '100%',
                       height: 'auto',
-                      maxWidth: '100%'
+                      maxWidth: '100%',
+                      margin: getImageMarginStyle(answer.question.imageAlign)
                     }}
                     className="rounded-lg border-2 border-gray-200 shadow-sm"
                   />
@@ -357,38 +359,55 @@ const AnswerAnalysis = ({ attempt, showAnswers, setShowAnswers }) => {
                   return (
                     <div
                       key={optIndex}
-                      className={`p-2 rounded-lg border flex items-start justify-between text-sm ${optionClass}`}
+                      className={`p-2 rounded-lg border flex flex-col text-sm ${optionClass}`}
                     >
-                      <div className="flex items-start flex-1">
-                        <span className="mr-2 font-semibold">{String.fromCharCode(65 + optIndex)}.</span>
-                        {option.html ? (
-                          <div 
-                            className="prose prose-sm max-w-none flex-1"
-                            dangerouslySetInnerHTML={createSanitizedHtml(option.html)}
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start flex-1">
+                          <span className="mr-2 font-semibold">{String.fromCharCode(65 + optIndex)}.</span>
+                          {option.html ? (
+                            <div 
+                              className="prose prose-sm max-w-none flex-1"
+                              dangerouslySetInnerHTML={createSanitizedHtml(option.html)}
+                            />
+                          ) : (
+                            <span className="flex-1">{option.text}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center ml-2 flex-shrink-0">
+                          {isCorrect && (
+                            <span className="text-xs font-bold text-green-800 mr-2">
+                              (Correct)
+                            </span>
+                          )}
+                          {isSelected && (
+                            <span className="text-xs font-bold text-indigo-800">
+                              Your Answer
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {option.imageUrl && (
+                        <div className="mt-2 ml-6">
+                          <img 
+                            src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${option.imageUrl}`}
+                            alt={`Option ${String.fromCharCode(65 + optIndex)}`}
+                            style={{
+                              width: option.imageWidth ? `${option.imageWidth}%` : '50%',
+                              height: 'auto',
+                              maxWidth: '100%',
+                              margin: getImageMarginStyle(option.imageAlign)
+                            }}
+                            className="rounded border border-gray-300"
                           />
-                        ) : (
-                          <span className="flex-1">{option.text}</span>
-                        )}
-                      </div>
-                      <div className="flex items-center ml-2 flex-shrink-0">
-                        {isCorrect && (
-                          <span className="text-xs font-bold text-green-800 mr-2">
-                            (Correct)
-                          </span>
-                        )}
-                        {isSelected && (
-                          <span className="text-xs font-bold text-indigo-800">
-                            Your Answer
-                          </span>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
               </div>
               
               {/* Explanation with HTML Support */}
-              {(answer.question?.explanationHtml || answer.question?.explanation) && (
+              {(answer.question?.explanationHtml || answer.question?.explanation || answer.question?.explanationImageUrl) && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
                   <h5 className="font-bold text-blue-900 mb-1 text-sm">Explanation:</h5>
                   {answer.question.explanationHtml ? (
@@ -396,10 +415,25 @@ const AnswerAnalysis = ({ attempt, showAnswers, setShowAnswers }) => {
                       className="prose prose-sm max-w-none text-blue-800"
                       dangerouslySetInnerHTML={createSanitizedHtml(answer.question.explanationHtml)}
                     />
-                  ) : (
+                  ) : answer.question.explanation ? (
                     <p className="text-blue-800 text-xs">
                       {answer.question.explanation}
                     </p>
+                  ) : null}
+                  {answer.question.explanationImageUrl && (
+                    <div className="mt-2">
+                      <img 
+                        src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${answer.question.explanationImageUrl}`}
+                        alt="Explanation" 
+                        style={{
+                          width: answer.question.explanationImageWidth ? `${answer.question.explanationImageWidth}%` : '100%',
+                          height: 'auto',
+                          maxWidth: '100%',
+                          margin: getImageMarginStyle(answer.question.explanationImageAlign)
+                        }}
+                        className="rounded-lg border border-blue-300 shadow-sm"
+                      />
+                    </div>
                   )}
                 </div>
               )}

@@ -52,6 +52,14 @@ const resetImageProperties = (isOption = false) => ({
   imageAlign: IMAGE_DEFAULTS.ALIGN
 });
 
+// Helper function to reset explanation image properties
+const resetExplanationImageProperties = () => ({
+  explanationImageUrl: "",
+  explanationImageWidth: IMAGE_DEFAULTS.QUESTION_WIDTH,
+  explanationImageHeight: IMAGE_DEFAULTS.QUESTION_HEIGHT,
+  explanationImageAlign: IMAGE_DEFAULTS.ALIGN
+});
+
 // Preview Mode Component
 const PreviewMode = ({ questionData }) => {
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -151,7 +159,7 @@ const PreviewMode = ({ questionData }) => {
       </div>
 
       {/* Explanation Preview */}
-      {(questionData.explanationHtml || questionData.explanation) && (
+      {(questionData.explanationHtml || questionData.explanation || questionData.explanationImageUrl) && (
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
             <AlertCircle className="w-5 h-5 mr-2 text-blue-600" />
@@ -163,8 +171,18 @@ const PreviewMode = ({ questionData }) => {
                 className="prose max-w-none"
                 dangerouslySetInnerHTML={createSanitizedHtml(questionData.explanationHtml)}
               />
-            ) : (
+            ) : questionData.explanation ? (
               <p>{questionData.explanation}</p>
+            ) : null}
+            {questionData.explanationImageUrl && (
+              <div className="mt-4">
+                <img 
+                  src={`${apiUrl}${questionData.explanationImageUrl}`}
+                  alt="Explanation" 
+                  style={getImageStyles(questionData.explanationImageAlign, questionData.explanationImageWidth, questionData.explanationImageHeight)}
+                  className="rounded-lg border-2 border-gray-200 shadow-md"
+                />
+              </div>
             )}
           </div>
         </div>
@@ -185,12 +203,15 @@ const EditMode = ({
   handleCorrectAnswerToggle,
   handleOptionImageUpload,
   handleExplanationHtmlChange,
+  handleExplanationImageUpload,
   addOption,
   removeOption,
   uploadingImage,
   uploadingOptionImage,
+  uploadingExplanationImage,
   fileInputRef,
   optionFileInputRefs,
+  explanationFileInputRef,
   modules,
   formats
 }) => {
@@ -754,6 +775,192 @@ const EditMode = ({
         </div>
       </div>
 
+      {/* Explanation Image Upload with Resize Controls */}
+      <div className="mb-6">
+        <label className="block text-sm font-semibold text-gray-700 mb-2">
+          Explanation Image (Optional)
+        </label>
+        
+        {/* Hidden file input */}
+        <input
+          type="file"
+          ref={explanationFileInputRef}
+          accept="image/*"
+          onChange={handleExplanationImageUpload}
+          className="hidden"
+        />
+
+        {!questionData.explanationImageUrl ? (
+          <button
+            type="button"
+            onClick={() => explanationFileInputRef.current?.click()}
+            disabled={uploadingExplanationImage}
+            className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-400 hover:text-blue-600 transition flex items-center justify-center space-x-2 disabled:opacity-50"
+          >
+            <ImageIcon className="w-5 h-5" />
+            <span>{uploadingExplanationImage ? 'Uploading...' : 'Upload Explanation Image'}</span>
+          </button>
+        ) : (
+          <div className="border border-gray-300 rounded-xl p-4 bg-gray-50">
+            <div className="flex items-start justify-between mb-4">
+              <img 
+                src={`${apiUrl}${questionData.explanationImageUrl}`}
+                alt="Explanation" 
+                style={getImageStyles(questionData.explanationImageAlign, questionData.explanationImageWidth, questionData.explanationImageHeight)}
+                className="rounded-lg border-2 border-gray-200 shadow-md"
+              />
+              <button
+                type="button"
+                onClick={() => setQuestionData(prev => ({ ...prev, ...resetExplanationImageProperties() }))}
+                className="text-red-500 hover:text-red-700 p-2"
+                title="Remove image"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Image Controls */}
+            <div className="space-y-4">
+              {/* Width Control */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-2">
+                  Image Width: {questionData.explanationImageWidth}%
+                </label>
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => 
+                      setQuestionData(prev => ({ 
+                        ...prev, 
+                        explanationImageWidth: Math.max(IMAGE_DEFAULTS.MIN_WIDTH, prev.explanationImageWidth - IMAGE_DEFAULTS.WIDTH_STEP) 
+                      }))
+                    }
+                    className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 transition"
+                  >
+                    <ZoomOut className="w-4 h-4" />
+                  </button>
+                  <input
+                    type="range"
+                    min={IMAGE_DEFAULTS.MIN_WIDTH}
+                    max={IMAGE_DEFAULTS.MAX_WIDTH}
+                    step={IMAGE_DEFAULTS.WIDTH_STEP}
+                    value={questionData.explanationImageWidth}
+                    onChange={(e) => 
+                      setQuestionData(prev => ({ 
+                        ...prev, 
+                        explanationImageWidth: Number(e.target.value) 
+                      }))
+                    }
+                    className="flex-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => 
+                      setQuestionData(prev => ({ 
+                        ...prev, 
+                        explanationImageWidth: Math.min(IMAGE_DEFAULTS.MAX_WIDTH, prev.explanationImageWidth + IMAGE_DEFAULTS.WIDTH_STEP) 
+                      }))
+                    }
+                    className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 transition"
+                  >
+                    <ZoomIn className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Height Control */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-2">
+                  Image Height: {questionData.explanationImageHeight}px
+                </label>
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => 
+                      setQuestionData(prev => ({ 
+                        ...prev, 
+                        explanationImageHeight: Math.max(IMAGE_DEFAULTS.MIN_HEIGHT, prev.explanationImageHeight - IMAGE_DEFAULTS.HEIGHT_STEP) 
+                      }))
+                    }
+                    className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 transition"
+                  >
+                    <ZoomOut className="w-4 h-4" />
+                  </button>
+                  <input
+                    type="range"
+                    min={IMAGE_DEFAULTS.MIN_HEIGHT}
+                    max={IMAGE_DEFAULTS.MAX_HEIGHT}
+                    step={IMAGE_DEFAULTS.HEIGHT_STEP}
+                    value={questionData.explanationImageHeight}
+                    onChange={(e) => 
+                      setQuestionData(prev => ({ 
+                        ...prev, 
+                        explanationImageHeight: Number(e.target.value) 
+                      }))
+                    }
+                    className="flex-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => 
+                      setQuestionData(prev => ({ 
+                        ...prev, 
+                        explanationImageHeight: Math.min(IMAGE_DEFAULTS.MAX_HEIGHT, prev.explanationImageHeight + IMAGE_DEFAULTS.HEIGHT_STEP) 
+                      }))
+                    }
+                    className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 transition"
+                  >
+                    <ZoomIn className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Alignment Control */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-2">
+                  Image Alignment
+                </label>
+                <div className="flex space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setQuestionData(prev => ({ ...prev, explanationImageAlign: 'left' }))}
+                    className={`px-3 py-1 text-xs rounded transition ${
+                      questionData.explanationImageAlign === 'left' 
+                        ? 'bg-blue-500 text-white' 
+                        : 'bg-gray-200 hover:bg-gray-300'
+                    }`}
+                  >
+                    Left
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQuestionData(prev => ({ ...prev, explanationImageAlign: 'center' }))}
+                    className={`px-3 py-1 text-xs rounded transition ${
+                      questionData.explanationImageAlign === 'center' 
+                        ? 'bg-blue-500 text-white' 
+                        : 'bg-gray-200 hover:bg-gray-300'
+                    }`}
+                  >
+                    Center
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQuestionData(prev => ({ ...prev, explanationImageAlign: 'right' }))}
+                    className={`px-3 py-1 text-xs rounded transition ${
+                      questionData.explanationImageAlign === 'right' 
+                        ? 'bg-blue-500 text-white' 
+                        : 'bg-gray-200 hover:bg-gray-300'
+                    }`}
+                  >
+                    Right
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Info Box */}
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
         <div className="flex items-start">
@@ -783,9 +990,11 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingOptionImage, setUploadingOptionImage] = useState(null);
+  const [uploadingExplanationImage, setUploadingExplanationImage] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const fileInputRef = useRef(null);
   const optionFileInputRefs = useRef([]);
+  const explanationFileInputRef = useRef(null);
 
   const [questionData, setQuestionData] = useState({
     questionText: "",
@@ -801,6 +1010,10 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     imageAlign: IMAGE_DEFAULTS.ALIGN,
     explanation: "",
     explanationHtml: "",
+    explanationImageUrl: "",
+    explanationImageWidth: IMAGE_DEFAULTS.QUESTION_WIDTH,
+    explanationImageHeight: IMAGE_DEFAULTS.QUESTION_HEIGHT,
+    explanationImageAlign: IMAGE_DEFAULTS.ALIGN,
     options: [
       createDefaultOption(),
       createDefaultOption(),
@@ -951,6 +1164,47 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
     }
   };
 
+  const handleExplanationImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      showError('Please select an image file');
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showError('Image size should be less than 5MB');
+      return;
+    }
+
+    setUploadingExplanationImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await api.post('/tests/upload-question-image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      if (response.data.success) {
+        setQuestionData(prev => ({
+          ...prev,
+          explanationImageUrl: response.data.data.imageUrl
+        }));
+        showSuccess('Explanation image uploaded successfully');
+      }
+    } catch (error) {
+      showError(error.response?.data?.message || 'Failed to upload image');
+    } finally {
+      setUploadingExplanationImage(false);
+    }
+  };
+
   const handleSectionChange = (sectionName) => {
     const section = sections.find(s => s.sectionName === sectionName);
     if (section) {
@@ -1071,6 +1325,10 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
           imageAlign: IMAGE_DEFAULTS.ALIGN,
           explanation: "",
           explanationHtml: "",
+          explanationImageUrl: "",
+          explanationImageWidth: IMAGE_DEFAULTS.QUESTION_WIDTH,
+          explanationImageHeight: IMAGE_DEFAULTS.QUESTION_HEIGHT,
+          explanationImageAlign: IMAGE_DEFAULTS.ALIGN,
           options: [
             createDefaultOption(),
             createDefaultOption(),
@@ -1152,12 +1410,15 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
               handleCorrectAnswerToggle={handleCorrectAnswerToggle}
               handleOptionImageUpload={handleOptionImageUpload}
               handleExplanationHtmlChange={handleExplanationHtmlChange}
+              handleExplanationImageUpload={handleExplanationImageUpload}
               addOption={addOption}
               removeOption={removeOption}
               uploadingImage={uploadingImage}
               uploadingOptionImage={uploadingOptionImage}
+              uploadingExplanationImage={uploadingExplanationImage}
               fileInputRef={fileInputRef}
               optionFileInputRefs={optionFileInputRefs}
+              explanationFileInputRef={explanationFileInputRef}
               modules={modules}
               formats={formats}
             />

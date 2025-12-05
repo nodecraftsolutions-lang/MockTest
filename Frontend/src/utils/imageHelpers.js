@@ -20,3 +20,15 @@ export const getImageStyles = (align, width, height, isPercentage = true) => ({
           '0 auto',
   display: align === 'center' ? 'block' : 'inline'
 });
+
+/**
+ * Generates margin style for image alignment without float
+ * Useful for images within flex or block containers
+ * @param {string} align - Image alignment ('left', 'center', 'right')
+ * @returns {string} Margin value for inline styles
+ */
+export const getImageMarginStyle = (align) => {
+  if (align === 'center') return '0 auto';
+  if (align === 'right') return '0 0 0 auto';
+  return '0'; // left or default
+};

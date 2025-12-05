@@ -9,6 +9,7 @@ import LoadingSpinner from "../../components/LoadingSpinner";
 import { useToast } from "../../context/ToastContext";
 import { useAuth } from "../../context/AuthContext";
 import { createSanitizedHtml } from "../../utils/sanitize";
+import { getImageMarginStyle } from "../../utils/imageHelpers";
 
 const ExamInterface = () => {
   const { testId } = useParams();
@@ -652,7 +653,8 @@ const ExamInterface = () => {
                   style={{
                     width: currentQ.imageWidth ? `${currentQ.imageWidth}%` : '100%',
                     height: 'auto',
-                    maxWidth: '100%'
+                    maxWidth: '100%',
+                    margin: getImageMarginStyle(currentQ.imageAlign)
                   }}
                   className="rounded-lg border-2 border-gray-200 shadow-md"
                 />
@@ -699,7 +701,8 @@ const ExamInterface = () => {
                             style={{
                               width: opt.imageWidth ? `${opt.imageWidth}%` : '50%',
                               height: 'auto',
-                              maxWidth: '100%'
+                              maxWidth: '100%',
+                              margin: getImageMarginStyle(opt.imageAlign)
                             }}
                             className="rounded border border-gray-300"
                           />
