@@ -474,9 +474,16 @@ router.get('/:id/questions', questionReadLimiter, auth, async (req, res) => {
       questionType: q.questionType,
       options: q.options.map(opt => ({ 
         text: opt.text,
-        html: opt.html
+        html: opt.html,
+        imageUrl: opt.imageUrl,
+        imageWidth: opt.imageWidth,
+        imageHeight: opt.imageHeight,
+        imageAlign: opt.imageAlign
       })),
       imageUrl: q.imageUrl,
+      imageWidth: q.imageWidth,
+      imageHeight: q.imageHeight,
+      imageAlign: q.imageAlign,
       section: q.section,
       difficulty: q.difficulty,
       marks: q.marks,
@@ -490,7 +497,14 @@ router.get('/:id/questions', questionReadLimiter, auth, async (req, res) => {
         questions,
         sections: test.sections,
         instructions: test.instructions,
-        savedAnswers: attempt.answers || []
+        savedAnswers: attempt.answers || [],
+        attempt: {
+          _id: attempt._id,
+          status: attempt.status,
+          startTime: attempt.startTime,
+          endTime: attempt.endTime,
+          submittedAt: attempt.submittedAt
+        }
       }
     });
   } catch (error) {
