@@ -50,6 +50,31 @@ const companySchema = new mongoose.Schema({
     type: String,
     maxlength: [10000, 'Description cannot exceed 10000 characters']
   },
+  descriptionHtml: {
+    type: String,
+    maxlength: [50000, 'Description HTML cannot exceed 50000 characters']
+  },
+  descriptionImageUrl: {
+    type: String,
+    default: null
+  },
+  descriptionImageWidth: {
+    type: Number,
+    default: 100,
+    min: 10,
+    max: 100
+  },
+  descriptionImageHeight: {
+    type: Number,
+    default: 300,
+    min: 50,
+    max: 800
+  },
+  descriptionImageAlign: {
+    type: String,
+    enum: ['left', 'center', 'right'],
+    default: 'left'
+  },
   defaultPattern: [sectionSchema],
   totalQuestions: { type: Number, default: 0 },
   totalDuration: { type: Number, default: 0 },

@@ -7,6 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useToast } from '../../context/ToastContext';
+import DescriptionEditor from '../../components/DescriptionEditor';
 
 const ManageCompanies = () => {
   const navigate = useNavigate();
@@ -23,6 +24,11 @@ const ManageCompanies = () => {
     name: '',
     logoUrl: '',
     description: '',
+    descriptionHtml: '',
+    descriptionImageUrl: '',
+    descriptionImageWidth: 100,
+    descriptionImageHeight: 300,
+    descriptionImageAlign: 'left',
     category: 'IT Services',
     difficulty: 'Medium',
     defaultPattern: [
@@ -41,6 +47,7 @@ const ManageCompanies = () => {
       instructions: []
     }
   });
+  const [uploadingDescriptionImage, setUploadingDescriptionImage] = useState(false);
   const { showSuccess, showError } = useToast();
 
   useEffect(() => {
@@ -139,6 +146,11 @@ const ManageCompanies = () => {
       name: '',
       logoUrl: '',
       description: '',
+      descriptionHtml: '',
+      descriptionImageUrl: '',
+      descriptionImageWidth: 100,
+      descriptionImageHeight: 300,
+      descriptionImageAlign: 'left',
       category: 'IT Services',
       difficulty: 'Medium',
       defaultPattern: [
@@ -562,18 +574,26 @@ const ManageCompanies = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="input-field"
-                  rows={6}
-                  placeholder="Enter company description (supports all characters including emojis and symbols)"
-                />
-              </div>
+              <DescriptionEditor
+                value={formData.descriptionHtml}
+                onChange={(content) => setFormData({ ...formData, descriptionHtml: content })}
+                placeholder="Enter company description... Use toolbar for rich formatting, fonts, sizes, colors, and images."
+                label="Company Description"
+                required={false}
+                imageUrl={formData.descriptionImageUrl}
+                imageWidth={formData.descriptionImageWidth}
+                imageHeight={formData.descriptionImageHeight}
+                imageAlign={formData.descriptionImageAlign}
+                onImageUpdate={(imageData) => setFormData({ 
+                  ...formData, 
+                  descriptionImageUrl: imageData.imageUrl,
+                  descriptionImageWidth: imageData.imageWidth,
+                  descriptionImageHeight: imageData.imageHeight,
+                  descriptionImageAlign: imageData.imageAlign
+                })}
+                uploadingImage={uploadingDescriptionImage}
+                onUploadingChange={setUploadingDescriptionImage}
+              />
 
               {/* Exam Pattern */}
               <div>

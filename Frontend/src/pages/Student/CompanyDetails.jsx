@@ -7,6 +7,8 @@ import { useToast } from "../../context/ToastContext";
 import { useAuth } from "../../context/AuthContext";
 import { useResponsive } from "../../hooks/useResponsive";
 import { ResponsiveContainer, ResponsiveGrid } from "../../components/ResponsiveWrapper";
+import { createSanitizedHtml } from "../../utils/sanitize";
+import { getImageStyles } from "../../utils/imageHelpers";
 
 const CompanyDetails = () => {
   const { companyId } = useParams();
@@ -217,8 +219,30 @@ const CompanyDetails = () => {
           <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-1 tracking-tight">
             {company?.name}
           </h1>
-          <p className="text-gray-600 text-xs sm:text-sm" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: company?.description?.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-lg">$1</strong>').replace(/\*\*‍\*(.*?)\*\*‍\*/g, '<strong class="font-bold text-lg">$1</strong>') || '' }} />
-
+          {company?.descriptionHtml ? (
+            <div 
+              className="text-gray-600 text-xs sm:text-sm prose prose-sm max-w-none"
+              dangerouslySetInnerHTML={createSanitizedHtml(company.descriptionHtml)}
+            />
+          ) : (
+            <p className="text-gray-600 text-xs sm:text-sm" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }}>
+              {company?.description || ''}
+            </p>
+          )}
+          {company?.descriptionImageUrl && (
+            <div className="mt-4">
+              <img 
+                src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${company.descriptionImageUrl}`}
+                alt={`${company.name} description`}
+                style={getImageStyles(
+                  company.descriptionImageAlign || 'left',
+                  company.descriptionImageWidth || 100,
+                  company.descriptionImageHeight || 300
+                )}
+                className="rounded-lg border border-gray-200 shadow-sm"
+              />
+            </div>
+          )}
         </div>
       </div>
 

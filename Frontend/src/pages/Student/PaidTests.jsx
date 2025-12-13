@@ -5,6 +5,8 @@ import api from '../../api/axios';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
+import { createSanitizedHtml } from '../../utils/sanitize';
+import { getImageStyles } from '../../utils/imageHelpers';
 
 const PaidTests = () => {
   const [companies, setCompanies] = useState([]);
@@ -334,8 +336,29 @@ const PaidTests = () => {
                               <span className="text-lg font-bold text-primary-600">
                                 ₹{test.price}
                               </span>
-                              {test.description && (
-                                <p className="text-sm text-gray-600" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: test.description?.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-lg">$1</strong>') || '' }} />
+                              {test.descriptionHtml ? (
+                                <div 
+                                  className="text-sm text-gray-600 prose prose-sm max-w-none"
+                                  dangerouslySetInnerHTML={createSanitizedHtml(test.descriptionHtml)}
+                                />
+                              ) : test.description ? (
+                                <p className="text-sm text-gray-600" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }}>
+                                  {test.description}
+                                </p>
+                              ) : null}
+                              {test.descriptionImageUrl && (
+                                <div className="mt-2">
+                                  <img 
+                                    src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${test.descriptionImageUrl}`}
+                                    alt={`${test.title} description`}
+                                    style={getImageStyles(
+                                      test.descriptionImageAlign || 'left',
+                                      test.descriptionImageWidth || 100,
+                                      test.descriptionImageHeight || 300
+                                    )}
+                                    className="rounded-lg border border-gray-200 shadow-sm"
+                                  />
+                                </div>
                               )}
                             </div>
                           </div>

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import api from "../../../api/axios";
 import { useToast } from "../../../context/ToastContext";
+import DescriptionEditor from "../../../components/DescriptionEditor";
 
 const TestCreation = () => {
   const navigate = useNavigate();
@@ -29,10 +30,16 @@ const TestCreation = () => {
   const [loading, setLoading] = useState(false);
   const [responseMsg, setResponseMsg] = useState(null);
   const [activeSection, setActiveSection] = useState("basic");
+  const [uploadingDescriptionImage, setUploadingDescriptionImage] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
     description: "",
+    descriptionHtml: "",
+    descriptionImageUrl: "",
+    descriptionImageWidth: 100,
+    descriptionImageHeight: 300,
+    descriptionImageAlign: "left",
     companyId: searchParams.get('companyId') || "",
     type: "free",
     price: 0,
@@ -235,17 +242,25 @@ const TestCreation = () => {
                       </div>
 
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Description *
-                        </label>
-                        <textarea
-                          name="description"
-                          placeholder="Describe the test content and purpose..."
-                          value={formData.description}
-                          onChange={handleChange}
-                          rows={3}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          required
+                        <DescriptionEditor
+                          value={formData.descriptionHtml}
+                          onChange={(content) => setFormData(prev => ({ ...prev, descriptionHtml: content }))}
+                          placeholder="Describe the test content and purpose... Use toolbar for rich formatting, fonts, sizes, colors, and images."
+                          label="Test Description"
+                          required={true}
+                          imageUrl={formData.descriptionImageUrl}
+                          imageWidth={formData.descriptionImageWidth}
+                          imageHeight={formData.descriptionImageHeight}
+                          imageAlign={formData.descriptionImageAlign}
+                          onImageUpdate={(imageData) => setFormData(prev => ({ 
+                            ...prev, 
+                            descriptionImageUrl: imageData.imageUrl,
+                            descriptionImageWidth: imageData.imageWidth,
+                            descriptionImageHeight: imageData.imageHeight,
+                            descriptionImageAlign: imageData.imageAlign
+                          }))}
+                          uploadingImage={uploadingDescriptionImage}
+                          onUploadingChange={setUploadingDescriptionImage}
                         />
                       </div>
 
@@ -657,12 +672,19 @@ const TestCreation = () => {
               </h3>
               
               <div className="space-y-4">
-                <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border border-blue-200">
+                 <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border border-blue-200">
                   <BookOpen className="w-12 h-12 mx-auto mb-2 text-blue-600" />
                   <h4 className="font-semibold text-gray-900">{formData.title || "Test Title"}</h4>
-                  <p className="text-sm text-gray-600 line-clamp-2">
-                    {formData.description || "Test description will appear here"}
-                  </p>
+                  {formData.descriptionHtml ? (
+                    <div 
+                      className="text-sm text-gray-600 line-clamp-2 prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ __html: formData.descriptionHtml }}
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-600 line-clamp-2">
+                      {formData.description || "Test description will appear here"}
+                    </p>
+                  )}
                   <span className={`inline-block mt-2 px-2 py-1 text-xs font-medium rounded-full border ${
                     formData.type === 'paid' 
                       ? 'bg-green-100 text-green-800 border-green-200' 
