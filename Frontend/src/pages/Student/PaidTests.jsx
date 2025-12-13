@@ -5,6 +5,7 @@ import api from '../../api/axios';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
+import { createSanitizedHtml } from '../../utils/sanitize';
 
 const PaidTests = () => {
   const [companies, setCompanies] = useState([]);
@@ -334,8 +335,31 @@ const PaidTests = () => {
                               <span className="text-lg font-bold text-primary-600">
                                 ₹{test.price}
                               </span>
-                              {test.description && (
-                                <p className="text-sm text-gray-600" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: test.description?.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-lg">$1</strong>') || '' }} />
+                              {test.descriptionHtml ? (
+                                <div 
+                                  className="text-sm text-gray-600 prose prose-sm max-w-none"
+                                  dangerouslySetInnerHTML={createSanitizedHtml(test.descriptionHtml)}
+                                />
+                              ) : test.description ? (
+                                <p className="text-sm text-gray-600" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }}>
+                                  {test.description}
+                                </p>
+                              ) : null}
+                              {test.descriptionImageUrl && (
+                                <div className="mt-2">
+                                  <img 
+                                    src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${test.descriptionImageUrl}`}
+                                    alt={`${test.title} description`}
+                                    style={{
+                                      width: `${test.descriptionImageWidth || 100}%`,
+                                      height: `${test.descriptionImageHeight || 300}px`,
+                                      objectFit: 'contain',
+                                      display: test.descriptionImageAlign === 'center' ? 'block' : 'inline',
+                                      margin: test.descriptionImageAlign === 'center' ? '0 auto' : test.descriptionImageAlign === 'right' ? '0 0 0 auto' : '0'
+                                    }}
+                                    className="rounded-lg border border-gray-200 shadow-sm"
+                                  />
+                                </div>
                               )}
                             </div>
                           </div>

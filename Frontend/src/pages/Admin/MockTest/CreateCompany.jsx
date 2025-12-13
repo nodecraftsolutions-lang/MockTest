@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import api from "../../../api/axios";
 import { useToast } from "../../../context/ToastContext";
+import DescriptionEditor from "../../../components/DescriptionEditor";
 
 const CreateCompany = () => {
   const navigate = useNavigate();
@@ -26,6 +27,11 @@ const CreateCompany = () => {
     name: "",
     logoUrl: "",
     description: "",
+    descriptionHtml: "",
+    descriptionImageUrl: "",
+    descriptionImageWidth: 100,
+    descriptionImageHeight: 300,
+    descriptionImageAlign: "left",
     category: "IT Services",
     difficulty: "Medium",
     defaultPattern: [
@@ -50,6 +56,7 @@ const CreateCompany = () => {
   const [loading, setLoading] = useState(false);
   const [responseMsg, setResponseMsg] = useState(null);
   const [activeSection, setActiveSection] = useState("basic");
+  const [uploadingDescriptionImage, setUploadingDescriptionImage] = useState(false);
 
   // Handle basic input changes
   const handleChange = (e) => {
@@ -108,6 +115,11 @@ const CreateCompany = () => {
           name: "",
           logoUrl: "",
           description: "",
+          descriptionHtml: "",
+          descriptionImageUrl: "",
+          descriptionImageWidth: 100,
+          descriptionImageHeight: 300,
+          descriptionImageAlign: "left",
           category: "IT Services",
           difficulty: "Medium",
           defaultPattern: [
@@ -119,7 +131,6 @@ const CreateCompany = () => {
               negativeMarking: 0.25,
             },
           ],
-          tags: ["Hiring", "Fresher"],
           metadata: {
             cutoffPercentage: 60,
             passingCriteria: "Overall percentage",
@@ -282,20 +293,26 @@ const CreateCompany = () => {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Description *
-                      </label>
-                      <textarea
-                        name="description"
-                        placeholder="Describe the company and hiring process..."
-                        value={formData.description}
-                        onChange={handleChange}
-                        rows={4}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                        required
-                      />
-                    </div>
+                    <DescriptionEditor
+                      value={formData.descriptionHtml}
+                      onChange={(content) => setFormData({ ...formData, descriptionHtml: content })}
+                      placeholder="Describe the company and hiring process... Use toolbar for rich formatting, fonts, sizes, colors, and images."
+                      label="Company Description"
+                      required={true}
+                      imageUrl={formData.descriptionImageUrl}
+                      imageWidth={formData.descriptionImageWidth}
+                      imageHeight={formData.descriptionImageHeight}
+                      imageAlign={formData.descriptionImageAlign}
+                      onImageUpdate={(imageData) => setFormData({ 
+                        ...formData, 
+                        descriptionImageUrl: imageData.imageUrl,
+                        descriptionImageWidth: imageData.imageWidth,
+                        descriptionImageHeight: imageData.imageHeight,
+                        descriptionImageAlign: imageData.imageAlign
+                      })}
+                      uploadingImage={uploadingDescriptionImage}
+                      onUploadingChange={setUploadingDescriptionImage}
+                    />
                   </div>
                 </div>
               )}

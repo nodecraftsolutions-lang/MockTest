@@ -58,6 +58,31 @@ const testSchema = new mongoose.Schema({
     trim: true,
     maxlength: [1000, 'Description cannot exceed 1000 characters']
   },
+  descriptionHtml: {
+    type: String,
+    maxlength: [50000, 'Description HTML cannot exceed 50000 characters']
+  },
+  descriptionImageUrl: {
+    type: String,
+    default: null
+  },
+  descriptionImageWidth: {
+    type: Number,
+    default: 100,
+    min: 10,
+    max: 100
+  },
+  descriptionImageHeight: {
+    type: Number,
+    default: 300,
+    min: 50,
+    max: 800
+  },
+  descriptionImageAlign: {
+    type: String,
+    enum: ['left', 'center', 'right'],
+    default: 'left'
+  },
   companyId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Company',
