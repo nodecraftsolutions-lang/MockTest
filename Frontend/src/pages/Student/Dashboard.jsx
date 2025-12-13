@@ -33,9 +33,9 @@ const AnimatedPieChart = ({ data, size = 180 }) => {
   const centerX = size / 2;
   const centerY = size / 2;
   const radius = size / 2 - 10;
-  
+
   let startAngle = 0;
-  
+
   return (
     <div className="relative flex items-center justify-center">
       <svg width={size} height={size} className="transform -rotate-90">
@@ -48,7 +48,7 @@ const AnimatedPieChart = ({ data, size = 180 }) => {
           stroke="#f3f4f6"
           strokeWidth="12"
         />
-        
+
         {/* Animated segments */}
         {data.map((segment, index) => {
           const percentage = segment.percentage;
@@ -56,7 +56,7 @@ const AnimatedPieChart = ({ data, size = 180 }) => {
           const strokeDashoffset = strokeDasharray - (strokeDasharray * percentage) / 100;
           const segmentStartAngle = startAngle;
           startAngle += (percentage / 100) * 360;
-          
+
           return (
             <circle
               key={index}
@@ -82,7 +82,7 @@ const AnimatedPieChart = ({ data, size = 180 }) => {
           );
         })}
       </svg>
-      
+
       {/* Center content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-2xl font-bold text-gray-900">
@@ -242,45 +242,45 @@ const StudentDashboard = () => {
       color: "text-green-600 bg-green-50 hover:bg-green-100",
       to: "/student/results"
     },
-    {
-      title: "My Courses",
-      description: "Access enrolled courses",
-      icon: GraduationCap,
-      color: "text-purple-600 bg-purple-50 hover:bg-purple-100",
-      to: "/student/my-courses"
-    }
+    // {
+    //   title: "My Courses",
+    //   description: "Access enrolled courses",
+    //   icon: GraduationCap,
+    //   color: "text-purple-600 bg-purple-50 hover:bg-purple-100",
+    //   to: "/student/my-courses"
+    // }
   ];
 
   // Performance data for pie chart
   const performanceData = [
-    { 
-      name: "Passed", 
-      value: statistics?.passedAttempts || 0, 
-      percentage: statistics?.totalAttempts > 0 
-        ? Math.round((statistics?.passedAttempts / statistics?.totalAttempts) * 100) 
+    {
+      name: "Passed",
+      value: statistics?.passedAttempts || 0,
+      percentage: statistics?.totalAttempts > 0
+        ? Math.round((statistics?.passedAttempts / statistics?.totalAttempts) * 100)
         : 0,
-      color: "#10B981" 
+      color: "#10B981"
     },
-    { 
-      name: "Failed", 
-      value: (statistics?.totalAttempts || 0) - (statistics?.passedAttempts || 0), 
-      percentage: statistics?.totalAttempts > 0 
-        ? Math.round(((statistics?.totalAttempts - statistics?.passedAttempts) / statistics?.totalAttempts) * 100) 
+    {
+      name: "Failed",
+      value: (statistics?.totalAttempts || 0) - (statistics?.passedAttempts || 0),
+      percentage: statistics?.totalAttempts > 0
+        ? Math.round(((statistics?.totalAttempts - statistics?.passedAttempts) / statistics?.totalAttempts) * 100)
         : 0,
-      color: "#EF4444" 
+      color: "#EF4444"
     },
-    { 
-      name: "Pending", 
-      value: 0, 
+    {
+      name: "Pending",
+      value: 0,
       percentage: 0,
-      color: "#9CA3AF" 
+      color: "#9CA3AF"
     }
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
 
-      
+
 
       <div className="p-4 md:p-6 max-w-7xl mx-auto">
         {/* Header */}
@@ -323,8 +323,8 @@ const StudentDashboard = () => {
             <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-gray-900">Recent Attempts</h3>
-                <Link 
-                  to="/student/results" 
+                <Link
+                  to="/student/results"
                   className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"
                 >
                   View All <ChevronRight className="w-4 h-4 ml-1" />
@@ -334,22 +334,21 @@ const StudentDashboard = () => {
               {recentAttempts && recentAttempts.length > 0 ? (
                 <div className="space-y-4">
                   {recentAttempts.slice(0, 3).map((attempt) => (
-                    <div 
-                      key={attempt._id} 
+                    <div
+                      key={attempt._id}
                       className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all duration-200"
                     >
                       <div className="flex items-center space-x-4">
-                        <div className={`p-3 rounded-lg ${
-                          attempt.isPassed 
-                            ? 'bg-green-100 text-green-600' 
-                            : 'bg-red-100 text-red-600'
-                        }`}>
+                        <div className={`p-3 rounded-lg ${attempt.isPassed
+                          ? 'bg-green-100 text-green-600'
+                          : 'bg-red-100 text-red-600'
+                          }`}>
                           <BookOpen className="w-5 h-5" />
                         </div>
                         <div>
                           <p className="font-medium text-gray-900">
-                            {attempt.testId?.title?.length > 30 
-                              ? `${attempt.testId?.title.substring(0, 30)}...` 
+                            {attempt.testId?.title?.length > 30
+                              ? `${attempt.testId?.title.substring(0, 30)}...`
                               : attempt.testId?.title}
                           </p>
                           <div className="flex items-center text-sm text-gray-500 mt-1">
@@ -362,9 +361,8 @@ const StudentDashboard = () => {
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-semibold text-gray-900">{attempt.score}%</p>
-                        <p className={`text-sm font-medium ${
-                          attempt.isPassed ? 'text-green-600' : 'text-red-600'
-                        }`}>
+                        <p className={`text-sm font-medium ${attempt.isPassed ? 'text-green-600' : 'text-red-600'
+                          }`}>
                           {attempt.isPassed ? 'Passed' : 'Failed'}
                         </p>
                       </div>
@@ -377,8 +375,8 @@ const StudentDashboard = () => {
                     <BookOpen className="w-8 h-8 text-gray-400" />
                   </div>
                   <p className="text-gray-500 mb-4">No attempts yet</p>
-                  <Link 
-                    to="/student/mock-tests" 
+                  <Link
+                    to="/student/mock-tests"
                     className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 font-medium shadow-sm"
                   >
                     Take your first test
@@ -391,8 +389,8 @@ const StudentDashboard = () => {
             <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-gray-900">Recent Orders</h3>
-                <Link 
-                  to="/student/orders" 
+                <Link
+                  to="/student/orders"
                   className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"
                 >
                   View All <ChevronRight className="w-4 h-4 ml-1" />
@@ -402,8 +400,8 @@ const StudentDashboard = () => {
               {recentOrders && recentOrders.length > 0 ? (
                 <div className="space-y-4">
                   {recentOrders.slice(0, 2).map((order) => (
-                    <div 
-                      key={order._id} 
+                    <div
+                      key={order._id}
                       className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all duration-200"
                     >
                       <div className="flex items-center space-x-4">
@@ -424,13 +422,12 @@ const StudentDashboard = () => {
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-semibold text-gray-900">₹{order.totalAmount || 0}</p>
-                        <p className={`text-sm font-medium ${
-                          order.paymentStatus === "completed"
-                            ? "text-green-600"
-                            : order.paymentStatus === "failed"
+                        <p className={`text-sm font-medium ${order.paymentStatus === "completed"
+                          ? "text-green-600"
+                          : order.paymentStatus === "failed"
                             ? "text-red-600"
                             : "text-amber-600"
-                        }`}>
+                          }`}>
                           {order.paymentStatus || "pending"}
                         </p>
                       </div>
@@ -443,8 +440,8 @@ const StudentDashboard = () => {
                     <DollarSign className="w-8 h-8 text-gray-400" />
                   </div>
                   <p className="text-gray-500 mb-4">No orders yet</p>
-                  <Link 
-                    to="/student/mock-tests" 
+                  <Link
+                    to="/student/mock-tests"
                     className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg hover:from-amber-600 hover:to-orange-700 transition-all duration-300 font-medium shadow-sm"
                   >
                     Browse premium tests
@@ -494,8 +491,8 @@ const StudentDashboard = () => {
                     {performanceData.filter(item => item.value > 0 || item.name !== "Pending").map((item, index) => (
                       <div key={index} className="flex items-center justify-between">
                         <div className="flex items-center">
-                          <div 
-                            className="w-3 h-3 rounded-full mr-3" 
+                          <div
+                            className="w-3 h-3 rounded-full mr-3"
                             style={{ backgroundColor: item.color }}
                           ></div>
                           <span className="text-sm font-medium text-gray-700">{item.name}</span>
@@ -507,7 +504,7 @@ const StudentDashboard = () => {
                       </div>
                     ))}
                   </div>
-                  
+
                   <div className="mt-6 pt-4 border-t border-gray-200">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">

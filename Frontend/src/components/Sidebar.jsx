@@ -128,11 +128,10 @@ const Sidebar = ({ type = "student", onStateChange }) => {
             setIsMobileOpen(false);
           }
         }}
-        className={`flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 group ${
-          active
-            ? "bg-gradient-to-r from-primary-50 to-primary-25 text-primary-700 border-l-4 border-primary-500 shadow-xs"
-            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-        } ${isCollapsed ? "justify-center" : ""}`}
+        className={`flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 group ${active
+          ? "bg-gradient-to-r from-primary-50 to-primary-25 text-primary-700 border-l-4 border-primary-500 shadow-xs"
+          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+          } ${isCollapsed ? "justify-center" : ""}`}
         title={isCollapsed ? label : ""}
       >
         <Icon className={`w-5 h-5 ${isCollapsed ? "" : "mr-3"} ${active ? "text-primary-600" : "text-gray-500 group-hover:text-primary-600"}`} />
@@ -151,13 +150,11 @@ const Sidebar = ({ type = "student", onStateChange }) => {
   const DropdownButton = ({ icon: Icon, label, menu, hasChildren = false }) => (
     <button
       onClick={() => toggleDropdown(menu)}
-      className={`flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
-        isCollapsed ? "justify-center" : ""
-      } ${
-        openDropdown === menu 
-          ? "bg-gradient-to-r from-primary-50 to-primary-25 text-primary-700 shadow-xs" 
+      className={`flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${isCollapsed ? "justify-center" : ""
+        } ${openDropdown === menu
+          ? "bg-gradient-to-r from-primary-50 to-primary-25 text-primary-700 shadow-xs"
           : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-      }`}
+        }`}
       title={isCollapsed ? label : ""}
     >
       <span className={`flex items-center ${isCollapsed ? "" : "flex-1"}`}>
@@ -166,9 +163,8 @@ const Sidebar = ({ type = "student", onStateChange }) => {
       </span>
       {!isCollapsed && hasChildren && (
         <ChevronDown
-          className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
-            openDropdown === menu ? "rotate-180" : ""
-          }`}
+          className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${openDropdown === menu ? "rotate-180" : ""
+            }`}
         />
       )}
     </button>
@@ -189,11 +185,10 @@ const Sidebar = ({ type = "student", onStateChange }) => {
           setIsMobileOpen(false);
         }
       }}
-      className={`flex items-center px-3 py-2.5 text-sm rounded-lg transition-all duration-200 group ${
-        location.pathname === to
-          ? "bg-gradient-to-r from-primary-50 to-primary-25 text-primary-700 font-medium border-l-2 border-primary-500 -ml-0.5 shadow-xs"
-          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-      }`}
+      className={`flex items-center px-3 py-2.5 text-sm rounded-lg transition-all duration-200 group ${location.pathname === to
+        ? "bg-gradient-to-r from-primary-50 to-primary-25 text-primary-700 font-medium border-l-2 border-primary-500 -ml-0.5 shadow-xs"
+        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+        }`}
     >
       <Icon className={`w-4 h-4 mr-3 ${location.pathname === to ? "text-primary-500" : "text-gray-400 group-hover:text-primary-500"}`} />
       <span className={location.pathname === to ? "font-medium" : ""}>{label}</span>
@@ -208,11 +203,10 @@ const Sidebar = ({ type = "student", onStateChange }) => {
           setIsMobileOpen(false);
         }
       }}
-      className={`flex items-center px-3 py-2.5 text-sm rounded-lg transition-all duration-200 group ${
-        location.pathname === to
-          ? "bg-gradient-to-r from-primary-50 to-primary-25 text-primary-700 font-medium border-l-2 border-primary-500 -ml-0.5 shadow-xs"
-          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-      }`}
+      className={`flex items-center px-3 py-2.5 text-sm rounded-lg transition-all duration-200 group ${location.pathname === to
+        ? "bg-gradient-to-r from-primary-50 to-primary-25 text-primary-700 font-medium border-l-2 border-primary-500 -ml-0.5 shadow-xs"
+        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+        }`}
     >
       <Icon className={`w-4 h-4 mr-3 ${location.pathname === to ? "text-primary-500" : "text-gray-400 group-hover:text-primary-500"}`} />
       <span className={location.pathname === to ? "font-medium" : ""}>{label}</span>
@@ -231,11 +225,9 @@ const Sidebar = ({ type = "student", onStateChange }) => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-screen bg-white border-r border-gray-200 flex flex-col z-50 transition-all duration-300 ease-in-out transform ${
-          isMobileOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0 ${
-          isCollapsed ? "w-16" : "w-64"
-        } shadow-lg`}
+        className={`fixed top-0 left-0 h-screen bg-white border-r border-gray-200 flex flex-col z-50 transition-all duration-300 ease-in-out transform ${isMobileOpen ? "translate-x-0" : "-translate-x-full"
+          } lg:translate-x-0 ${isCollapsed ? "w-16" : "w-64"
+          } shadow-lg`}
       >
         {/* Header */}
         <div className={`px-4 py-5 border-b border-gray-100 flex items-center justify-between ${isCollapsed ? "px-3" : ""}`}>
@@ -260,13 +252,12 @@ const Sidebar = ({ type = "student", onStateChange }) => {
               <LayoutDashboard className="w-5 h-5 text-white" />
             </div>
           )}
-          
+
           {/* Toggle Button */}
           <button
             onClick={toggleSidebar}
-            className={`p-1.5 rounded-lg hover:bg-gray-100 transition-colors duration-200 ${
-              isCollapsed ? "absolute -right-3 top-6 bg-white border border-gray-200 shadow-md hover:shadow-lg" : ""
-            }`}
+            className={`p-1.5 rounded-lg hover:bg-gray-100 transition-colors duration-200 ${isCollapsed ? "absolute -right-3 top-6 bg-white border border-gray-200 shadow-md hover:shadow-lg" : ""
+              }`}
             title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {isCollapsed ? (
@@ -282,20 +273,20 @@ const Sidebar = ({ type = "student", onStateChange }) => {
           {type === "student" ? (
             <>
               <div className="mb-1">
-                <NavItem 
-                  to="/student" 
-                  icon={LayoutDashboard} 
-                  label="Dashboard" 
+                <NavItem
+                  to="/student"
+                  icon={LayoutDashboard}
+                  label="Dashboard"
                   showLabel={!isCollapsed}
                 />
               </div>
 
               {/* Courses Dropdown */}
-              <div className="relative group mb-2">
-                <DropdownButton 
-                  icon={GraduationCap} 
-                  label="Courses" 
-                  menu="courses" 
+              {/* <div className="relative group mb-2">
+                <DropdownButton
+                  icon={GraduationCap}
+                  label="Courses"
+                  menu="courses"
                   hasChildren={true}
                 />
 
@@ -310,7 +301,7 @@ const Sidebar = ({ type = "student", onStateChange }) => {
                       {c.title}
                     </Link>
                   ))}
-                  
+
                   {courses.length > 5 && (
                     <Link
                       to="/student/courses"
@@ -327,17 +318,17 @@ const Sidebar = ({ type = "student", onStateChange }) => {
                     My Courses
                   </Link>
                 </DropdownContent>
-              </div>
+              </div> */}
 
               {/* Recordings Dropdown */}
-              <div className="relative group mb-2">
-                <DropdownButton 
-                  icon={Video} 
-                  label="Recordings" 
-                  menu="recordings" 
+              {/* <div className="relative group mb-2">
+                <DropdownButton
+                  icon={Video}
+                  label="Recordings"
+                  menu="recordings"
                   hasChildren={true}
                 />
-                
+
                 <DropdownContent menu="recordings">
                   {recordings.length > 0 ? (
                     recordings.slice(0, 5).map((c) => (
@@ -370,46 +361,46 @@ const Sidebar = ({ type = "student", onStateChange }) => {
                     All Recordings
                   </Link>
                 </DropdownContent>
+              </div> */}
+
+              <div className="mb-1">
+                <NavItem
+                  to="/student/mock-tests"
+                  icon={BookOpen}
+                  label="Mock Tests"
+                  showLabel={!isCollapsed}
+                />
               </div>
 
               <div className="mb-1">
-                <NavItem 
-                  to="/student/mock-tests" 
-                  icon={BookOpen} 
-                  label="Mock Tests" 
-                  showLabel={!isCollapsed}
-                />
-              </div>
-
-              <div className="mb-1">
-                <NavItem 
-                  to="/student/results" 
-                  icon={BarChart3} 
-                  label="Results" 
+                <NavItem
+                  to="/student/results"
+                  icon={BarChart3}
+                  label="Results"
                   showLabel={!isCollapsed}
                 />
               </div>
               <div className="mb-1">
-                <NavItem 
-                  to="/student/orders" 
-                  icon={ShoppingBag} 
-                  label="Orders" 
+                <NavItem
+                  to="/student/orders"
+                  icon={ShoppingBag}
+                  label="Orders"
                   showLabel={!isCollapsed}
                 />
               </div>
               <div className="mb-1">
-                <NavItem 
-                  to="/student/profile" 
-                  icon={User} 
-                  label="Profile" 
+                <NavItem
+                  to="/student/profile"
+                  icon={User}
+                  label="Profile"
                   showLabel={!isCollapsed}
                 />
               </div>
               <div className="mb-1">
-                <NavItem 
-                  to="/student/contact" 
-                  icon={Headphones} 
-                  label="Contact" 
+                <NavItem
+                  to="/student/contact"
+                  icon={Headphones}
+                  label="Contact"
                   showLabel={!isCollapsed}
                 />
               </div>
@@ -417,81 +408,81 @@ const Sidebar = ({ type = "student", onStateChange }) => {
           ) : (
             <>
               <div className="mb-1">
-                <NavItem 
-                  to="/admin" 
-                  icon={LayoutDashboard} 
-                  label="Dashboard" 
+                <NavItem
+                  to="/admin"
+                  icon={LayoutDashboard}
+                  label="Dashboard"
                   showLabel={!isCollapsed}
                 />
               </div>
-              
+
               <div className="relative group mb-2">
-                <DropdownButton 
-                  icon={BookOpen} 
-                  label="Course Management" 
-                  menu="course" 
+                <DropdownButton
+                  icon={BookOpen}
+                  label="Course Management"
+                  menu="course"
                   hasChildren={true}
                 />
-                
+
                 <DropdownContent menu="course">
-                  <AdminSubItem 
-                    to="/admin/course/management" 
-                    icon={Database} 
-                    label="All Courses" 
+                  <AdminSubItem
+                    to="/admin/course/management"
+                    icon={Database}
+                    label="All Courses"
                   />
-                  <AdminSubItem 
-                    to="/admin/course/create" 
-                    icon={Plus} 
-                    label="Create New Course" 
+                  <AdminSubItem
+                    to="/admin/course/create"
+                    icon={Plus}
+                    label="Create New Course"
                   />
-                  <AdminSubItem 
-                    to="/admin/course/sessions" 
-                    icon={Calendar} 
-                    label="Upload Sessions" 
+                  <AdminSubItem
+                    to="/admin/course/sessions"
+                    icon={Calendar}
+                    label="Upload Sessions"
                   />
-                  <AdminSubItem 
-                    to="/admin/course/discussions" 
-                    icon={MessageSquare} 
-                    label="Student Discussions" 
+                  <AdminSubItem
+                    to="/admin/course/discussions"
+                    icon={MessageSquare}
+                    label="Student Discussions"
                   />
                 </DropdownContent>
               </div>
 
               <div className="relative group mb-2">
-                <DropdownButton 
-                  icon={Video} 
-                  label="Recordings Management" 
-                  menu="recordings" 
+                <DropdownButton
+                  icon={Video}
+                  label="Recordings Management"
+                  menu="recordings"
                   hasChildren={true}
                 />
-                
+
                 <DropdownContent menu="recordings">
-                  <AdminSubItem 
-                    to="/admin/recordings/upload" 
-                    icon={Settings} 
-                    label="Manage Recordings" 
+                  <AdminSubItem
+                    to="/admin/recordings/upload"
+                    icon={Settings}
+                    label="Manage Recordings"
                   />
                 </DropdownContent>
               </div>
-              
+
               <div className="relative group mb-2">
-                <DropdownButton 
-                  icon={Building} 
-                  label="MockTest" 
-                  menu="mocktest" 
+                <DropdownButton
+                  icon={Building}
+                  label="MockTest"
+                  menu="mocktest"
                   hasChildren={true}
                 />
-                
+
                 <DropdownContent menu="mocktest">
-                  <MockTestSubItem 
-                    to="/admin/mocktest" 
-                    icon={Building} 
-                    label="Company & Test Management" 
+                  <MockTestSubItem
+                    to="/admin/mocktest"
+                    icon={Building}
+                    label="Company & Test Management"
                   />
-                  <MockTestSubItem 
-                    to="/admin/mocktest/question-generate" 
-                    icon={ListStartIcon} 
-                    label="Generate Test Questions" 
+                  <MockTestSubItem
+                    to="/admin/mocktest/question-generate"
+                    icon={ListStartIcon}
+                    label="Generate Test Questions"
                   />
                   {/* Question Bank Upload removed - Questions are now added directly to tests via the question editor */}
                   {/* <MockTestSubItem 
@@ -501,77 +492,77 @@ const Sidebar = ({ type = "student", onStateChange }) => {
                   /> */}
                 </DropdownContent>
               </div>
-              
+
               <div className="mb-1">
-                <NavItem 
-                  to="/admin/students" 
-                  icon={Users} 
-                  label="Students" 
+                <NavItem
+                  to="/admin/students"
+                  icon={Users}
+                  label="Students"
                   showLabel={!isCollapsed}
                 />
               </div>
               <div className="mb-1">
-                <NavItem 
-                  to="/admin/results" 
-                  icon={BarChart3} 
-                  label="Results" 
+                <NavItem
+                  to="/admin/results"
+                  icon={BarChart3}
+                  label="Results"
                   showLabel={!isCollapsed}
                 />
               </div>
               <div className="mb-1">
-                <NavItem 
-                  to="/admin/payments" 
-                  icon={DollarSign} 
-                  label="Payments" 
+                <NavItem
+                  to="/admin/payments"
+                  icon={DollarSign}
+                  label="Payments"
                   showLabel={!isCollapsed}
                 />
               </div>
-              
+
               {/* Add the new Paid Tests Analytics page */}
               <div className="mb-1">
-                <NavItem 
-                  to="/admin/paid-tests-analytics" 
-                  icon={TrendingUp} 
-                  label="Paid Tests Analytics" 
+                <NavItem
+                  to="/admin/paid-tests-analytics"
+                  icon={TrendingUp}
+                  label="Paid Tests Analytics"
                   showLabel={!isCollapsed}
                 />
               </div>
-              
+
               <div className="mb-1">
-                <NavItem 
-                  to="/admin/enrollments" 
-                  icon={FileCheck} 
-                  label="Enrollments" 
+                <NavItem
+                  to="/admin/enrollments"
+                  icon={FileCheck}
+                  label="Enrollments"
                   showLabel={!isCollapsed}
                 />
               </div>
               {/* Add the new Admin Mail page */}
               <div className="mb-1">
-                <NavItem 
-                  to="/admin/mail" 
-                  icon={MessageSquare} 
-                  label="Send Mail" 
+                <NavItem
+                  to="/admin/mail"
+                  icon={MessageSquare}
+                  label="Send Mail"
                   showLabel={!isCollapsed}
                 />
               </div>
               <div className="mb-1">
-                <NavItem 
-                  to="/admin/alumni" 
-                  icon={GraduationCap} 
-                  label="Alumni" 
+                <NavItem
+                  to="/admin/alumni"
+                  icon={GraduationCap}
+                  label="Alumni"
                   showLabel={!isCollapsed}
                 />
               </div>
               <div className="mb-1">
-                <NavItem 
-                  to="/admin/settings" 
-                  icon={Settings} 
-                  label="Settings" 
+                <NavItem
+                  to="/admin/settings"
+                  icon={Settings}
+                  label="Settings"
                   showLabel={!isCollapsed}
                 />
               </div>
-              
-              
+
+
             </>
           )}
         </nav>
@@ -594,17 +585,17 @@ const Sidebar = ({ type = "student", onStateChange }) => {
                 </div>
               )}
             </div>
-            
+
             {!isCollapsed && (
               <button
                 onClick={logout}
                 className="text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg px-2 py-1 flex items-center transition-colors duration-200"
               >
-                <LogOut className="w-4 h-4 mr-1" /> 
+                <LogOut className="w-4 h-4 mr-1" />
                 Logout
               </button>
             )}
-            
+
             {isCollapsed && (
               <button
                 onClick={logout}
