@@ -54,7 +54,7 @@ A reusable component that provides:
 
 #### Admin Side
 1. **CreateCompany.jsx** - Company creation with rich description
-2. **Companies.jsx** - Company editing with rich description
+2. **CompanyTestManagement.jsx** - Company and test editing in modal dialogs with rich description
 3. **TestCreation.jsx** - Test creation with rich description
 
 #### Student Side

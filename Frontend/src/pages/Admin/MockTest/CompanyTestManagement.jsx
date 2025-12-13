@@ -24,6 +24,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../../api/axios";
 import { useToast } from "../../../context/ToastContext";
+import DescriptionEditor from "../../../components/DescriptionEditor";
 
 const CompanyTestManagement = () => {
   const { showSuccess, showError } = useToast();
@@ -56,6 +57,11 @@ const CompanyTestManagement = () => {
     name: "",
     logoUrl: "",
     description: "",
+    descriptionHtml: "",
+    descriptionImageUrl: "",
+    descriptionImageWidth: 100,
+    descriptionImageHeight: 300,
+    descriptionImageAlign: "left",
     category: "IT Services",
     difficulty: "Medium",
     defaultPattern: [
@@ -80,6 +86,11 @@ const CompanyTestManagement = () => {
   const [testFormData, setTestFormData] = useState({
     title: "",
     description: "",
+    descriptionHtml: "",
+    descriptionImageUrl: "",
+    descriptionImageWidth: 100,
+    descriptionImageHeight: 300,
+    descriptionImageAlign: "left",
     companyId: "",
     type: "free",
     price: 0,
@@ -93,6 +104,10 @@ const CompanyTestManagement = () => {
       }
     ]
   });
+  
+  // Image upload states
+  const [uploadingCompanyImage, setUploadingCompanyImage] = useState(false);
+  const [uploadingTestImage, setUploadingTestImage] = useState(false);
 
   // Fetch all data on component mount
   useEffect(() => {
@@ -276,6 +291,11 @@ const CompanyTestManagement = () => {
       name: "",
       logoUrl: "",
       description: "",
+      descriptionHtml: "",
+      descriptionImageUrl: "",
+      descriptionImageWidth: 100,
+      descriptionImageHeight: 300,
+      descriptionImageAlign: "left",
       category: "IT Services",
       difficulty: "Medium",
       defaultPattern: [
@@ -304,6 +324,11 @@ const CompanyTestManagement = () => {
     setTestFormData({
       title: "",
       description: "",
+      descriptionHtml: "",
+      descriptionImageUrl: "",
+      descriptionImageWidth: 100,
+      descriptionImageHeight: 300,
+      descriptionImageAlign: "left",
       companyId: "",
       type: "free",
       price: 0,
@@ -327,6 +352,11 @@ const CompanyTestManagement = () => {
       name: company.name,
       logoUrl: company.logoUrl || "",
       description: company.description || "",
+      descriptionHtml: company.descriptionHtml || "",
+      descriptionImageUrl: company.descriptionImageUrl || "",
+      descriptionImageWidth: company.descriptionImageWidth || 100,
+      descriptionImageHeight: company.descriptionImageHeight || 300,
+      descriptionImageAlign: company.descriptionImageAlign || "left",
       category: company.category || "IT Services",
       difficulty: company.difficulty || "Medium",
       defaultPattern: company.defaultPattern || [
@@ -356,6 +386,11 @@ const CompanyTestManagement = () => {
     setTestFormData({
       title: test.title,
       description: test.description || "",
+      descriptionHtml: test.descriptionHtml || "",
+      descriptionImageUrl: test.descriptionImageUrl || "",
+      descriptionImageWidth: test.descriptionImageWidth || 100,
+      descriptionImageHeight: test.descriptionImageHeight || 300,
+      descriptionImageAlign: test.descriptionImageAlign || "left",
       companyId: test.companyId?._id || test.companyId || "",
       type: test.type,
       price: test.price,
@@ -978,19 +1013,26 @@ const CompanyTestManagement = () => {
                 </div>
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
-                </label>
-                <textarea
-                  name="description"
-                  value={companyFormData.description}
-                  onChange={handleCompanyChange}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter company description"
-                />
-              </div>
+              <DescriptionEditor
+                value={companyFormData.descriptionHtml}
+                onChange={(content) => setCompanyFormData({ ...companyFormData, descriptionHtml: content })}
+                placeholder="Describe the company and hiring process... Use toolbar for rich formatting, fonts, sizes, colors, and images."
+                label="Company Description"
+                required={false}
+                imageUrl={companyFormData.descriptionImageUrl}
+                imageWidth={companyFormData.descriptionImageWidth}
+                imageHeight={companyFormData.descriptionImageHeight}
+                imageAlign={companyFormData.descriptionImageAlign}
+                onImageUpdate={(imageData) => setCompanyFormData({ 
+                  ...companyFormData, 
+                  descriptionImageUrl: imageData.imageUrl,
+                  descriptionImageWidth: imageData.imageWidth,
+                  descriptionImageHeight: imageData.imageHeight,
+                  descriptionImageAlign: imageData.imageAlign
+                })}
+                uploadingImage={uploadingCompanyImage}
+                onUploadingChange={setUploadingCompanyImage}
+              />
               
               {/* Test Pattern */}
               <div>
@@ -1265,19 +1307,26 @@ const CompanyTestManagement = () => {
                 )}
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
-                </label>
-                <textarea
-                  name="description"
-                  value={testFormData.description}
-                  onChange={handleTestChange}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter test description"
-                />
-              </div>
+              <DescriptionEditor
+                value={testFormData.descriptionHtml}
+                onChange={(content) => setTestFormData({ ...testFormData, descriptionHtml: content })}
+                placeholder="Describe the test content and purpose... Use toolbar for rich formatting, fonts, sizes, colors, and images."
+                label="Test Description"
+                required={false}
+                imageUrl={testFormData.descriptionImageUrl}
+                imageWidth={testFormData.descriptionImageWidth}
+                imageHeight={testFormData.descriptionImageHeight}
+                imageAlign={testFormData.descriptionImageAlign}
+                onImageUpdate={(imageData) => setTestFormData({ 
+                  ...testFormData, 
+                  descriptionImageUrl: imageData.imageUrl,
+                  descriptionImageWidth: imageData.imageWidth,
+                  descriptionImageHeight: imageData.imageHeight,
+                  descriptionImageAlign: imageData.imageAlign
+                })}
+                uploadingImage={uploadingTestImage}
+                onUploadingChange={setUploadingTestImage}
+              />
               
               {/* Test Sections */}
               <div>
