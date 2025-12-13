@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import api from "../api/axios";
 import { useToast } from "../context/ToastContext";
+import { getImageStyles } from "../utils/imageHelpers";
 
 // Image dimension constants
 const IMAGE_DEFAULTS = {
@@ -115,21 +116,6 @@ const DescriptionEditor = ({
     } finally {
       onUploadingChange(false);
     }
-  };
-
-  const getImageStyles = (align, width, height) => {
-    const baseStyles = {
-      width: `${width}%`,
-      height: `${height}px`,
-      objectFit: 'contain',
-    };
-
-    if (align === 'center') {
-      return { ...baseStyles, display: 'block', margin: '0 auto' };
-    } else if (align === 'right') {
-      return { ...baseStyles, display: 'block', marginLeft: 'auto' };
-    }
-    return baseStyles;
   };
 
   return (

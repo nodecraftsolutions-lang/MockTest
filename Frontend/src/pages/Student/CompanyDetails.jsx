@@ -8,6 +8,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useResponsive } from "../../hooks/useResponsive";
 import { ResponsiveContainer, ResponsiveGrid } from "../../components/ResponsiveWrapper";
 import { createSanitizedHtml } from "../../utils/sanitize";
+import { getImageStyles } from "../../utils/imageHelpers";
 
 const CompanyDetails = () => {
   const { companyId } = useParams();
@@ -233,13 +234,11 @@ const CompanyDetails = () => {
               <img 
                 src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${company.descriptionImageUrl}`}
                 alt={`${company.name} description`}
-                style={{
-                  width: `${company.descriptionImageWidth || 100}%`,
-                  height: `${company.descriptionImageHeight || 300}px`,
-                  objectFit: 'contain',
-                  display: company.descriptionImageAlign === 'center' ? 'block' : 'inline',
-                  margin: company.descriptionImageAlign === 'center' ? '0 auto' : company.descriptionImageAlign === 'right' ? '0 0 0 auto' : '0'
-                }}
+                style={getImageStyles(
+                  company.descriptionImageAlign || 'left',
+                  company.descriptionImageWidth || 100,
+                  company.descriptionImageHeight || 300
+                )}
                 className="rounded-lg border border-gray-200 shadow-sm"
               />
             </div>

@@ -575,7 +575,7 @@ const ManageCompanies = () => {
               </div>
 
               <DescriptionEditor
-                value={formData.descriptionHtml || formData.description}
+                value={formData.descriptionHtml}
                 onChange={(content) => setFormData({ ...formData, descriptionHtml: content })}
                 placeholder="Enter company description... Use toolbar for rich formatting, fonts, sizes, colors, and images."
                 label="Company Description"

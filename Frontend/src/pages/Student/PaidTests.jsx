@@ -6,6 +6,7 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 import { createSanitizedHtml } from '../../utils/sanitize';
+import { getImageStyles } from '../../utils/imageHelpers';
 
 const PaidTests = () => {
   const [companies, setCompanies] = useState([]);
@@ -350,13 +351,11 @@ const PaidTests = () => {
                                   <img 
                                     src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${test.descriptionImageUrl}`}
                                     alt={`${test.title} description`}
-                                    style={{
-                                      width: `${test.descriptionImageWidth || 100}%`,
-                                      height: `${test.descriptionImageHeight || 300}px`,
-                                      objectFit: 'contain',
-                                      display: test.descriptionImageAlign === 'center' ? 'block' : 'inline',
-                                      margin: test.descriptionImageAlign === 'center' ? '0 auto' : test.descriptionImageAlign === 'right' ? '0 0 0 auto' : '0'
-                                    }}
+                                    style={getImageStyles(
+                                      test.descriptionImageAlign || 'left',
+                                      test.descriptionImageWidth || 100,
+                                      test.descriptionImageHeight || 300
+                                    )}
                                     className="rounded-lg border border-gray-200 shadow-sm"
                                   />
                                 </div>
