@@ -1114,7 +1114,7 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await api.post('/api/v1/images/upload', formData, {
+      const response = await api.post('/images/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -1154,7 +1154,7 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await api.post('/api/v1/images/upload', formData, {
+      const response = await api.post('/images/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -1197,7 +1197,7 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await api.post('/api/v1/images/upload', formData, {
+      const response = await api.post('/images/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
