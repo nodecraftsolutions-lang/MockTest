@@ -60,6 +60,17 @@ const resetExplanationImageProperties = () => ({
   explanationImageAlign: IMAGE_DEFAULTS.ALIGN
 });
 
+// Helper function to construct image URL
+const constructImageUrl = (url) => {
+  if (!url) return '';
+  // If it's already a full URL, return as is
+  if (url.startsWith('http')) {
+    return url;
+  }
+  // Otherwise prepend the API URL
+  return `${apiUrl}${url}`;
+};
+
 // Preview Mode Component
 const PreviewMode = ({ questionData }) => {
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -102,12 +113,14 @@ const PreviewMode = ({ questionData }) => {
         {/* Question Image */}
         {questionData.imageUrl && (
           <div className="mb-6">
-            <img 
-              src={questionData.imageUrl?.startsWith('http') ? questionData.imageUrl : `${apiUrl}${questionData.imageUrl}`}
-              alt="Question" 
-              style={getImageStyles(questionData.imageAlign, questionData.imageWidth, questionData.imageHeight)}
-              className="rounded-lg border-2 border-gray-200 shadow-md"
-            />
+            <div className="flex items-start gap-4">
+              <img 
+                src={constructImageUrl(questionData.imageUrl)}
+                alt="Question" 
+                style={getImageStyles(questionData.imageAlign, questionData.imageWidth, questionData.imageHeight)}
+                className="rounded-lg border-2 border-gray-300 shadow-sm"
+              />
+            </div>
           </div>
         )}
 
@@ -141,7 +154,7 @@ const PreviewMode = ({ questionData }) => {
                 {opt.imageUrl && (
                   <div className="mt-2">
                     <img 
-                      src={opt.imageUrl?.startsWith('http') ? opt.imageUrl : `${apiUrl}${opt.imageUrl}`}
+                      src={constructImageUrl(opt.imageUrl)}
                       alt={`Option ${String.fromCharCode(65 + i)}`}
                       style={getImageStyles(opt.imageAlign, opt.imageWidth, opt.imageHeight)}
                       className="rounded-lg border border-gray-300"
@@ -177,7 +190,7 @@ const PreviewMode = ({ questionData }) => {
             {questionData.explanationImageUrl && (
               <div className="mt-4">
                 <img 
-                  src={questionData.explanationImageUrl?.startsWith('http') ? questionData.explanationImageUrl : `${apiUrl}${questionData.explanationImageUrl}`}
+                  src={constructImageUrl(questionData.explanationImageUrl)}
                   alt="Explanation" 
                   style={getImageStyles(questionData.explanationImageAlign, questionData.explanationImageWidth, questionData.explanationImageHeight)}
                   className="rounded-lg border-2 border-gray-200 shadow-md"
@@ -346,7 +359,7 @@ const EditMode = ({
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
               <div className="flex items-start gap-4">
                 <img 
-                  src={questionData.imageUrl?.startsWith('http') ? questionData.imageUrl : `${apiUrl}${questionData.imageUrl}`}
+                  src={constructImageUrl(questionData.imageUrl)}
                   alt="Question" 
                   style={getImageStyles(questionData.imageAlign, questionData.imageWidth, questionData.imageHeight)}
                   className="rounded-lg border-2 border-gray-300 shadow-sm"
@@ -557,7 +570,7 @@ const EditMode = ({
                       <div className="mt-2 bg-white border border-gray-200 rounded-lg p-3">
                         <div className="flex items-start gap-3">
                           <img 
-                            src={option.imageUrl?.startsWith('http') ? option.imageUrl : `${apiUrl}${option.imageUrl}`}
+                            src={constructImageUrl(option.imageUrl)}
                             alt={`Option ${String.fromCharCode(65 + index)}`}
                             style={getImageStyles(option.imageAlign, option.imageWidth, option.imageHeight)}
                             className="rounded border border-gray-300"
@@ -804,7 +817,7 @@ const EditMode = ({
           <div className="border border-gray-300 rounded-xl p-4 bg-gray-50">
             <div className="flex items-start justify-between mb-4">
               <img 
-                src={questionData.explanationImageUrl?.startsWith('http') ? questionData.explanationImageUrl : `${apiUrl}${questionData.explanationImageUrl}`}
+                src={constructImageUrl(questionData.explanationImageUrl)}
                 alt="Explanation" 
                 style={getImageStyles(questionData.explanationImageAlign, questionData.explanationImageWidth, questionData.explanationImageHeight)}
                 className="rounded-lg border-2 border-gray-200 shadow-md"
@@ -1102,7 +1115,7 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await api.post('/tests/upload-question-image', formData, {
+      const response = await api.post('/api/v1/images/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -1111,7 +1124,7 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
       if (response.data.success) {
         setQuestionData(prev => ({
           ...prev,
-          imageUrl: response.data.data.imageUrl
+          imageUrl: response.data.data.url || response.data.data.imageUrl
         }));
         showSuccess('Image uploaded successfully');
       }
@@ -1142,7 +1155,7 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await api.post('/tests/upload-question-image', formData, {
+      const response = await api.post('/api/v1/images/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -1152,7 +1165,7 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
         const newOptions = [...questionData.options];
         newOptions[index] = {
           ...newOptions[index],
-          imageUrl: response.data.data.imageUrl
+          imageUrl: response.data.data.url || response.data.data.imageUrl
         };
         setQuestionData(prev => ({ ...prev, options: newOptions }));
         showSuccess('Image uploaded successfully');
@@ -1185,7 +1198,7 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await api.post('/tests/upload-question-image', formData, {
+      const response = await api.post('/api/v1/images/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -1194,7 +1207,7 @@ const QuestionEditor = ({ testId, sections, onQuestionAdded, onClose }) => {
       if (response.data.success) {
         setQuestionData(prev => ({
           ...prev,
-          explanationImageUrl: response.data.data.imageUrl
+          explanationImageUrl: response.data.data.url || response.data.data.imageUrl
         }));
         showSuccess('Explanation image uploaded successfully');
       }
