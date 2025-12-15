@@ -5,20 +5,30 @@ import { Info } from "lucide-react";
 import api from "../api/axios";
 import { useToast } from "../context/ToastContext";
 
-// Register custom fonts (only register once)
-let fontsRegistered = false;
-if (!fontsRegistered) {
-  const Font = Quill.import('formats/font');
-  Font.whitelist = ['sans-serif', 'serif', 'monospace', 'arial', 'times-new-roman', 'courier', 'georgia', 'verdana'];
-  Quill.register(Font, true);
+// Register custom fonts and sizes (singleton pattern for hot reload safety)
+const initializeQuillFormats = () => {
+  try {
+    const Font = Quill.import('formats/font');
+    const Size = Quill.import('attributors/style/size');
+    
+    // Only register if not already registered
+    if (!Font.whitelist || !Font.whitelist.includes('arial')) {
+      Font.whitelist = ['sans-serif', 'serif', 'monospace', 'arial', 'times-new-roman', 'courier', 'georgia', 'verdana'];
+      Quill.register(Font, true);
+    }
+    
+    if (!Size.whitelist || !Size.whitelist.includes('10px')) {
+      Size.whitelist = ['10px', '12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '36px', '42px', '48px', '56px', '64px', '72px'];
+      Quill.register(Size, true);
+    }
+  } catch (error) {
+    // Formats already registered or registration error
+    console.warn('Quill format registration skipped:', error.message);
+  }
+};
 
-  // Register custom sizes
-  const Size = Quill.import('attributors/style/size');
-  Size.whitelist = ['10px', '12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '36px', '42px', '48px', '56px', '64px', '72px'];
-  Quill.register(Size, true);
-  
-  fontsRegistered = true;
-}
+// Initialize on module load
+initializeQuillFormats();
 
 const DescriptionEditor = ({ 
   value, 
