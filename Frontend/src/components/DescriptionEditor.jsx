@@ -160,21 +160,6 @@ const DescriptionEditor = ({
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .description-editor .ql-container {
-          min-height: 300px;
-        }
-        .description-editor .ql-editor {
-          min-height: 300px;
-        }
-        .description-editor .ql-editor img {
-          max-width: 100%;
-          height: auto;
-          display: block;
-          margin: 10px 0;
-        }
-      `}</style>
     </div>
   );
 };

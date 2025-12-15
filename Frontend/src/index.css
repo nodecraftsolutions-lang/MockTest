@@ -46,6 +46,22 @@
   margin: 10px 0;
 }
 
+/* Description editor specific styles */
+.description-editor .ql-container {
+  min-height: 300px;
+}
+
+.description-editor .ql-editor {
+  min-height: 300px;
+}
+
+.description-editor .ql-editor img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 10px 0;
+}
+
 /* Custom font sizes */
 .ql-editor .ql-size-10px { font-size: 10px; }
 .ql-editor .ql-size-12px { font-size: 12px; }
@@ -225,19 +241,6 @@
 .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="72px"]::before,
 .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="72px"]::before {
   content: '72px';
-}
-
-
-.prose table td,
-.prose table th {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: left;
-}
-
-.prose table th {
-  background-color: #f3f4f6;
-  font-weight: 600;
 }
 
 @keyframes slide {
