@@ -30,16 +30,11 @@ const TestCreation = () => {
   const [loading, setLoading] = useState(false);
   const [responseMsg, setResponseMsg] = useState(null);
   const [activeSection, setActiveSection] = useState("basic");
-  const [uploadingDescriptionImage, setUploadingDescriptionImage] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     descriptionHtml: "",
-    descriptionImageUrl: "",
-    descriptionImageWidth: 100,
-    descriptionImageHeight: 300,
-    descriptionImageAlign: "left",
     companyId: searchParams.get('companyId') || "",
     type: "free",
     price: 0,
@@ -245,22 +240,9 @@ const TestCreation = () => {
                         <DescriptionEditor
                           value={formData.descriptionHtml}
                           onChange={(content) => setFormData(prev => ({ ...prev, descriptionHtml: content }))}
-                          placeholder="Describe the test content and purpose... Use toolbar for rich formatting, fonts, sizes, colors, and images."
+                          placeholder="Describe the test content and purpose... Use toolbar for rich formatting, fonts, sizes, colors, and images. Click the image icon to insert images anywhere in your description."
                           label="Test Description"
                           required={true}
-                          imageUrl={formData.descriptionImageUrl}
-                          imageWidth={formData.descriptionImageWidth}
-                          imageHeight={formData.descriptionImageHeight}
-                          imageAlign={formData.descriptionImageAlign}
-                          onImageUpdate={(imageData) => setFormData(prev => ({ 
-                            ...prev, 
-                            descriptionImageUrl: imageData.imageUrl,
-                            descriptionImageWidth: imageData.imageWidth,
-                            descriptionImageHeight: imageData.imageHeight,
-                            descriptionImageAlign: imageData.imageAlign
-                          }))}
-                          uploadingImage={uploadingDescriptionImage}
-                          onUploadingChange={setUploadingDescriptionImage}
                         />
                       </div>
 

@@ -28,10 +28,6 @@ const CreateCompany = () => {
     logoUrl: "",
     description: "",
     descriptionHtml: "",
-    descriptionImageUrl: "",
-    descriptionImageWidth: 100,
-    descriptionImageHeight: 300,
-    descriptionImageAlign: "left",
     category: "IT Services",
     difficulty: "Medium",
     defaultPattern: [
@@ -56,7 +52,6 @@ const CreateCompany = () => {
   const [loading, setLoading] = useState(false);
   const [responseMsg, setResponseMsg] = useState(null);
   const [activeSection, setActiveSection] = useState("basic");
-  const [uploadingDescriptionImage, setUploadingDescriptionImage] = useState(false);
 
   // Handle basic input changes
   const handleChange = (e) => {
@@ -116,10 +111,6 @@ const CreateCompany = () => {
           logoUrl: "",
           description: "",
           descriptionHtml: "",
-          descriptionImageUrl: "",
-          descriptionImageWidth: 100,
-          descriptionImageHeight: 300,
-          descriptionImageAlign: "left",
           category: "IT Services",
           difficulty: "Medium",
           defaultPattern: [
@@ -296,22 +287,9 @@ const CreateCompany = () => {
                     <DescriptionEditor
                       value={formData.descriptionHtml}
                       onChange={(content) => setFormData({ ...formData, descriptionHtml: content })}
-                      placeholder="Describe the company and hiring process... Use toolbar for rich formatting, fonts, sizes, colors, and images."
+                      placeholder="Describe the company and hiring process... Use toolbar for rich formatting, fonts, sizes, colors, and images. Click the image icon to insert images anywhere in your description."
                       label="Company Description"
                       required={true}
-                      imageUrl={formData.descriptionImageUrl}
-                      imageWidth={formData.descriptionImageWidth}
-                      imageHeight={formData.descriptionImageHeight}
-                      imageAlign={formData.descriptionImageAlign}
-                      onImageUpdate={(imageData) => setFormData({ 
-                        ...formData, 
-                        descriptionImageUrl: imageData.imageUrl,
-                        descriptionImageWidth: imageData.imageWidth,
-                        descriptionImageHeight: imageData.imageHeight,
-                        descriptionImageAlign: imageData.imageAlign
-                      })}
-                      uploadingImage={uploadingDescriptionImage}
-                      onUploadingChange={setUploadingDescriptionImage}
                     />
                   </div>
                 </div>
