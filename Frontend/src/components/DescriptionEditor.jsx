@@ -149,7 +149,6 @@ const DescriptionEditor = ({
           formats={formats}
           placeholder={placeholder}
           className="bg-white"
-          style={{ minHeight: '300px' }}
         />
       </div>
 
