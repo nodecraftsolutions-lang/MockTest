@@ -23,6 +23,7 @@ const imageRoutes = require('./routes/image');
 const socketConfig = require('./socket/socketConfig');
 
 const app = express();
+app.set('trust proxy', true); // Enable trust proxy for rate limiting
 const server = createServer(app);
 
 // ✅ Configure CORS with specific origins for production
