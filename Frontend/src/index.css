@@ -47,12 +47,22 @@
 }
 
 /* Description editor specific styles */
+.description-editor {
+  position: relative;
+  overflow: visible;
+}
+
 .description-editor .ql-container {
   min-height: 300px;
+  max-height: 600px;
+  overflow-y: auto;
+  position: relative;
 }
 
 .description-editor .ql-editor {
   min-height: 300px;
+  position: relative;
+  overflow-y: auto;
 }
 
 .description-editor .ql-editor img {
@@ -60,6 +70,27 @@
   height: auto;
   display: block;
   margin: 10px 0;
+  cursor: pointer;
+}
+
+.description-editor .ql-editor p {
+  min-height: 1em;
+}
+
+/* Prevent layout shift when inserting images */
+/* Modern browsers with :has() support */
+@supports selector(:has(*)) {
+  .description-editor .ql-editor p:has(img) {
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Fallback for browsers without :has() support */
+@supports not selector(:has(*)) {
+  .description-editor .ql-editor img {
+    margin: 10px auto;
+  }
 }
 
 /* Custom font sizes - shared between editor and prose */
