@@ -74,9 +74,22 @@
 }
 
 /* Prevent layout shift when inserting images */
-.description-editor .ql-editor p:has(img) {
-  margin: 0;
-  padding: 0;
+/* Modern browsers with :has() support */
+@supports selector(:has(*)) {
+  .description-editor .ql-editor p:has(img) {
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Fallback for browsers without :has() support */
+@supports not selector(:has(*)) {
+  .description-editor .ql-editor p {
+    margin: 0.5em 0;
+  }
+  .description-editor .ql-editor img {
+    margin: 10px auto;
+  }
 }
 
 .description-editor .ql-editor p {
