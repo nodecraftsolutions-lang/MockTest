@@ -22,9 +22,23 @@
 .ql-editor h4,
 .ql-editor h5,
 .ql-editor h6 {
-  margin: 0;
+  margin: 0 0 1em 0;
   padding: 0;
   counter-reset: list-1 list-2 list-3 list-4 list-5 list-6 list-7 list-8 list-9;
+}
+
+.ql-editor ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+}
+
+.ql-editor ol {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+}
+
+.ql-editor li {
+  margin: 0.25em 0;
 }
 
 .ql-editor table {
@@ -118,6 +132,30 @@
 .prose table th {
   background-color: #f3f4f6;
   font-weight: 600;
+}
+
+/* List styles for prose */
+.prose ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin: 1em 0;
+}
+
+.prose ol {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+  margin: 1em 0;
+}
+
+.prose li {
+  margin: 0.25em 0;
+}
+
+.prose ul ul,
+.prose ol ol,
+.prose ul ol,
+.prose ol ul {
+  margin: 0;
 }
 
 /* Quill toolbar customization for font names */

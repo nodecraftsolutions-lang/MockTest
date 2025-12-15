@@ -113,7 +113,7 @@ const QuestionManagement = () => {
         {option.imageUrl && (
           <div className="mt-2">
             <img 
-              src={`${apiUrl}${option.imageUrl}`}
+              src={option.imageUrl?.startsWith('http') ? option.imageUrl : `${apiUrl}${option.imageUrl}`}
               alt="Option"
               style={getImageStyles(option.imageAlign, option.imageWidth, option.imageHeight)}
               className="rounded border border-gray-300"
@@ -274,7 +274,7 @@ const QuestionManagement = () => {
                       {question.imageUrl && (
                         <div className="mb-4">
                           <img 
-                            src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${question.imageUrl}`}
+                            src={question.imageUrl?.startsWith('http') ? question.imageUrl : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${question.imageUrl}`}
                             alt="Question" 
                             style={getImageStyles(question.imageAlign, question.imageWidth, question.imageHeight)}
                             className="rounded-lg border-2 border-gray-200"

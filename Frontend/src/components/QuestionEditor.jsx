@@ -103,7 +103,7 @@ const PreviewMode = ({ questionData }) => {
         {questionData.imageUrl && (
           <div className="mb-6">
             <img 
-              src={`${apiUrl}${questionData.imageUrl}`}
+              src={questionData.imageUrl?.startsWith('http') ? questionData.imageUrl : `${apiUrl}${questionData.imageUrl}`}
               alt="Question" 
               style={getImageStyles(questionData.imageAlign, questionData.imageWidth, questionData.imageHeight)}
               className="rounded-lg border-2 border-gray-200 shadow-md"
@@ -141,7 +141,7 @@ const PreviewMode = ({ questionData }) => {
                 {opt.imageUrl && (
                   <div className="mt-2">
                     <img 
-                      src={`${apiUrl}${opt.imageUrl}`}
+                      src={opt.imageUrl?.startsWith('http') ? opt.imageUrl : `${apiUrl}${opt.imageUrl}`}
                       alt={`Option ${String.fromCharCode(65 + i)}`}
                       style={getImageStyles(opt.imageAlign, opt.imageWidth, opt.imageHeight)}
                       className="rounded-lg border border-gray-300"
@@ -177,7 +177,7 @@ const PreviewMode = ({ questionData }) => {
             {questionData.explanationImageUrl && (
               <div className="mt-4">
                 <img 
-                  src={`${apiUrl}${questionData.explanationImageUrl}`}
+                  src={questionData.explanationImageUrl?.startsWith('http') ? questionData.explanationImageUrl : `${apiUrl}${questionData.explanationImageUrl}`}
                   alt="Explanation" 
                   style={getImageStyles(questionData.explanationImageAlign, questionData.explanationImageWidth, questionData.explanationImageHeight)}
                   className="rounded-lg border-2 border-gray-200 shadow-md"
@@ -346,7 +346,7 @@ const EditMode = ({
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
               <div className="flex items-start gap-4">
                 <img 
-                  src={`${apiUrl}${questionData.imageUrl}`}
+                  src={questionData.imageUrl?.startsWith('http') ? questionData.imageUrl : `${apiUrl}${questionData.imageUrl}`}
                   alt="Question" 
                   style={getImageStyles(questionData.imageAlign, questionData.imageWidth, questionData.imageHeight)}
                   className="rounded-lg border-2 border-gray-300 shadow-sm"
@@ -557,7 +557,7 @@ const EditMode = ({
                       <div className="mt-2 bg-white border border-gray-200 rounded-lg p-3">
                         <div className="flex items-start gap-3">
                           <img 
-                            src={`${apiUrl}${option.imageUrl}`}
+                            src={option.imageUrl?.startsWith('http') ? option.imageUrl : `${apiUrl}${option.imageUrl}`}
                             alt={`Option ${String.fromCharCode(65 + index)}`}
                             style={getImageStyles(option.imageAlign, option.imageWidth, option.imageHeight)}
                             className="rounded border border-gray-300"
@@ -804,7 +804,7 @@ const EditMode = ({
           <div className="border border-gray-300 rounded-xl p-4 bg-gray-50">
             <div className="flex items-start justify-between mb-4">
               <img 
-                src={`${apiUrl}${questionData.explanationImageUrl}`}
+                src={questionData.explanationImageUrl?.startsWith('http') ? questionData.explanationImageUrl : `${apiUrl}${questionData.explanationImageUrl}`}
                 alt="Explanation" 
                 style={getImageStyles(questionData.explanationImageAlign, questionData.explanationImageWidth, questionData.explanationImageHeight)}
                 className="rounded-lg border-2 border-gray-200 shadow-md"

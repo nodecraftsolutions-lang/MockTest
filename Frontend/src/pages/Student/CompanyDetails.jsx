@@ -232,7 +232,7 @@ const CompanyDetails = () => {
           {company?.descriptionImageUrl && (
             <div className="mt-4">
               <img
-                src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${company.descriptionImageUrl}`}
+                src={company.descriptionImageUrl?.startsWith('http') ? company.descriptionImageUrl : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${company.descriptionImageUrl}`}
                 alt={`${company.name} description`}
                 style={getImageStyles(
                   company.descriptionImageAlign || 'left',

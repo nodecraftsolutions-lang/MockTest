@@ -8,6 +8,7 @@ import api from '../../api/axios';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useToast } from '../../context/ToastContext';
 import DescriptionEditor from '../../components/DescriptionEditor';
+import { createSanitizedHtml } from '../../utils/sanitize';
 
 const ManageCompanies = () => {
   const navigate = useNavigate();
@@ -352,9 +353,14 @@ const ManageCompanies = () => {
                   </div>
                 </div>
 
-                {company.description && (
+                {company.descriptionHtml ? (
+                  <div
+                    className="text-gray-900 text-xs prose prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-900 prose-li:text-gray-900 prose-ul:text-gray-900 prose-span:text-gray-900 mb-4"
+                    dangerouslySetInnerHTML={createSanitizedHtml(company.descriptionHtml)}
+                  />
+                ) : company.description ? (
                   <p className="text-xs text-gray-600 mb-4" style={{ fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: company.description?.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-lg">$1</strong>') || '' }} />
-                )}
+                ) : null}
 
                 {/* Pattern Overview */}
                 {pattern && (

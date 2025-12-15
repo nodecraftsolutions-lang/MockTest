@@ -325,7 +325,7 @@ const AnswerAnalysis = ({ attempt, showAnswers, setShowAnswers }) => {
               {answer.question?.imageUrl && (
                 <div className="mb-3">
                   <img 
-                    src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${answer.question.imageUrl}`}
+                    src={answer.question.imageUrl?.startsWith('http') ? answer.question.imageUrl : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${answer.question.imageUrl}`}
                     alt="Question" 
                     style={{
                       width: answer.question.imageWidth ? `${answer.question.imageWidth}%` : '100%',
@@ -391,7 +391,7 @@ const AnswerAnalysis = ({ attempt, showAnswers, setShowAnswers }) => {
                       {option.imageUrl && (
                         <div className="mt-2 ml-6">
                           <img 
-                            src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${option.imageUrl}`}
+                            src={option.imageUrl?.startsWith('http') ? option.imageUrl : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${option.imageUrl}`}
                             alt={`Option ${String.fromCharCode(65 + optIndex)}`}
                             style={{
                               width: option.imageWidth ? `${option.imageWidth}%` : '50%',
@@ -425,7 +425,7 @@ const AnswerAnalysis = ({ attempt, showAnswers, setShowAnswers }) => {
                   {answer.question.explanationImageUrl && (
                     <div className="mt-2">
                       <img 
-                        src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${answer.question.explanationImageUrl}`}
+                        src={answer.question.explanationImageUrl?.startsWith('http') ? answer.question.explanationImageUrl : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${answer.question.explanationImageUrl}`}
                         alt="Explanation" 
                         style={{
                           width: answer.question.explanationImageWidth ? `${answer.question.explanationImageWidth}%` : '100%',
