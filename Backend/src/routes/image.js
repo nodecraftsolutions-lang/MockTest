@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const Image = require('../models/Image');
 const { auth, adminAuth, optionalAuth } = require('../middlewares/auth');
+const mongoose = require('mongoose');
 
 // Configure multer for memory storage
 const storage = multer.memoryStorage();
@@ -69,6 +70,9 @@ router.post('/upload', auth, upload.single('image'), async (req, res) => {
 // @access  Public
 router.get('/:id', async (req, res) => {
     try {
+        console.log('Requested image ID:', req.params.id);
+        console.log('Is valid ObjectId:', mongoose.Types.ObjectId.isValid(req.params.id));
+        
         const image = await Image.findById(req.params.id);
 
         if (!image) {

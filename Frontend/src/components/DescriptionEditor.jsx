@@ -99,6 +99,9 @@ const DescriptionEditor = ({
           }
 
           const imageUrl = `${backendUrl}${response.data.data.imageUrl}`;
+          console.log('Constructed image URL:', imageUrl);
+          console.log('Backend URL:', backendUrl);
+          console.log('Response data:', response.data);
 
           // Get the editor instance
           const quill = quillRef.current?.getEditor();
