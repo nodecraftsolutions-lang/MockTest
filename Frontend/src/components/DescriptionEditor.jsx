@@ -5,15 +5,20 @@ import { Info } from "lucide-react";
 import api from "../api/axios";
 import { useToast } from "../context/ToastContext";
 
-// Register custom fonts
-const Font = Quill.import('formats/font');
-Font.whitelist = ['sans-serif', 'serif', 'monospace', 'arial', 'times-new-roman', 'courier', 'georgia', 'verdana'];
-Quill.register(Font, true);
+// Register custom fonts (only register once)
+let fontsRegistered = false;
+if (!fontsRegistered) {
+  const Font = Quill.import('formats/font');
+  Font.whitelist = ['sans-serif', 'serif', 'monospace', 'arial', 'times-new-roman', 'courier', 'georgia', 'verdana'];
+  Quill.register(Font, true);
 
-// Register custom sizes
-const Size = Quill.import('attributors/style/size');
-Size.whitelist = ['10px', '12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '36px', '42px', '48px', '56px', '64px', '72px'];
-Quill.register(Size, true);
+  // Register custom sizes
+  const Size = Quill.import('attributors/style/size');
+  Size.whitelist = ['10px', '12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '36px', '42px', '48px', '56px', '64px', '72px'];
+  Quill.register(Size, true);
+  
+  fontsRegistered = true;
+}
 
 const DescriptionEditor = ({ 
   value, 
