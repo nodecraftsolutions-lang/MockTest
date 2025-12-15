@@ -34,6 +34,18 @@ const ExamInterface = () => {
   const [testAlreadyAttempted, setTestAlreadyAttempted] = useState(false);
   const { showError, showSuccess } = useToast();
   
+  // Helper function to construct image URL
+  const constructImageUrl = (url) => {
+    if (!url) return '';
+    // If it's already a full URL, return as is
+    if (url.startsWith('http')) {
+      return url;
+    }
+    // Otherwise prepend the API URL
+    const apiUrl = import.meta.env.VITE_API_URL || (window.location.protocol + '//' + window.location.host);
+    return `${apiUrl}${url}`;
+  };
+  
   // All tests now use the same API endpoints
   const isMockTest = false;
   
@@ -667,7 +679,7 @@ const ExamInterface = () => {
             {currentQ.imageUrl && (
               <div className="mb-4 sm:mb-6">
                 <img 
-                  src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${currentQ.imageUrl}`}
+                  src={constructImageUrl(currentQ.imageUrl)}
                   alt="Question" 
                   style={{
                     width: currentQ.imageWidth ? `${currentQ.imageWidth}%` : '100%',
@@ -716,7 +728,7 @@ const ExamInterface = () => {
                       {opt.imageUrl && (
                         <div className="mt-2">
                           <img 
-                            src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${opt.imageUrl}`}
+                            src={constructImageUrl(opt.imageUrl)}
                             alt={`Option ${String.fromCharCode(65 + i)}`}
                             style={{
                               width: opt.imageWidth ? `${opt.imageWidth}%` : '50%',
