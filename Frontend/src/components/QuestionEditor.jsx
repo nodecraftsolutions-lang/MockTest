@@ -68,12 +68,12 @@ const constructImageUrl = (url) => {
     return url;
   }
   // Otherwise prepend the API URL
+  const apiUrl = import.meta.env.VITE_API_URL || (window.location.protocol + '//' + window.location.host);
   return `${apiUrl}${url}`;
 };
 
 // Preview Mode Component
 const PreviewMode = ({ questionData }) => {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
   
   return (
     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl">
@@ -228,7 +228,6 @@ const EditMode = ({
   modules,
   formats
 }) => {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
   return (
     <>
