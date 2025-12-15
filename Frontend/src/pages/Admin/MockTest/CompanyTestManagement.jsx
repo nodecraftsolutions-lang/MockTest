@@ -58,10 +58,6 @@ const CompanyTestManagement = () => {
     logoUrl: "",
     description: "",
     descriptionHtml: "",
-    descriptionImageUrl: "",
-    descriptionImageWidth: 100,
-    descriptionImageHeight: 300,
-    descriptionImageAlign: "left",
     category: "IT Services",
     difficulty: "Medium",
     defaultPattern: [
@@ -87,10 +83,6 @@ const CompanyTestManagement = () => {
     title: "",
     description: "",
     descriptionHtml: "",
-    descriptionImageUrl: "",
-    descriptionImageWidth: 100,
-    descriptionImageHeight: 300,
-    descriptionImageAlign: "left",
     companyId: "",
     type: "free",
     price: 0,
@@ -105,10 +97,6 @@ const CompanyTestManagement = () => {
     ]
   });
   
-  // Image upload states
-  const [uploadingCompanyImage, setUploadingCompanyImage] = useState(false);
-  const [uploadingTestImage, setUploadingTestImage] = useState(false);
-
   // Fetch all data on component mount
   useEffect(() => {
     fetchCompanies();
@@ -292,10 +280,6 @@ const CompanyTestManagement = () => {
       logoUrl: "",
       description: "",
       descriptionHtml: "",
-      descriptionImageUrl: "",
-      descriptionImageWidth: 100,
-      descriptionImageHeight: 300,
-      descriptionImageAlign: "left",
       category: "IT Services",
       difficulty: "Medium",
       defaultPattern: [
@@ -325,10 +309,6 @@ const CompanyTestManagement = () => {
       title: "",
       description: "",
       descriptionHtml: "",
-      descriptionImageUrl: "",
-      descriptionImageWidth: 100,
-      descriptionImageHeight: 300,
-      descriptionImageAlign: "left",
       companyId: "",
       type: "free",
       price: 0,
@@ -353,10 +333,6 @@ const CompanyTestManagement = () => {
       logoUrl: company.logoUrl || "",
       description: company.description || "",
       descriptionHtml: company.descriptionHtml || "",
-      descriptionImageUrl: company.descriptionImageUrl || "",
-      descriptionImageWidth: company.descriptionImageWidth || 100,
-      descriptionImageHeight: company.descriptionImageHeight || 300,
-      descriptionImageAlign: company.descriptionImageAlign || "left",
       category: company.category || "IT Services",
       difficulty: company.difficulty || "Medium",
       defaultPattern: company.defaultPattern || [
@@ -387,10 +363,6 @@ const CompanyTestManagement = () => {
       title: test.title,
       description: test.description || "",
       descriptionHtml: test.descriptionHtml || "",
-      descriptionImageUrl: test.descriptionImageUrl || "",
-      descriptionImageWidth: test.descriptionImageWidth || 100,
-      descriptionImageHeight: test.descriptionImageHeight || 300,
-      descriptionImageAlign: test.descriptionImageAlign || "left",
       companyId: test.companyId?._id || test.companyId || "",
       type: test.type,
       price: test.price,
@@ -1016,22 +988,9 @@ const CompanyTestManagement = () => {
               <DescriptionEditor
                 value={companyFormData.descriptionHtml}
                 onChange={(content) => setCompanyFormData({ ...companyFormData, descriptionHtml: content })}
-                placeholder="Describe the company and hiring process... Use toolbar for rich formatting, fonts, sizes, colors, and images."
+                placeholder="Describe the company and hiring process... Use toolbar for rich formatting, fonts, sizes, colors, and images. Click the image icon to insert images anywhere in your description."
                 label="Company Description"
                 required={false}
-                imageUrl={companyFormData.descriptionImageUrl}
-                imageWidth={companyFormData.descriptionImageWidth}
-                imageHeight={companyFormData.descriptionImageHeight}
-                imageAlign={companyFormData.descriptionImageAlign}
-                onImageUpdate={(imageData) => setCompanyFormData({ 
-                  ...companyFormData, 
-                  descriptionImageUrl: imageData.imageUrl,
-                  descriptionImageWidth: imageData.imageWidth,
-                  descriptionImageHeight: imageData.imageHeight,
-                  descriptionImageAlign: imageData.imageAlign
-                })}
-                uploadingImage={uploadingCompanyImage}
-                onUploadingChange={setUploadingCompanyImage}
               />
               
               {/* Test Pattern */}
@@ -1310,22 +1269,9 @@ const CompanyTestManagement = () => {
               <DescriptionEditor
                 value={testFormData.descriptionHtml}
                 onChange={(content) => setTestFormData({ ...testFormData, descriptionHtml: content })}
-                placeholder="Describe the test content and purpose... Use toolbar for rich formatting, fonts, sizes, colors, and images."
+                placeholder="Describe the test content and purpose... Use toolbar for rich formatting, fonts, sizes, colors, and images. Click the image icon to insert images anywhere in your description."
                 label="Test Description"
                 required={false}
-                imageUrl={testFormData.descriptionImageUrl}
-                imageWidth={testFormData.descriptionImageWidth}
-                imageHeight={testFormData.descriptionImageHeight}
-                imageAlign={testFormData.descriptionImageAlign}
-                onImageUpdate={(imageData) => setTestFormData({ 
-                  ...testFormData, 
-                  descriptionImageUrl: imageData.imageUrl,
-                  descriptionImageWidth: imageData.imageWidth,
-                  descriptionImageHeight: imageData.imageHeight,
-                  descriptionImageAlign: imageData.imageAlign
-                })}
-                uploadingImage={uploadingTestImage}
-                onUploadingChange={setUploadingTestImage}
               />
               
               {/* Test Sections */}

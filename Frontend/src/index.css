@@ -38,9 +38,68 @@
   padding: 8px;
 }
 
+/* Images in editor */
+.ql-editor img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 10px 0;
+}
+
+/* Description editor specific styles */
+.description-editor .ql-container {
+  min-height: 300px;
+}
+
+.description-editor .ql-editor {
+  min-height: 300px;
+}
+
+.description-editor .ql-editor img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 10px 0;
+}
+
+/* Custom font sizes - shared between editor and prose */
+.ql-editor .ql-size-10px, .prose .ql-size-10px { font-size: 10px; }
+.ql-editor .ql-size-12px, .prose .ql-size-12px { font-size: 12px; }
+.ql-editor .ql-size-14px, .prose .ql-size-14px { font-size: 14px; }
+.ql-editor .ql-size-16px, .prose .ql-size-16px { font-size: 16px; }
+.ql-editor .ql-size-18px, .prose .ql-size-18px { font-size: 18px; }
+.ql-editor .ql-size-20px, .prose .ql-size-20px { font-size: 20px; }
+.ql-editor .ql-size-24px, .prose .ql-size-24px { font-size: 24px; }
+.ql-editor .ql-size-28px, .prose .ql-size-28px { font-size: 28px; }
+.ql-editor .ql-size-32px, .prose .ql-size-32px { font-size: 32px; }
+.ql-editor .ql-size-36px, .prose .ql-size-36px { font-size: 36px; }
+.ql-editor .ql-size-42px, .prose .ql-size-42px { font-size: 42px; }
+.ql-editor .ql-size-48px, .prose .ql-size-48px { font-size: 48px; }
+.ql-editor .ql-size-56px, .prose .ql-size-56px { font-size: 56px; }
+.ql-editor .ql-size-64px, .prose .ql-size-64px { font-size: 64px; }
+.ql-editor .ql-size-72px, .prose .ql-size-72px { font-size: 72px; }
+
+/* Custom fonts - shared between editor and prose */
+.ql-editor .ql-font-sans-serif, .prose .ql-font-sans-serif { font-family: sans-serif; }
+.ql-editor .ql-font-serif, .prose .ql-font-serif { font-family: serif; }
+.ql-editor .ql-font-monospace, .prose .ql-font-monospace { font-family: monospace; }
+.ql-editor .ql-font-arial, .prose .ql-font-arial { font-family: Arial, sans-serif; }
+.ql-editor .ql-font-times-new-roman, .prose .ql-font-times-new-roman { font-family: 'Times New Roman', Times, serif; }
+.ql-editor .ql-font-courier, .prose .ql-font-courier { font-family: 'Courier New', Courier, monospace; }
+.ql-editor .ql-font-georgia, .prose .ql-font-georgia { font-family: Georgia, serif; }
+.ql-editor .ql-font-verdana, .prose .ql-font-verdana { font-family: Verdana, sans-serif; }
+
 /* Prose styles for displaying rich content */
 .prose {
   max-width: 100%;
+}
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 10px 0;
+  border-radius: 8px;
 }
 
 .prose table {
@@ -59,6 +118,102 @@
 .prose table th {
   background-color: #f3f4f6;
   font-weight: 600;
+}
+
+/* Quill toolbar customization for font names */
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="sans-serif"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="sans-serif"]::before {
+  content: 'Sans Serif';
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="serif"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="serif"]::before {
+  content: 'Serif';
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="monospace"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="monospace"]::before {
+  content: 'Monospace';
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="arial"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="arial"]::before {
+  content: 'Arial';
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="times-new-roman"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="times-new-roman"]::before {
+  content: 'Times New Roman';
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="courier"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="courier"]::before {
+  content: 'Courier';
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="georgia"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="georgia"]::before {
+  content: 'Georgia';
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="verdana"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="verdana"]::before {
+  content: 'Verdana';
+}
+
+/* Quill toolbar customization for font sizes */
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="10px"]::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="10px"]::before {
+  content: '10px';
+}
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="12px"]::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="12px"]::before {
+  content: '12px';
+}
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="14px"]::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="14px"]::before {
+  content: '14px';
+}
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="16px"]::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="16px"]::before {
+  content: '16px';
+}
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="18px"]::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="18px"]::before {
+  content: '18px';
+}
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="20px"]::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="20px"]::before {
+  content: '20px';
+}
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="24px"]::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="24px"]::before {
+  content: '24px';
+}
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="28px"]::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="28px"]::before {
+  content: '28px';
+}
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="32px"]::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="32px"]::before {
+  content: '32px';
+}
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="36px"]::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="36px"]::before {
+  content: '36px';
+}
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="42px"]::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="42px"]::before {
+  content: '42px';
+}
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="48px"]::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="48px"]::before {
+  content: '48px';
+}
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="56px"]::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="56px"]::before {
+  content: '56px';
+}
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="64px"]::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="64px"]::before {
+  content: '64px';
+}
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="72px"]::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="72px"]::before {
+  content: '72px';
 }
 
 @keyframes slide {
