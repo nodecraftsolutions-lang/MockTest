@@ -1,16 +1,16 @@
 import { useState, useEffect } from "react";
-import { 
-  Building, 
-  BookOpen, 
-  Database, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Upload, 
-  Settings, 
-  CheckCircle, 
-  AlertCircle, 
-  Eye, 
+import {
+  Building,
+  BookOpen,
+  Database,
+  Plus,
+  Edit,
+  Trash2,
+  Upload,
+  Settings,
+  CheckCircle,
+  AlertCircle,
+  Eye,
   FileText,
   Zap,
   Users,
@@ -39,19 +39,19 @@ const CompanyTestManagement = () => {
     tests: true,
     questionBanks: true
   });
-  
+
   // Filters and search
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCompany, setFilterCompany] = useState("all");
   const [filterType, setFilterType] = useState("all");
   const [expandedCompanies, setExpandedCompanies] = useState(new Set());
-  
+
   // Modals
   const [showCompanyModal, setShowCompanyModal] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
   const [editingCompany, setEditingCompany] = useState(null);
   const [editingTest, setEditingTest] = useState(null);
-  
+
   // Forms
   const [companyFormData, setCompanyFormData] = useState({
     name: "",
@@ -78,7 +78,7 @@ const CompanyTestManagement = () => {
       ],
     },
   });
-  
+
   const [testFormData, setTestFormData] = useState({
     title: "",
     description: "",
@@ -96,7 +96,7 @@ const CompanyTestManagement = () => {
       }
     ]
   });
-  
+
   // Fetch all data on component mount
   useEffect(() => {
     fetchCompanies();
@@ -418,12 +418,12 @@ const CompanyTestManagement = () => {
     // Find the test to check if it was already generated
     const test = tests.find(t => t._id === testId);
     const wasAlreadyGenerated = test && test.isGenerated;
-    
+
     try {
       const response = await api.post(`/tests/${testId}/generate-questions`);
       if (response.data.success) {
-        const message = wasAlreadyGenerated 
-          ? "Questions regenerated successfully" 
+        const message = wasAlreadyGenerated
+          ? "Questions regenerated successfully"
           : "Questions generated successfully";
         showSuccess(message);
         fetchTests();
@@ -454,20 +454,20 @@ const CompanyTestManagement = () => {
 
   // Get tests for a specific company
   const getCompanyTests = (companyId) => {
-    return tests.filter(test => 
-      test.companyId && 
-      (typeof test.companyId === 'string' ? 
-        test.companyId === companyId : 
+    return tests.filter(test =>
+      test.companyId &&
+      (typeof test.companyId === 'string' ?
+        test.companyId === companyId :
         test.companyId._id === companyId)
     );
   };
 
   // Get question banks for a specific company
   const getCompanyQuestionBanks = (companyId) => {
-    return questionBanks.filter(bank => 
-      bank.companyId && 
-      (typeof bank.companyId === 'string' ? 
-        bank.companyId === companyId : 
+    return questionBanks.filter(bank =>
+      bank.companyId &&
+      (typeof bank.companyId === 'string' ?
+        bank.companyId === companyId :
         bank.companyId._id === companyId)
     );
   };
@@ -535,7 +535,7 @@ const CompanyTestManagement = () => {
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
-            
+
             <select
               value={filterCompany}
               onChange={(e) => setFilterCompany(e.target.value)}
@@ -548,7 +548,7 @@ const CompanyTestManagement = () => {
                 </option>
               ))}
             </select>
-            
+
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
@@ -569,12 +569,12 @@ const CompanyTestManagement = () => {
               const companyQuestionBanks = getCompanyQuestionBanks(company._id);
               const { totalQuestions, totalDuration } = calculateCompanyPatternTotals(company.defaultPattern || []);
               const isExpanded = expandedCompanies.has(company._id);
-              
+
               // Filter tests based on type filter
               const filteredTests = companyTests.filter(test => {
                 return filterType === "all" || test.type === filterType;
               });
-              
+
               return (
                 <div key={company._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                   {/* Company Header */}
@@ -601,7 +601,7 @@ const CompanyTestManagement = () => {
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => toggleCompanyExpansion(company._id)}
@@ -640,18 +640,23 @@ const CompanyTestManagement = () => {
                         </button>
                       </div>
                     </div>
-                    
-                    {company.description && (
-                      <p className="mt-3 text-gray-600 text-sm" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: company.description?.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-lg">$1</strong>').replace(/\*\*‍\*(.*?)\*\*‍\*/g, '<strong class="font-bold text-lg">$1</strong>') || '' }} />
+
+                    {(company.descriptionHtml || company.description) && (
+                      <div
+                        className="mt-3 text-gray-900 text-sm prose prose-sm max-w-none prose-img:rounded-xl prose-img:max-h-60 prose-img:w-auto prose-img:object-contain prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-900 prose-p:my-1 prose-ul:text-gray-900 prose-ul:my-1 prose-li:text-gray-900 prose-li:my-0 prose-span:text-gray-900"
+                        dangerouslySetInnerHTML={{
+                          __html: company.descriptionHtml || company.description?.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-lg">$1</strong>').replace(/\*\*‍\*(.*?)\*\*‍\*/g, '<strong class="font-bold text-lg">$1</strong>') || ''
+                        }}
+                      />
                     )}
-                    
+
                     {/* Show company sections below the description */}
                     <div className="mt-3">
                       <h4 className="text-sm font-medium text-blue-800 mb-2">Company Sections:</h4>
                       <div className="flex flex-wrap gap-2">
                         {company.defaultPattern?.map((section, index) => (
-                          <span 
-                            key={index} 
+                          <span
+                            key={index}
                             className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
                           >
                             {section.sectionName} ({section.questionCount} Qs, {section.duration} min)
@@ -660,7 +665,7 @@ const CompanyTestManagement = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Expanded Content */}
                   {isExpanded && (
                     <div className="p-6">
@@ -681,7 +686,7 @@ const CompanyTestManagement = () => {
                             </button>
                           </div>
                         </div>
-                        
+
                         {filteredTests.length > 0 ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {filteredTests.map(test => {
@@ -692,9 +697,8 @@ const CompanyTestManagement = () => {
                                     <div>
                                       <h4 className="font-medium text-gray-900">{test.title}</h4>
                                       <div className="flex items-center mt-1">
-                                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                          test.type === 'free' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                                        }`}>
+                                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${test.type === 'free' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                                          }`}>
                                           {test.type === 'free' ? 'Free' : `₹${test.price}`}
                                         </span>
                                         {test.isFeatured && (
@@ -721,7 +725,7 @@ const CompanyTestManagement = () => {
                                       </button>
                                     </div>
                                   </div>
-                                  
+
                                   <div className="grid grid-cols-3 gap-2 mb-3">
                                     <div className="text-center p-2 bg-blue-50 rounded">
                                       <div className="text-sm font-medium text-gray-900">{totalQuestions}</div>
@@ -736,7 +740,7 @@ const CompanyTestManagement = () => {
                                       <div className="text-xs text-gray-600">Minutes</div>
                                     </div>
                                   </div>
-                                  
+
                                   <div className="flex flex-wrap gap-1 mb-3">
                                     {(test.sections || []).slice(0, 3).map((section, idx) => (
                                       <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
@@ -749,7 +753,7 @@ const CompanyTestManagement = () => {
                                       </span>
                                     )}
                                   </div>
-                                  
+
                                   <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
                                     <div className="flex items-center">
                                       {test.isGenerated ? (
@@ -789,8 +793,8 @@ const CompanyTestManagement = () => {
                           <div className="text-center py-8">
                             <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                             <p className="text-gray-600">
-                              {filterType === "all" 
-                                ? "No tests created for this company yet" 
+                              {filterType === "all"
+                                ? "No tests created for this company yet"
                                 : `No ${filterType} tests found for this company`}
                             </p>
                             <button
@@ -807,14 +811,14 @@ const CompanyTestManagement = () => {
                           </div>
                         )}
                       </div>
-                      
+
                       {/* Question Banks Section */}
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                           <Database className="w-5 h-5 mr-2 text-purple-600" />
                           Question Banks ({companyQuestionBanks.length})
                         </h3>
-                        
+
                         {companyQuestionBanks.length > 0 ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {companyQuestionBanks.map(bank => (
@@ -825,7 +829,7 @@ const CompanyTestManagement = () => {
                                     {bank.section}
                                   </span>
                                 </div>
-                                
+
                                 <div className="grid grid-cols-2 gap-2 mb-3">
                                   <div className="text-center p-2 bg-blue-50 rounded">
                                     <div className="text-sm font-medium text-gray-900">{bank.totalQuestions || 0}</div>
@@ -836,7 +840,7 @@ const CompanyTestManagement = () => {
                                     <div className="text-xs text-gray-600">Uploaded</div>
                                   </div>
                                 </div>
-                                
+
                                 <div className="flex justify-between items-center">
                                   <span className="text-xs text-gray-500">
                                     Created {new Date(bank.createdAt).toLocaleDateString()}
@@ -915,7 +919,7 @@ const CompanyTestManagement = () => {
                 </button>
               </div>
             </div>
-            
+
             <form onSubmit={submitCompanyForm} className="p-6 space-y-6">
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -933,7 +937,7 @@ const CompanyTestManagement = () => {
                     placeholder="Enter company name"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Logo URL
@@ -947,7 +951,7 @@ const CompanyTestManagement = () => {
                     placeholder="https://example.com/logo.png"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Category *
@@ -967,7 +971,7 @@ const CompanyTestManagement = () => {
                     <option value="Other">Other</option>
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Difficulty Level
@@ -984,7 +988,7 @@ const CompanyTestManagement = () => {
                   </select>
                 </div>
               </div>
-              
+
               <DescriptionEditor
                 value={companyFormData.descriptionHtml}
                 onChange={(content) => setCompanyFormData({ ...companyFormData, descriptionHtml: content })}
@@ -992,7 +996,7 @@ const CompanyTestManagement = () => {
                 label="Company Description"
                 required={false}
               />
-              
+
               {/* Test Pattern */}
               <div>
                 <div className="flex justify-between items-center mb-4">
@@ -1006,7 +1010,7 @@ const CompanyTestManagement = () => {
                     Add Section
                   </button>
                 </div>
-                
+
                 <div className="space-y-4">
                   {companyFormData.defaultPattern.map((section, index) => (
                     <div key={index} className="border border-gray-200 rounded-lg p-4">
@@ -1022,7 +1026,7 @@ const CompanyTestManagement = () => {
                           </button>
                         )}
                       </div>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1037,7 +1041,7 @@ const CompanyTestManagement = () => {
                             placeholder="e.g., Aptitude"
                           />
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Questions *
@@ -1051,7 +1055,7 @@ const CompanyTestManagement = () => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Duration (min) *
@@ -1065,7 +1069,7 @@ const CompanyTestManagement = () => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Marks per Question
@@ -1084,7 +1088,7 @@ const CompanyTestManagement = () => {
                   ))}
                 </div>
               </div>
-              
+
               {/* Settings */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -1107,7 +1111,7 @@ const CompanyTestManagement = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Passing Criteria
@@ -1128,7 +1132,7 @@ const CompanyTestManagement = () => {
                   />
                 </div>
               </div>
-              
+
               {/* Form Actions */}
               <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
                 <button
@@ -1173,7 +1177,7 @@ const CompanyTestManagement = () => {
                 </button>
               </div>
             </div>
-            
+
             <form onSubmit={submitTestForm} className="p-6 space-y-6">
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1191,7 +1195,7 @@ const CompanyTestManagement = () => {
                     placeholder="Enter test title"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Company *
@@ -1210,7 +1214,7 @@ const CompanyTestManagement = () => {
                       </option>
                     ))}
                   </select>
-                  
+
                   {/* Show company sections when a company is selected */}
                   {testFormData.companyId && (
                     <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
@@ -1219,8 +1223,8 @@ const CompanyTestManagement = () => {
                         {companies
                           .find(company => company._id === testFormData.companyId)
                           ?.defaultPattern?.map((section, index) => (
-                            <span 
-                              key={index} 
+                            <span
+                              key={index}
                               className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
                             >
                               {section.sectionName} ({section.questionCount} Qs, {section.duration} min)
@@ -1230,7 +1234,7 @@ const CompanyTestManagement = () => {
                     </div>
                   )}
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Test Type *
@@ -1246,7 +1250,7 @@ const CompanyTestManagement = () => {
                     <option value="paid">Paid</option>
                   </select>
                 </div>
-                
+
                 {testFormData.type === "paid" && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1265,7 +1269,7 @@ const CompanyTestManagement = () => {
                   </div>
                 )}
               </div>
-              
+
               <DescriptionEditor
                 value={testFormData.descriptionHtml}
                 onChange={(content) => setTestFormData({ ...testFormData, descriptionHtml: content })}
@@ -1273,7 +1277,7 @@ const CompanyTestManagement = () => {
                 label="Test Description"
                 required={false}
               />
-              
+
               {/* Test Sections */}
               <div>
                 <div className="flex justify-between items-center mb-4">
@@ -1287,7 +1291,7 @@ const CompanyTestManagement = () => {
                     Add Section
                   </button>
                 </div>
-                
+
                 <div className="space-y-4">
                   {testFormData.sections.map((section, index) => (
                     <div key={index} className="border border-gray-200 rounded-lg p-4">
@@ -1303,7 +1307,7 @@ const CompanyTestManagement = () => {
                           </button>
                         )}
                       </div>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1318,7 +1322,7 @@ const CompanyTestManagement = () => {
                             placeholder="e.g., Aptitude"
                           />
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Questions *
@@ -1332,7 +1336,7 @@ const CompanyTestManagement = () => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Duration (min) *
@@ -1346,7 +1350,7 @@ const CompanyTestManagement = () => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Marks per Question
@@ -1365,7 +1369,7 @@ const CompanyTestManagement = () => {
                   ))}
                 </div>
               </div>
-              
+
               {/* Form Actions */}
               <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
                 <button

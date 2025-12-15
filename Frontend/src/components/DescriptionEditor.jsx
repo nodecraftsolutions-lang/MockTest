@@ -1,6 +1,8 @@
 import { useRef, useMemo, useCallback } from "react";
 import ReactQuill, { Quill } from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import "../utils/quill-setup"; // Must come before ImageResize
+import ImageResize from 'quill-image-resize-module';
 import { Info } from "lucide-react";
 import api from "../api/axios";
 import { useToast } from "../context/ToastContext";
@@ -8,15 +10,18 @@ import { useToast } from "../context/ToastContext";
 // Register custom fonts and sizes (singleton pattern for hot reload safety)
 const initializeQuillFormats = () => {
   try {
+    // Register ImageResize
+    Quill.register('modules/imageResize', ImageResize);
+
     const Font = Quill.import('formats/font');
-    const Size = Quill.import('attributors/style/size');
-    
+    const Size = Quill.import('formats/size');
+
     // Only register if not already registered
     if (!Font.whitelist || !Font.whitelist.includes('arial')) {
       Font.whitelist = ['sans-serif', 'serif', 'monospace', 'arial', 'times-new-roman', 'courier', 'georgia', 'verdana'];
       Quill.register(Font, true);
     }
-    
+
     if (!Size.whitelist || !Size.whitelist.includes('10px')) {
       Size.whitelist = ['10px', '12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '36px', '42px', '48px', '56px', '64px', '72px'];
       Quill.register(Size, true);
@@ -30,9 +35,9 @@ const initializeQuillFormats = () => {
 // Initialize on module load
 initializeQuillFormats();
 
-const DescriptionEditor = ({ 
-  value, 
-  onChange, 
+const DescriptionEditor = ({
+  value,
+  onChange,
   placeholder = "Enter description...",
   label = "Description",
   required = false,
@@ -42,7 +47,9 @@ const DescriptionEditor = ({
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
   // Image upload handler
-  const imageHandler = useCallback(() => {
+  const imageHandlerRef = useRef(null);
+
+  const performImageUpload = async () => {
     const input = document.createElement('input');
     input.setAttribute('type', 'file');
     input.setAttribute('accept', 'image/*');
@@ -76,26 +83,34 @@ const DescriptionEditor = ({
 
         if (response.data.success) {
           const imageUrl = `${apiUrl}${response.data.data.imageUrl}`;
-          
+
           // Get the editor instance
           const quill = quillRef.current?.getEditor();
           if (quill) {
             const range = quill.getSelection();
-            
+
             // Insert the image at cursor position
             quill.insertEmbed(range?.index || 0, 'image', imageUrl);
-            
+
             // Move cursor after the image
             quill.setSelection((range?.index || 0) + 1);
           }
-          
+
           showSuccess('Image uploaded and inserted successfully');
         }
       } catch (error) {
         showError(error.response?.data?.message || 'Failed to upload image');
       }
     };
-  }, [showError, showSuccess, apiUrl]);
+  };
+
+  // Update ref on every render
+  imageHandlerRef.current = performImageUpload;
+
+  // Stable handler for modules
+  const imageHandler = useCallback(() => {
+    imageHandlerRef.current?.();
+  }, []);
 
   // Rich text editor modules configuration with custom image handler
   const modules = useMemo(() => ({
@@ -119,6 +134,20 @@ const DescriptionEditor = ({
         image: imageHandler
       }
     },
+    imageResize: {
+      parchment: Quill.import('parchment'),
+      displaySize: true,
+      handles: ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'],
+      handleStyles: {
+        backgroundColor: 'black',
+        border: 'none',
+        color: 'white'
+      },
+      modules: ['Resize', 'DisplaySize', 'Toolbar']
+    },
+    clipboard: {
+      matchVisual: false
+    }
   }), [imageHandler]);
 
   const formats = [
@@ -129,7 +158,8 @@ const DescriptionEditor = ({
     'list', 'bullet', 'indent',
     'direction', 'align',
     'blockquote', 'code-block',
-    'link', 'image', 'video'
+    'link', 'image', 'video',
+    'width', 'height', 'style' // Added for image resize support
   ];
 
   return (
@@ -137,9 +167,9 @@ const DescriptionEditor = ({
       <label className="block text-sm font-semibold text-gray-700 mb-2">
         {label} {required && '*'}
       </label>
-      
+
       {/* Rich Text Editor */}
-      <div className="border border-gray-300 rounded-xl overflow-hidden mb-4 description-editor">
+      <div className="border border-gray-300 rounded-xl mb-4 description-editor">
         <ReactQuill
           ref={quillRef}
           theme="snow"

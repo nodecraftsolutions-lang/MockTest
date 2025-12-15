@@ -14,22 +14,22 @@ const router = express.Router();
 router.get('/', optionalAuth, async (req, res) => {
   try {
     const { page = 1, limit = 1000, search, category, fetchAll } = req.query;
-    
+
     const query = { isActive: true };
-    
+
     if (search) {
       query.name = { $regex: search, $options: 'i' };
     }
-    
+
     if (category) {
       query.category = category;
     }
 
     // Build query without pagination if fetchAll is specified
     let companiesQuery = Company.find(query)
-      .select('name logoUrl description category difficulty totalQuestions totalDuration defaultPattern')
+      .select('name logoUrl description descriptionHtml category difficulty totalQuestions totalDuration defaultPattern')
       .sort({ name: 1 });
-    
+
     // Apply pagination only if fetchAll is not specified
     if (fetchAll !== 'true') {
       companiesQuery = companiesQuery.limit(limit * 1).skip((page - 1) * limit);
@@ -64,10 +64,10 @@ router.get('/', optionalAuth, async (req, res) => {
 // @access  Public
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
-    const company = await Company.findOne({ 
-      _id: req.params.id, 
-      isActive: true 
-    }).select('name logoUrl description category difficulty totalQuestions totalDuration defaultPattern metadata');
+    const company = await Company.findOne({
+      _id: req.params.id,
+      isActive: true
+    }).select('name logoUrl description descriptionHtml category difficulty totalQuestions totalDuration defaultPattern metadata');
 
     if (!company) {
       return res.status(404).json({
@@ -111,9 +111,9 @@ router.get('/:id', optionalAuth, async (req, res) => {
 // @access  Public
 router.get('/:id/pattern', async (req, res) => {
   try {
-    const company = await Company.findOne({ 
-      _id: req.params.id, 
-      isActive: true 
+    const company = await Company.findOne({
+      _id: req.params.id,
+      isActive: true
     }).select('name defaultPattern totalQuestions totalDuration metadata');
 
     if (!company) {
@@ -151,7 +151,7 @@ router.get('/:id/pattern', async (req, res) => {
 router.get('/meta/categories', async (req, res) => {
   try {
     const categories = await Company.distinct('category', { isActive: true });
-    
+
     res.json({
       success: true,
       data: {
@@ -208,8 +208,8 @@ router.post('/', adminAuth, [
     .notEmpty()
     .withMessage('Section name is required'),
   body('defaultPattern.*.questionCount')
-  .isInt({ min: 1 })
-  .withMessage('Number of questions must be at least 1'),
+    .isInt({ min: 1 })
+    .withMessage('Number of questions must be at least 1'),
 
   body('defaultPattern.*.duration')
     .isInt({ min: 1 })
@@ -229,10 +229,10 @@ router.post('/', adminAuth, [
       });
     }
 
-    let { name, logoUrl, description, category, difficulty, defaultPattern, tags, metadata } = req.body;
+    let { name, logoUrl, description, descriptionHtml, category, difficulty, defaultPattern, tags, metadata } = req.body;
 
     // Check if company name already exists
-    const existingCompany = await Company.findOne({ 
+    const existingCompany = await Company.findOne({
       name: { $regex: new RegExp(`^${name}$`, 'i') }
     });
 
@@ -247,6 +247,7 @@ router.post('/', adminAuth, [
       name,
       logoUrl,
       description,
+      descriptionHtml,
       category,
       difficulty: difficulty || 'Medium',
       defaultPattern,
@@ -326,11 +327,11 @@ router.put('/:id', adminAuth, [
       });
     }
 
-    const { name, logoUrl, description, category, difficulty, defaultPattern, tags, metadata, isActive } = req.body;
+    const { name, logoUrl, description, descriptionHtml, category, difficulty, defaultPattern, tags, metadata, isActive } = req.body;
 
     // Check if new name conflicts with existing company
     if (name && name !== company.name) {
-      const existingCompany = await Company.findOne({ 
+      const existingCompany = await Company.findOne({
         name: { $regex: new RegExp(`^${name}$`, 'i') },
         _id: { $ne: req.params.id }
       });
@@ -347,7 +348,11 @@ router.put('/:id', adminAuth, [
     if (description !== undefined) {
       company.description = description;
     }
-    
+
+    if (descriptionHtml !== undefined) {
+      company.descriptionHtml = descriptionHtml;
+    }
+
     // Update fields
     if (name) company.name = name;
     if (logoUrl !== undefined) company.logoUrl = logoUrl;
@@ -392,7 +397,7 @@ router.delete('/:id', adminAuth, async (req, res) => {
 
     // Delete all associated tests
     await Test.deleteMany({ companyId: req.params.id });
-    
+
     // Delete all associated question banks
     await QuestionBank.deleteMany({ companyId: req.params.id });
 
@@ -427,7 +432,7 @@ router.get('/:id/stats', adminAuth, async (req, res) => {
     }
 
     const stats = await company.getStats();
-    
+
     // Get additional detailed stats
     const tests = await Test.find({ companyId: req.params.id });
     const testStats = await Promise.all(

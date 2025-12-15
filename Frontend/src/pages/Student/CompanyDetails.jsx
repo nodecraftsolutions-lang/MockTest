@@ -76,12 +76,12 @@ const CompanyDetails = () => {
     // Get paid test IDs
     const paidTests = tests.filter((t) => t.type === "paid");
     const testIds = paidTests.map(test => test._id);
-    
+
     if (testIds.length === 0) {
       showError("No paid tests available for this company");
       return;
     }
-    
+
     // Show billing modal for payment
     setPendingTestIds(testIds);
     setShowBillingModal(true);
@@ -106,16 +106,16 @@ const CompanyDetails = () => {
 
     try {
       setEnrolling(true);
-      
+
       // Create payment order
       console.log('Sending payment order request with testIds:', pendingTestIds);
       console.log('Test IDs type and structure:', pendingTestIds.map(id => ({ id, type: typeof id })));
-      
+
       const res = await api.post('/payments/create-order', {
         testIds: pendingTestIds,
         billingDetails
       });
-      
+
       console.log('Payment order response:', res.data);
 
       if (res.data.success) {
@@ -166,7 +166,7 @@ const CompanyDetails = () => {
               contact: billingDetails.mobile,
             },
             modal: {
-              ondismiss: function() {
+              ondismiss: function () {
                 showError("Payment cancelled");
                 setEnrolling(false);
               }
@@ -220,8 +220,8 @@ const CompanyDetails = () => {
             {company?.name}
           </h1>
           {company?.descriptionHtml ? (
-            <div 
-              className="text-gray-600 text-xs sm:text-sm prose prose-sm max-w-none"
+            <div
+              className="text-gray-900 text-xs sm:text-sm prose prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-900 prose-li:text-gray-900 prose-ul:text-gray-900 prose-span:text-gray-900"
               dangerouslySetInnerHTML={createSanitizedHtml(company.descriptionHtml)}
             />
           ) : (
@@ -231,7 +231,7 @@ const CompanyDetails = () => {
           )}
           {company?.descriptionImageUrl && (
             <div className="mt-4">
-              <img 
+              <img
                 src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${company.descriptionImageUrl}`}
                 alt={`${company.name} description`}
                 style={getImageStyles(
@@ -439,7 +439,7 @@ const CompanyDetails = () => {
                     <input
                       type="text"
                       value={billingDetails.name}
-                      onChange={(e) => setBillingDetails({...billingDetails, name: e.target.value})}
+                      onChange={(e) => setBillingDetails({ ...billingDetails, name: e.target.value })}
                       className="input-field pl-9 sm:pl-10 text-sm sm:text-base"
                       placeholder="Enter your full name"
                     />
@@ -455,7 +455,7 @@ const CompanyDetails = () => {
                     <input
                       type="email"
                       value={billingDetails.email}
-                      onChange={(e) => setBillingDetails({...billingDetails, email: e.target.value})}
+                      onChange={(e) => setBillingDetails({ ...billingDetails, email: e.target.value })}
                       className="input-field pl-9 sm:pl-10 text-sm sm:text-base"
                       placeholder="Enter your email"
                     />
@@ -471,7 +471,7 @@ const CompanyDetails = () => {
                     <input
                       type="tel"
                       value={billingDetails.mobile}
-                      onChange={(e) => setBillingDetails({...billingDetails, mobile: e.target.value})}
+                      onChange={(e) => setBillingDetails({ ...billingDetails, mobile: e.target.value })}
                       className="input-field pl-9 sm:pl-10 text-sm sm:text-base"
                       placeholder="Enter 10-digit mobile number"
                       maxLength="10"
