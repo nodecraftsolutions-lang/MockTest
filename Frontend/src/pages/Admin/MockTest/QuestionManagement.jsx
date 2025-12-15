@@ -97,9 +97,19 @@ const QuestionManagement = () => {
     return <p className="text-gray-900">{question.questionText}</p>;
   };
 
+  // Helper function to construct image URL
+  const constructImageUrl = (url) => {
+    if (!url) return '';
+    // If it's already a full URL, return as is
+    if (url.startsWith('http')) {
+      return url;
+    }
+    // Otherwise prepend the API URL
+    const apiUrl = import.meta.env.VITE_API_URL || (window.location.protocol + '//' + window.location.host);
+    return `${apiUrl}${url}`;
+  };
+
   const renderOptionContent = (option) => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-    
     return (
       <div>
         {option.html ? (
@@ -113,7 +123,7 @@ const QuestionManagement = () => {
         {option.imageUrl && (
           <div className="mt-2">
             <img 
-              src={option.imageUrl?.startsWith('http') ? option.imageUrl : `${apiUrl}${option.imageUrl}`}
+              src={constructImageUrl(option.imageUrl)}
               alt="Option"
               style={getImageStyles(option.imageAlign, option.imageWidth, option.imageHeight)}
               className="rounded border border-gray-300"
@@ -274,7 +284,7 @@ const QuestionManagement = () => {
                       {question.imageUrl && (
                         <div className="mb-4">
                           <img 
-                            src={question.imageUrl?.startsWith('http') ? question.imageUrl : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${question.imageUrl}`}
+                            src={constructImageUrl(question.imageUrl)}
                             alt="Question" 
                             style={getImageStyles(question.imageAlign, question.imageWidth, question.imageHeight)}
                             className="rounded-lg border-2 border-gray-200"

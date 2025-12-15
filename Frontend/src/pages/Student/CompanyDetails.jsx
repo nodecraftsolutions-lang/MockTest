@@ -30,6 +30,18 @@ const CompanyDetails = () => {
   const { showError, showSuccess } = useToast();
   const { isMobile } = useResponsive();
 
+  // Helper function to construct image URL
+  const constructImageUrl = (url) => {
+    if (!url) return '';
+    // If it's already a full URL, return as is
+    if (url.startsWith('http')) {
+      return url;
+    }
+    // Otherwise prepend the API URL
+    const apiUrl = import.meta.env.VITE_API_URL || (window.location.protocol + '//' + window.location.host);
+    return `${apiUrl}${url}`;
+  };
+
   useEffect(() => {
     fetchData();
     // Initialize billing details with user info
@@ -232,7 +244,7 @@ const CompanyDetails = () => {
           {company?.descriptionImageUrl && (
             <div className="mt-4">
               <img
-                src={company.descriptionImageUrl?.startsWith('http') ? company.descriptionImageUrl : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${company.descriptionImageUrl}`}
+                src={constructImageUrl(company.descriptionImageUrl)}
                 alt={`${company.name} description`}
                 style={getImageStyles(
                   company.descriptionImageAlign || 'left',

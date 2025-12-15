@@ -19,7 +19,7 @@ import { useToast } from "../../context/ToastContext";
 import { useResponsive } from "../../hooks/useResponsive";
 import { ResponsiveContainer, ResponsiveGrid } from "../../components/ResponsiveWrapper";
 import { createSanitizedHtml } from "../../utils/sanitize";
-import { getImageMarginStyle } from "../../utils/imageHelpers";
+import { getImageMarginStyle, getImageStyles } from "../../utils/imageHelpers";
 
 const ResultDetail = () => {
   const { attemptId } = useParams();
@@ -28,6 +28,18 @@ const ResultDetail = () => {
   const [showAnswers, setShowAnswers] = useState(false);
   const { showError } = useToast();
   const { isMobile } = useResponsive();
+
+  // Helper function to construct image URL
+  const constructImageUrl = (url) => {
+    if (!url) return '';
+    // If it's already a full URL, return as is
+    if (url.startsWith('http')) {
+      return url;
+    }
+    // Otherwise prepend the API URL
+    const apiUrl = import.meta.env.VITE_API_URL || (window.location.protocol + '//' + window.location.host);
+    return `${apiUrl}${url}`;
+  };
 
   useEffect(() => {
     const fetchAttempt = async () => {
@@ -325,14 +337,9 @@ const AnswerAnalysis = ({ attempt, showAnswers, setShowAnswers }) => {
               {answer.question?.imageUrl && (
                 <div className="mb-3">
                   <img 
-                    src={answer.question.imageUrl?.startsWith('http') ? answer.question.imageUrl : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${answer.question.imageUrl}`}
+                    src={constructImageUrl(answer.question.imageUrl)}
                     alt="Question" 
-                    style={{
-                      width: answer.question.imageWidth ? `${answer.question.imageWidth}%` : '100%',
-                      height: 'auto',
-                      maxWidth: '100%',
-                      margin: getImageMarginStyle(answer.question.imageAlign)
-                    }}
+                    style={getImageStyles(answer.question.imageAlign, answer.question.imageWidth, answer.question.imageHeight)}
                     className="rounded-lg border-2 border-gray-200 shadow-sm"
                   />
                 </div>
@@ -391,14 +398,9 @@ const AnswerAnalysis = ({ attempt, showAnswers, setShowAnswers }) => {
                       {option.imageUrl && (
                         <div className="mt-2 ml-6">
                           <img 
-                            src={option.imageUrl?.startsWith('http') ? option.imageUrl : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${option.imageUrl}`}
+                            src={constructImageUrl(option.imageUrl)}
                             alt={`Option ${String.fromCharCode(65 + optIndex)}`}
-                            style={{
-                              width: option.imageWidth ? `${option.imageWidth}%` : '50%',
-                              height: 'auto',
-                              maxWidth: '100%',
-                              margin: getImageMarginStyle(option.imageAlign)
-                            }}
+                            style={getImageStyles(option.imageAlign, option.imageWidth, option.imageHeight)}
                             className="rounded border border-gray-300"
                           />
                         </div>
@@ -425,14 +427,9 @@ const AnswerAnalysis = ({ attempt, showAnswers, setShowAnswers }) => {
                   {answer.question.explanationImageUrl && (
                     <div className="mt-2">
                       <img 
-                        src={answer.question.explanationImageUrl?.startsWith('http') ? answer.question.explanationImageUrl : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${answer.question.explanationImageUrl}`}
+                        src={constructImageUrl(answer.question.explanationImageUrl)}
                         alt="Explanation" 
-                        style={{
-                          width: answer.question.explanationImageWidth ? `${answer.question.explanationImageWidth}%` : '100%',
-                          height: 'auto',
-                          maxWidth: '100%',
-                          margin: getImageMarginStyle(answer.question.explanationImageAlign)
-                        }}
+                        style={getImageStyles(answer.question.explanationImageAlign, answer.question.explanationImageWidth, answer.question.explanationImageHeight)}
                         className="rounded-lg border border-blue-300 shadow-sm"
                       />
                     </div>
