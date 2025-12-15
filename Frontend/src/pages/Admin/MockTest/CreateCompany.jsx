@@ -473,22 +473,7 @@ const CreateCompany = () => {
                       </div>
                     </div>
 
-                    {/* Tags Section */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Tags
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {formData.tags.map((tag, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
+
                   </div>
                 </div>
               )}

@@ -1,9 +1,10 @@
-import { useRef, useMemo, useCallback } from "react";
+import { useRef, useMemo, useCallback, useState } from "react";
 import ReactQuill, { Quill } from "react-quill";
 import "react-quill/dist/quill.snow.css";
-import { Info } from "lucide-react";
+import { Info, Eye, EyeOff } from "lucide-react";
 import api from "../api/axios";
 import { useToast } from "../context/ToastContext";
+import { createSanitizedHtml } from "../utils/sanitize";
 
 // Register custom fonts and sizes (singleton pattern for hot reload safety)
 const initializeQuillFormats = () => {
@@ -40,6 +41,7 @@ const DescriptionEditor = ({
   const { showSuccess, showError } = useToast();
   const quillRef = useRef(null);
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const [showPreview, setShowPreview] = useState(false);
 
   // Image upload handler
   const imageHandler = useCallback(() => {
@@ -134,23 +136,66 @@ const DescriptionEditor = ({
 
   return (
     <div className="mb-6">
-      <label className="block text-sm font-semibold text-gray-700 mb-2">
-        {label} {required && '*'}
-      </label>
+      <div className="flex justify-between items-center mb-2">
+        <label className="block text-sm font-semibold text-gray-700">
+          {label} {required && '*'}
+        </label>
+        <button
+          type="button"
+          onClick={() => setShowPreview(!showPreview)}
+          className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+        >
+          {showPreview ? (
+            <>
+              <EyeOff className="w-4 h-4" />
+              Hide Preview
+            </>
+          ) : (
+            <>
+              <Eye className="w-4 h-4" />
+              Show Preview
+            </>
+          )}
+        </button>
+      </div>
       
       {/* Rich Text Editor */}
-      <div className="border border-gray-300 rounded-xl overflow-hidden mb-4 description-editor">
-        <ReactQuill
-          ref={quillRef}
-          theme="snow"
-          value={value}
-          onChange={onChange}
-          modules={modules}
-          formats={formats}
-          placeholder={placeholder}
-          className="bg-white"
-        />
-      </div>
+      {!showPreview && (
+        <div className="border border-gray-300 rounded-xl overflow-hidden mb-4 description-editor">
+          <ReactQuill
+            ref={quillRef}
+            theme="snow"
+            value={value}
+            onChange={onChange}
+            modules={modules}
+            formats={formats}
+            placeholder={placeholder}
+            className="bg-white"
+          />
+        </div>
+      )}
+
+      {/* Preview Section */}
+      {showPreview && (
+        <div className="border border-blue-300 rounded-xl overflow-hidden mb-4 bg-blue-50/30">
+          <div className="bg-blue-100 px-4 py-2 border-b border-blue-300">
+            <p className="text-sm font-semibold text-blue-900 flex items-center gap-2">
+              <Eye className="w-4 h-4" />
+              Preview - This is how students and admins will see the description
+            </p>
+          </div>
+          <div className="p-6 bg-white">
+            {value ? (
+              <div 
+                className="prose prose-sm max-w-none text-gray-600"
+                dangerouslySetInnerHTML={createSanitizedHtml(value)}
+              />
+            ) : (
+              <p className="text-gray-400 italic">No content to preview. Start typing in the editor...</p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Info Box */}
       <div className="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
@@ -166,6 +211,7 @@ const DescriptionEditor = ({
               <li><strong>Advanced Features:</strong> Headers (H1-H6), lists, alignment, quotes, code blocks, subscript, superscript</li>
               <li><strong>Media:</strong> Insert images, videos, and links directly within your content</li>
               <li><strong>Flexible Layout:</strong> Place images anywhere - text can flow above, below, or around images</li>
+              <li><strong>Live Preview:</strong> Click "Show Preview" to see exactly how the description will appear to students and admins</li>
             </ul>
             <p className="mt-2 text-xs text-blue-700">
               <strong>Tip:</strong> You can resize images after inserting them by clicking and dragging the image corners.
