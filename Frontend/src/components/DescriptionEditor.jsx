@@ -93,9 +93,9 @@ const DescriptionEditor = ({
           if (!import.meta.env.VITE_API_URL && window.location.port === '5173') {
             backendUrl = `${window.location.protocol}//${window.location.hostname}:8000`;
           }
-          // If we are in production (same origin), backendUrl might be empty string or relative path api base
+          // If we are in production (same origin), use the current hostname with port 8000
           if (!import.meta.env.VITE_API_URL && window.location.port !== '5173') {
-            backendUrl = ''; // Relative path
+            backendUrl = `${window.location.protocol}//${window.location.hostname}:8000`;
           }
 
           const imageUrl = `${backendUrl}${response.data.data.imageUrl}`;
