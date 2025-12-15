@@ -73,6 +73,10 @@
   cursor: pointer;
 }
 
+.description-editor .ql-editor p {
+  min-height: 1em;
+}
+
 /* Prevent layout shift when inserting images */
 /* Modern browsers with :has() support */
 @supports selector(:has(*)) {
@@ -84,16 +88,9 @@
 
 /* Fallback for browsers without :has() support */
 @supports not selector(:has(*)) {
-  .description-editor .ql-editor p {
-    margin: 0.5em 0;
-  }
   .description-editor .ql-editor img {
     margin: 10px auto;
   }
-}
-
-.description-editor .ql-editor p {
-  min-height: 1em;
 }
 
 /* Custom font sizes - shared between editor and prose */

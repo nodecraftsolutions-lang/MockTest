@@ -144,6 +144,8 @@ const DescriptionEditor = ({
           type="button"
           onClick={() => setShowPreview(!showPreview)}
           className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+          aria-label={showPreview ? "Hide preview and return to editor" : "Show preview of formatted content"}
+          aria-pressed={showPreview}
         >
           {showPreview ? (
             <>
@@ -188,6 +190,9 @@ const DescriptionEditor = ({
             {value ? (
               <div 
                 className="prose prose-sm max-w-none text-gray-600"
+                // Security: createSanitizedHtml uses DOMPurify to sanitize HTML content
+                // and prevent XSS attacks. It applies a whitelist of allowed tags and attributes.
+                // This is the same sanitization used in student/admin views for consistency.
                 dangerouslySetInnerHTML={createSanitizedHtml(value)}
               />
             ) : (
