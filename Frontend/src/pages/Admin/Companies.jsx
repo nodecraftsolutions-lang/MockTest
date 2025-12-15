@@ -25,10 +25,6 @@ const ManageCompanies = () => {
     logoUrl: '',
     description: '',
     descriptionHtml: '',
-    descriptionImageUrl: '',
-    descriptionImageWidth: 100,
-    descriptionImageHeight: 300,
-    descriptionImageAlign: 'left',
     category: 'IT Services',
     difficulty: 'Medium',
     defaultPattern: [
@@ -47,7 +43,6 @@ const ManageCompanies = () => {
       instructions: []
     }
   });
-  const [uploadingDescriptionImage, setUploadingDescriptionImage] = useState(false);
   const { showSuccess, showError } = useToast();
 
   useEffect(() => {
@@ -147,10 +142,6 @@ const ManageCompanies = () => {
       logoUrl: '',
       description: '',
       descriptionHtml: '',
-      descriptionImageUrl: '',
-      descriptionImageWidth: 100,
-      descriptionImageHeight: 300,
-      descriptionImageAlign: 'left',
       category: 'IT Services',
       difficulty: 'Medium',
       defaultPattern: [
@@ -577,22 +568,9 @@ const ManageCompanies = () => {
               <DescriptionEditor
                 value={formData.descriptionHtml}
                 onChange={(content) => setFormData({ ...formData, descriptionHtml: content })}
-                placeholder="Enter company description... Use toolbar for rich formatting, fonts, sizes, colors, and images."
+                placeholder="Enter company description... Use toolbar for rich formatting, fonts, sizes, colors, and images. Click the image icon to insert images anywhere in your description."
                 label="Company Description"
                 required={false}
-                imageUrl={formData.descriptionImageUrl}
-                imageWidth={formData.descriptionImageWidth}
-                imageHeight={formData.descriptionImageHeight}
-                imageAlign={formData.descriptionImageAlign}
-                onImageUpdate={(imageData) => setFormData({ 
-                  ...formData, 
-                  descriptionImageUrl: imageData.imageUrl,
-                  descriptionImageWidth: imageData.imageWidth,
-                  descriptionImageHeight: imageData.imageHeight,
-                  descriptionImageAlign: imageData.imageAlign
-                })}
-                uploadingImage={uploadingDescriptionImage}
-                onUploadingChange={setUploadingDescriptionImage}
               />
 
               {/* Exam Pattern */}
