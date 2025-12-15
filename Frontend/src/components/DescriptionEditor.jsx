@@ -88,14 +88,20 @@ const DescriptionEditor = ({
           let backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
           // If explicitly running on localhost dev port, allow overriding to localhost:8000
-          // effectively behaving like the default. 
+          // effectively behaving like the default.
           // But if on VPS (e.g. 195.35.6.57:5173), we want 195.35.6.57:8000
           if (!import.meta.env.VITE_API_URL && window.location.port === '5173') {
             backendUrl = `${window.location.protocol}//${window.location.hostname}:8000`;
           }
           // If we are in production (same origin), use the current hostname with port 8000
-          if (!import.meta.env.VITE_API_URL && window.location.port !== '5173') {
-            backendUrl = `${window.location.protocol}//${window.location.hostname}:8000`;
+          else if (!import.meta.env.VITE_API_URL && window.location.port !== '5173') {
+            // Use HTTPS for production
+            backendUrl = `https://${window.location.hostname}`;
+          }
+
+          // Ensure we're using HTTPS in production
+          if (window.location.protocol === 'https:' && backendUrl.startsWith('http:')) {
+            backendUrl = backendUrl.replace('http:', 'https:');
           }
 
           const imageUrl = `${backendUrl}${response.data.data.imageUrl}`;
