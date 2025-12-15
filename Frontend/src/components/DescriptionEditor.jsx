@@ -75,14 +75,30 @@ const DescriptionEditor = ({
         const formData = new FormData();
         formData.append('image', file);
 
-        const response = await api.post('/tests/upload-question-image', formData, {
+        // Upload to the new database-backed endpoint
+        const response = await api.post('/images/upload', formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
         });
 
         if (response.data.success) {
-          const imageUrl = `${apiUrl}${response.data.data.imageUrl}`;
+          // The backend returns a relative URL like /api/v1/images/:id
+          // We need to prepend the backend base URL to make it absolute for the editor
+          let backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+          // If explicitly running on localhost dev port, allow overriding to localhost:8000
+          // effectively behaving like the default. 
+          // But if on VPS (e.g. 195.35.6.57:5173), we want 195.35.6.57:8000
+          if (!import.meta.env.VITE_API_URL && window.location.port === '5173') {
+            backendUrl = `${window.location.protocol}//${window.location.hostname}:8000`;
+          }
+          // If we are in production (same origin), backendUrl might be empty string or relative path api base
+          if (!import.meta.env.VITE_API_URL && window.location.port !== '5173') {
+            backendUrl = ''; // Relative path
+          }
+
+          const imageUrl = `${backendUrl}${response.data.data.imageUrl}`;
 
           // Get the editor instance
           const quill = quillRef.current?.getEditor();

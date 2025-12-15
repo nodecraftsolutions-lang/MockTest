@@ -18,6 +18,7 @@ const questionBankRoutes = require('./routes/questionBank');
 const recordingRoutes = require('./routes/recordings');
 const enrollmentRoutes = require('./routes/enrollment');
 const alumniRoutes = require('./routes/alumni');
+const imageRoutes = require('./routes/image');
 
 const socketConfig = require('./socket/socketConfig');
 
@@ -62,8 +63,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ✅ Simple health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     message: 'Server is running successfully'
   });
@@ -110,6 +111,7 @@ app.use('/api/v1/question-banks', questionBankRoutes);
 app.use('/api/v1/enrollments', enrollmentRoutes);
 app.use('/api/v1/recordings', recordingRoutes);
 app.use('/api/v1/alumni', alumniRoutes);
+app.use('/api/v1/images', imageRoutes);
 
 // ✅ Serve the frontend app
 app.get('*', (req, res) => {
