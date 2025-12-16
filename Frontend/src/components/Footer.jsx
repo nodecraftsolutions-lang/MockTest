@@ -65,9 +65,9 @@ const Footer = () => {
   const footerLinks = {
     products: [
       { name: 'Mock Tests', action: handleViewTests },
-      { name: 'Courses', action: handleViewCourses },
+      // { name: 'Courses', action: handleViewCourses },
       { name: 'Practice Tests', action: handleViewTests },
-      { name: 'Study Materials', action: handleStudyMaterials }
+      //{ name: 'Study Materials', action: handleStudyMaterials }
     ],
     company: [
       { name: 'About Us', path: '/about' },
