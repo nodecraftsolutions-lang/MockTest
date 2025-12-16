@@ -654,7 +654,7 @@ const ExamInterface = () => {
                   className="prose max-w-none"
                   dangerouslySetInnerHTML={createSanitizedHtml(currentQ.questionHtml)}
                 />
-              ) : (
+              ) : currentQ.questionText ? (
                 <p className="font-medium">
                   {currentQ.questionText.split('\n').map((line, index) => (
                     <span key={index}>
@@ -663,7 +663,7 @@ const ExamInterface = () => {
                     </span>
                   ))}
                 </p>
-              )}
+              ) : null}
             </div>
 
             {/* Question Image */}
@@ -713,9 +713,9 @@ const ExamInterface = () => {
                           className="inline prose prose-sm max-w-none"
                           dangerouslySetInnerHTML={createSanitizedHtml(opt.html)}
                         />
-                      ) : (
+                      ) : opt.text ? (
                         <span>{opt.text}</span>
-                      )}
+                      ) : null}
                       {opt.imageUrl && (
                         <div className="mt-2">
                           <img 

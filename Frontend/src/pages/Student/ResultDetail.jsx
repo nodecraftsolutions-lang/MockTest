@@ -317,12 +317,12 @@ const AnswerAnalysis = ({ attempt, showAnswers, setShowAnswers }) => {
                   className="prose max-w-none text-gray-700 mb-3 text-sm"
                   dangerouslySetInnerHTML={createSanitizedHtml(answer.question.html)}
                 />
-              ) : (
+              ) : answer.question?.text ? (
                 <p
                   className="text-gray-700 mb-3 text-sm"
-                  dangerouslySetInnerHTML={{ __html: answer.question?.text }}
+                  dangerouslySetInnerHTML={{ __html: answer.question.text }}
                 />
-              )}
+              ) : null}
               
               {/* Question Image */}
               {answer.question?.imageUrl && (
@@ -369,9 +369,9 @@ const AnswerAnalysis = ({ attempt, showAnswers, setShowAnswers }) => {
                               className="prose prose-sm max-w-none flex-1"
                               dangerouslySetInnerHTML={createSanitizedHtml(option.html)}
                             />
-                          ) : (
+                          ) : option.text ? (
                             <span className="flex-1">{option.text}</span>
-                          )}
+                          ) : null}
                         </div>
                         <div className="flex items-center ml-2 flex-shrink-0">
                           {isCorrect && (

@@ -96,9 +96,9 @@ const PreviewMode = ({ questionData }) => {
               className="prose max-w-none"
               dangerouslySetInnerHTML={createSanitizedHtml(questionData.questionHtml)}
             />
-          ) : (
-            <p className="font-medium text-gray-500 italic">No question text entered yet...</p>
-          )}
+          ) : questionData.questionText ? (
+            <p className="text-gray-900">{questionData.questionText}</p>
+          ) : null}
         </div>
 
         {/* Question Image */}
@@ -139,9 +139,9 @@ const PreviewMode = ({ questionData }) => {
                     className="inline prose prose-sm max-w-none"
                     dangerouslySetInnerHTML={createSanitizedHtml(opt.html)}
                   />
-                ) : (
-                  <span>{opt.text || '(Empty option)'}</span>
-                )}
+                ) : opt.text ? (
+                  <span>{opt.text}</span>
+                ) : null}
                 {opt.imageUrl && (
                   <div className="mt-2">
                     <img 

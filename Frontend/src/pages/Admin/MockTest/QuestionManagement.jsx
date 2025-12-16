@@ -95,9 +95,9 @@ const QuestionManagement = () => {
         />
       );
     }
-    return <p className="text-gray-900">{question.questionText}</p>;
+    // Only render text if it exists and is not empty
+    return question.questionText ? <p className="text-gray-900">{question.questionText}</p> : null;
   };
-
 
 
   const renderOptionContent = (option) => {
@@ -108,9 +108,9 @@ const QuestionManagement = () => {
             className="prose prose-sm max-w-none"
             dangerouslySetInnerHTML={createSanitizedHtml(option.html)}
           />
-        ) : (
-          <span>{option.text || '(No text)'}</span>
-        )}
+        ) : option.text ? (
+          <span>{option.text}</span>
+        ) : null}
         {option.imageUrl && (
           <div className="mt-2">
             <img 
