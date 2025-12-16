@@ -16,7 +16,8 @@ import {
 import api from "../api/axios";
 import { useToast } from "../context/ToastContext";
 import { createSanitizedHtml } from "../utils/sanitize";
-import { getImageStyles } from "../utils/imageHelpers";
+import { getImageStyles } from '../utils/imageHelpers';
+import { constructImageUrl } from '../utils/imageUtils';
 
 // Image dimension constants
 const IMAGE_DEFAULTS = {
@@ -60,17 +61,7 @@ const resetExplanationImageProperties = () => ({
   explanationImageAlign: IMAGE_DEFAULTS.ALIGN
 });
 
-// Helper function to construct image URL
-const constructImageUrl = (url) => {
-  if (!url) return '';
-  // If it's already a full URL, return as is
-  if (url.startsWith('http')) {
-    return url;
-  }
-  // Otherwise prepend the API URL
-  const apiUrl = import.meta.env.VITE_API_URL || (window.location.protocol + '//' + window.location.host);
-  return `${apiUrl}${url}`;
-};
+
 
 // Preview Mode Component
 const PreviewMode = ({ questionData }) => {

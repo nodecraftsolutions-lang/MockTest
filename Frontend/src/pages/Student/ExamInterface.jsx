@@ -10,6 +10,7 @@ import { useToast } from "../../context/ToastContext";
 import { useAuth } from "../../context/AuthContext";
 import { createSanitizedHtml } from "../../utils/sanitize";
 import { getImageMarginStyle } from "../../utils/imageHelpers";
+import { constructImageUrl } from "../../utils/imageUtils";
 
 const ExamInterface = () => {
   const { testId } = useParams();
@@ -34,17 +35,7 @@ const ExamInterface = () => {
   const [testAlreadyAttempted, setTestAlreadyAttempted] = useState(false);
   const { showError, showSuccess } = useToast();
   
-  // Helper function to construct image URL
-  const constructImageUrl = (url) => {
-    if (!url) return '';
-    // If it's already a full URL, return as is
-    if (url.startsWith('http')) {
-      return url;
-    }
-    // Otherwise prepend the API URL
-    const apiUrl = import.meta.env.VITE_API_URL || (window.location.protocol + '//' + window.location.host);
-    return `${apiUrl}${url}`;
-  };
+
   
   // All tests now use the same API endpoints
   const isMockTest = false;

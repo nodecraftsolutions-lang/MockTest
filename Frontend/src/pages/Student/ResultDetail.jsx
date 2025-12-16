@@ -20,6 +20,7 @@ import { useResponsive } from "../../hooks/useResponsive";
 import { ResponsiveContainer, ResponsiveGrid } from "../../components/ResponsiveWrapper";
 import { createSanitizedHtml } from "../../utils/sanitize";
 import { getImageMarginStyle, getImageStyles } from "../../utils/imageHelpers";
+import { constructImageUrl } from "../../utils/imageUtils";
 
 const ResultDetail = () => {
   const { attemptId } = useParams();
@@ -29,17 +30,7 @@ const ResultDetail = () => {
   const { showError } = useToast();
   const { isMobile } = useResponsive();
 
-  // Helper function to construct image URL
-  const constructImageUrl = (url) => {
-    if (!url) return '';
-    // If it's already a full URL, return as is
-    if (url.startsWith('http')) {
-      return url;
-    }
-    // Otherwise prepend the API URL
-    const apiUrl = import.meta.env.VITE_API_URL || (window.location.protocol + '//' + window.location.host);
-    return `${apiUrl}${url}`;
-  };
+
 
   useEffect(() => {
     const fetchAttempt = async () => {
