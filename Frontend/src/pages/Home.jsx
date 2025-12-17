@@ -8,8 +8,7 @@ import SEO from '../components/SEO';
 
 const ImageSlider = () => {
   const images = [
-    { src: "student.png", alt: "Students taking online mock tests on PrepZon platform" },
-    { src: "/course.png", alt: "Online courses and learning materials on PrepZon" }
+    { src: "student.png", alt: "Students taking online mock tests on PrepZon platform" }
   ];
   const [current, setCurrent] = useState(0);
 
@@ -24,11 +23,10 @@ const ImageSlider = () => {
     <div className="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2 lg:top-[-100px]">
       <div className="h-64 w-full sm:h-72 md:h-80 lg:w-full lg:h-full relative overflow-hidden flex items-center justify-center rounded-2xl shadow-xl">
         {images.map((image, index) => (
-          <div 
+          <div
             key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 flex items-center justify-center ${
-              index === current ? "opacity-100" : "opacity-0"
-            }`}
+            className={`absolute inset-0 transition-opacity duration-1000 flex items-center justify-center ${index === current ? "opacity-100" : "opacity-0"
+              }`}
           >
             <div className="flex items-center justify-center h-full w-full">
               <img
@@ -98,7 +96,7 @@ const Home = () => {
             isPopular: course.isPaid !== undefined ? course.isPaid : false
           }));
           setCourses(homepageCourses);
-          
+
           // Extract ALL instructors from ALL courses
           const instructorMap = new Map();
           response.data.data.forEach(course => {
@@ -123,7 +121,7 @@ const Home = () => {
               });
             }
           });
-          
+
           // Convert map to array - now we get ALL instructors, not just 4
           const allInstructors = Array.from(instructorMap.values());
           setInstructors(allInstructors);
@@ -279,41 +277,41 @@ const Home = () => {
 
   // Carousel navigation for instructors
   const nextInstructors = () => {
-    setCurrentInstructorIndex(prev => 
+    setCurrentInstructorIndex(prev =>
       prev + (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4) >= instructors.length ? 0 : prev + (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4)
     );
   };
 
   const prevInstructors = () => {
-    setCurrentInstructorIndex(prev => 
-      prev - (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4) < 0 ? 
-      Math.max(0, instructors.length - (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4)) : 
-      prev - (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4)
+    setCurrentInstructorIndex(prev =>
+      prev - (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4) < 0 ?
+        Math.max(0, instructors.length - (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4)) :
+        prev - (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4)
     );
   };
 
   // Carousel navigation for alumni
   const nextAlumni = () => {
-    setCurrentAlumniIndex(prev => 
+    setCurrentAlumniIndex(prev =>
       prev + 1 >= alumni.length ? 0 : prev + 1
     );
   };
 
   const prevAlumni = () => {
-    setCurrentAlumniIndex(prev => 
+    setCurrentAlumniIndex(prev =>
       prev - 1 < 0 ? Math.max(0, alumni.length - 1) : prev - 1
     );
   };
 
   // Carousel navigation for courses
   const nextCourses = () => {
-    setCurrentCourseIndex(prev => 
+    setCurrentCourseIndex(prev =>
       prev + 1 >= courses.length ? 0 : prev + 1
     );
   };
 
   const prevCourses = () => {
-    setCurrentCourseIndex(prev => 
+    setCurrentCourseIndex(prev =>
       prev - 1 < 0 ? Math.max(0, courses.length - 1) : prev - 1
     );
   };
@@ -547,30 +545,32 @@ const Home = () => {
               <main className="mt-0 mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
                 <div className="sm:text-center lg:text-left">
                   <h1 className="text-3xl tracking-tight font-extrabold text-foreground sm:text-3xl md:text-4xl lg:text-6xl">
-                    <span className="block">Welcome to Prepzon</span>
-                    <span className="block">-Your Gateway from</span>
-                    <span className="block text-primary">Campus to Corporate</span>
+                    <span className="block">Welcome to PrepZon</span>
+                    <span className="block text-primary">– Your Gateway from Campus to Career</span>
                   </h1>
-                  <p className="mt-2 text-xs text-muted-foreground sm:mt-3 sm:text-sm sm:max-w-xl sm:mx-auto md:mt-4 md:text-base lg:mx-0 lg:text-left">
-                    <span className="font-semibold text-foreground">PrepZon</span> is a next-generation <span className="font-semibold text-foreground">EdTech platform</span> built to bridge the gap between <span className="font-semibold text-foreground">college learning and corporate readiness.</span>
+                  <p className="mt-1 text-xs text-muted-foreground sm:mt-2 sm:text-sm sm:max-w-xl sm:mx-auto md:mt-3 md:text-base lg:mx-0 lg:text-left">
+                    <span className="font-semibold text-foreground">PrepZon</span> is a next-generation <span className="font-semibold text-foreground">EdTech platform</span> focused exclusively on exam-oriented mock tests, designed to help students practice effectively and perform confidently in real exams.
                   </p>
-                  <p className="mt-2 text-xs text-muted-foreground sm:mt-3 sm:text-sm sm:max-w-xl sm:mx-auto md:mt-4 md:text-base lg:mx-0 lg:text-left">
-                    Our mock tests and live courses are designed to help students crack:
+                  <p className="mt-1 text-xs text-muted-foreground sm:mt-2 sm:text-sm sm:max-w-xl sm:mx-auto md:mt-3 md:text-base lg:mx-0 lg:text-left">
+                    Our mock tests are carefully designed to match actual exam patterns and help students crack:
                   </p>
-                  <ul className="mt-2 text-sm text-muted-foreground sm:text-base lg:mx-0 space-y-1">
+                  <ul className="mt-1 text-sm text-muted-foreground sm:text-base lg:mx-0 space-y-0.5">
                     <li className="flex">
                       <span className="flex-shrink-0 mr-2">•</span>
-                      <span><span className="font-semibold text-orange-500">Top IT Company recruitment exams</span> - TCS, Infosys, Wipro, Accenture, Capgemini, Cognizant, and more.</span>
+                      <span><span className="font-semibold text-orange-500">College Entrance Exams</span> – AP EAPCET (Engineering, Agriculture & Pharmacy), JEE Main & Advanced, NEET UG & PG</span>
                     </li>
                     <li className="flex">
                       <span className="flex-shrink-0 mr-2">•</span>
-                      <span><span className="font-semibold text-orange-500">Government Job exams</span> - UPSC, SBI PO, IBPS PO, RRB, SSC, and others.</span>
+                      <span><span className="font-semibold text-orange-500">Management & Higher Studies Exams</span> – CAT, MAT, GATE</span>
                     </li>
                     <li className="flex">
                       <span className="flex-shrink-0 mr-2">•</span>
-                      <span><span className="font-semibold text-orange-500">Entrance exams for higher studies</span> - CAT, GATE, GRE, and similar aptitude-based tests.</span>
+                      <span><span className="font-semibold text-orange-500">Law Entrance Exams</span> – CLAT, AILET</span>
                     </li>
                   </ul>
+                  <p className="mt-2 text-sm text-muted-foreground font-medium sm:text-base lg:mx-0">
+                    Practice smarter with real-exam simulations, performance analysis, and detailed solutions-all in one place.
+                  </p>
                   <div className="mt-4 sm:mt-6 sm:flex sm:justify-center lg:justify-start">
                     <div className="rounded-md shadow">
                       <Link
@@ -593,8 +593,8 @@ const Home = () => {
               </main>
             </div>
           </div>
-              <ImageSlider/>
-          </div>
+          <ImageSlider />
+        </div>
       </section>
       {/* Core Offerings Section - Reduced padding from py-20 to py-12 */}
       <section className="py-12 bg-gradient-to-br from-primary/5 via-white to-secondary/10">
@@ -605,7 +605,7 @@ const Home = () => {
             </h2>
             <div className="w-24 h-1 bg-gradient-to-r from-primary to-orange-500 mx-auto mt-6 rounded-full"></div>
           </div>
-          
+
           <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {/* Live Interactive Classes */}
             <div className="bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300 border border-gray-200 hover:border-primary/30 group hover:-translate-y-2">
@@ -619,7 +619,7 @@ const Home = () => {
                 Join our Campus2Corporate training program with daily Zoom sessions led by industry experts. Get practical knowledge, corporate exposure, and live doubt-solving sessions every day.
               </p>
             </div>
-            
+
             {/* Recorded Sessions + Study Notes */}
             <div className="bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300 border border-gray-200 hover:border-primary/30 group hover:-translate-y-2">
               <div className="flex items-start mb-4">
@@ -632,7 +632,7 @@ const Home = () => {
                 Missed a class? No worries! Access all recorded sessions, notes, and study materials anytime — valid for 1 year after enrollment.
               </p>
             </div>
-            
+
             {/* Mock Tests (Free & Paid) */}
             <div className="bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300 border border-gray-200 hover:border-primary/30 group hover:-translate-y-2">
               <div className="flex items-start mb-4">
@@ -656,10 +656,10 @@ const Home = () => {
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
               🎓Why Choose <span className="text-orange-500">PrepZon</span>
             </h2>
-            
+
             <div className="w-24 h-1 bg-gradient-to-r from-primary to-orange-500 mx-auto mt-6 rounded-full"></div>
           </div>
-          
+
           <div className="max-w-6xl mx-auto">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[
@@ -684,9 +684,9 @@ const Home = () => {
               ))}
             </div>
           </div>
-          
+
           <div className="text-center mt-12">
-            <Link 
+            <Link
               to="/auth"
               className="inline-block bg-gradient-to-r from-primary to-orange-500 text-blue-900 font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-lg"
             >
@@ -711,7 +711,7 @@ const Home = () => {
                 Choose from our wide range of courses taught by industry experts
               </p>
             </div>
-            
+
             {loading ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[1, 2, 3].map((index) => (
@@ -728,7 +728,7 @@ const Home = () => {
                 ))}
               </div>
             ) : (
-              <div 
+              <div
                 className="relative"
                 onMouseEnter={handleCourseMouseEnter}
                 onMouseLeave={handleCourseMouseLeave}
@@ -736,13 +736,13 @@ const Home = () => {
                 {/* Carousel Navigation Buttons - Now visible on mobile */}
                 {courses.length > 1 && (
                   <>
-                    <button 
+                    <button
                       onClick={prevCourses}
                       className="absolute left-4 md:left-0 top-1/2 -translate-y-1/2 z-50 bg-white rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
                     >
                       <ChevronLeft className="w-5 h-5 text-gray-700" />
                     </button>
-                    <button 
+                    <button
                       onClick={nextCourses}
                       className="absolute right-4 md:right-0 top-1/2 -translate-y-1/2 z-50 bg-white rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
                     >
@@ -750,23 +750,23 @@ const Home = () => {
                     </button>
                   </>
                 )}
-                
+
                 {/* Carousel Container */}
                 <div className="overflow-hidden py-2">
-                  <div 
+                  <div
                     ref={courseCarouselRef}
                     className="flex transition-transform duration-500 ease-in-out"
                     style={{ transform: `translateX(-${currentCourseIndex * (windowWidth < 768 ? 100 : 33.333)}%)` }}
                   >
                     {courses.map((course) => (
-                      <div 
-                        key={course.id} 
+                      <div
+                        key={course.id}
                         className="flex-shrink-0 w-full md:w-1/3 px-2"
                       >
                         <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group h-full">
                           <div className="relative h-48 overflow-hidden">
-                            <img 
-                              src={course.image} 
+                            <img
+                              src={course.image}
                               alt={course.title}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
@@ -779,7 +779,7 @@ const Home = () => {
                               <Play className="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                             </div>
                           </div>
-                          
+
                           <div className="p-4 md:p-6">
                             <div className="flex items-center justify-between mb-2">
                               <span className="text-xs font-medium text-primary uppercase tracking-wide">
@@ -790,13 +790,13 @@ const Home = () => {
                                 <span className="text-sm font-medium">{course.rating}</span>
                               </div>
                             </div>
-                            
+
                             <h3 className="text-xl font-semibold text-foreground mb-2 line-clamp-1">
                               {course.title}
                             </h3>
-                            
+
                             <p className="text-muted-foreground text-sm mb-4 line-clamp-2" style={{ whiteSpace: 'pre-line', fontWeight: 'normal' }} dangerouslySetInnerHTML={{ __html: course.description?.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-lg">$1</strong>') || '' }} />
-                            
+
                             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
                               <div className="flex items-center gap-1">
                                 <Clock className="w-4 h-4" />
@@ -807,12 +807,12 @@ const Home = () => {
                                 <span>{course.students.toLocaleString()}</span>
                               </div>
                             </div>
-                            
+
                             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                               <div>
                                 <span className="text-2xl font-bold text-foreground">₹{course.price}</span>
                               </div>
-                              <button 
+                              <button
                                 onClick={() => handleEnrollClick(course.id)}
                                 className="w-full sm:w-auto bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors duration-200 flex items-center justify-center gap-2"
                               >
@@ -826,7 +826,7 @@ const Home = () => {
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Carousel Indicators - Visible on mobile */}
                 {courses.length > 1 && (
                   <div className="flex justify-center mt-6 space-x-2 pb-4">
@@ -834,18 +834,17 @@ const Home = () => {
                       <button
                         key={index}
                         onClick={() => setCurrentCourseIndex(index * (windowWidth < 768 ? 1 : 3))}
-                        className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all duration-300 ${
-                          Math.floor(currentCourseIndex / (windowWidth < 768 ? 1 : 3)) === index 
-                            ? 'bg-primary w-4 md:w-6' 
-                            : 'bg-gray-300 hover:bg-gray-400'
-                        }`}
+                        className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all duration-300 ${Math.floor(currentCourseIndex / (windowWidth < 768 ? 1 : 3)) === index
+                          ? 'bg-primary w-4 md:w-6'
+                          : 'bg-gray-300 hover:bg-gray-400'
+                          }`}
                       />
                     ))}
                   </div>
                 )}
               </div>
             )}
-            
+
             <div className="text-center mt-12">
               <Link to="/student/courses" className="bg-secondary text-white px-6 py-3 rounded-lg hover:bg-secondary/80 transition-colors duration-200 font-medium inline-block">
                 View All Courses
@@ -870,7 +869,7 @@ const Home = () => {
                 Our instructors are professionals with years of experience in their respective fields
               </p>
             </div>
-            
+
             {loading ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {[1, 2, 3, 4].map((index) => (
@@ -887,7 +886,7 @@ const Home = () => {
                 ))}
               </div>
             ) : (
-              <div 
+              <div
                 className="relative"
                 onMouseEnter={handleInstructorMouseEnter}
                 onMouseLeave={handleInstructorMouseLeave}
@@ -895,13 +894,13 @@ const Home = () => {
                 {/* Carousel Navigation Buttons - Now visible on mobile */}
                 {instructors.length > 2 && (
                   <>
-                    <button 
+                    <button
                       onClick={prevInstructors}
                       className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 md:-translate-x-4 z-10 bg-white rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
                     >
                       <ChevronLeft className="w-5 h-5 text-gray-700" />
                     </button>
-                    <button 
+                    <button
                       onClick={nextInstructors}
                       className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 md:translate-x-4 z-10 bg-white rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
                     >
@@ -909,23 +908,23 @@ const Home = () => {
                     </button>
                   </>
                 )}
-                
+
                 {/* Carousel Container */}
                 <div className="overflow-hidden py-2">
-                  <div 
+                  <div
                     ref={carouselRef}
                     className="flex transition-transform duration-500 ease-in-out"
                     style={{ transform: `translateX(-${currentInstructorIndex * (windowWidth < 640 ? 100 : windowWidth < 768 ? 50 : 25)}%)` }}
                   >
                     {instructors.map((instructor, index) => (
-                      <div 
-                        key={index} 
+                      <div
+                        key={index}
                         className="flex-shrink-0 w-full sm:w-1/2 md:w-1/4 px-2"
                       >
                         <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-4 md:p-6 text-center group h-full">
                           <div className="relative mb-4 mx-auto w-20 h-20 md:w-24 md:h-24">
-                            <img 
-                              src={instructor.photoUrl} 
+                            <img
+                              src={instructor.photoUrl}
                               alt={instructor.name}
                               className="w-full h-full rounded-full object-cover group-hover:scale-105 transition-transform duration-300"
                               onError={(e) => {
@@ -937,14 +936,14 @@ const Home = () => {
                               <CheckCircle className="w-3 h-3 md:w-4 md:h-4" />
                             </div>
                           </div>
-                          
+
                           <h3 className="text-lg md:text-xl font-semibold text-foreground mb-1">{instructor.name}</h3>
                           <p className="text-primary font-medium text-xs md:text-sm mb-2 md:mb-3">{instructor.expertise}</p>
                           {instructor.experience && (
                             <p className="text-muted-foreground text-xs mb-2">{instructor.experience}</p>
                           )}
                           <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{instructor.bio}</p>
-                          
+
                           <div className="flex items-center justify-center text-xs md:text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <BookOpen className="w-3 h-3 md:w-4 md:h-4" />
@@ -956,7 +955,7 @@ const Home = () => {
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Carousel Indicators - Visible on mobile */}
                 {instructors.length > 1 && (
                   <div className="flex justify-center mt-6 space-x-2 pb-4">
@@ -964,11 +963,10 @@ const Home = () => {
                       <button
                         key={index}
                         onClick={() => setCurrentInstructorIndex(index * (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4))}
-                        className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all duration-300 ${
-                          Math.floor(currentInstructorIndex / (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4)) === index 
-                            ? 'bg-primary w-4 md:w-6' 
-                            : 'bg-gray-300 hover:bg-gray-400'
-                        }`}
+                        className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all duration-300 ${Math.floor(currentInstructorIndex / (windowWidth < 640 ? 1 : windowWidth < 768 ? 2 : 4)) === index
+                          ? 'bg-primary w-4 md:w-6'
+                          : 'bg-gray-300 hover:bg-gray-400'
+                          }`}
                       />
                     ))}
                   </div>
@@ -978,7 +976,7 @@ const Home = () => {
           </div>
         </section>
       )}
-      
+
 
       {/* Alumni Section - Only show if there are alumni - Reduced padding from py-20 to py-12 */}
       {alumni.length > 0 && (
@@ -995,7 +993,7 @@ const Home = () => {
                 Hear from our students who have transformed their careers with our courses
               </p>
             </div>
-            
+
             {loading ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[1, 2, 3].map((index) => (
@@ -1014,7 +1012,7 @@ const Home = () => {
                 ))}
               </div>
             ) : (
-              <div 
+              <div
                 className="relative"
                 onMouseEnter={handleAlumniMouseEnter}
                 onMouseLeave={handleAlumniMouseLeave}
@@ -1022,13 +1020,13 @@ const Home = () => {
                 {/* Carousel Navigation Buttons - Now visible on mobile */}
                 {alumni.length > 1 && (
                   <>
-                    <button 
+                    <button
                       onClick={prevAlumni}
                       className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 md:-translate-x-4 z-10 bg-white rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
                     >
                       <ChevronLeft className="w-5 h-5 text-gray-700" />
                     </button>
-                    <button 
+                    <button
                       onClick={nextAlumni}
                       className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 md:translate-x-4 z-10 bg-white rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
                     >
@@ -1036,34 +1034,34 @@ const Home = () => {
                     </button>
                   </>
                 )}
-                
+
                 {/* Carousel Container */}
                 <div className="overflow-hidden py-2">
-                  <div 
+                  <div
                     ref={alumniCarouselRef}
                     className="flex transition-transform duration-500 ease-in-out"
                     style={{ transform: `translateX(-${currentAlumniIndex * (windowWidth < 768 ? 100 : 33.333)}%)` }}
                   >
                     {alumni.map((alumnus, index) => (
-                      <div 
-                        key={index} 
+                      <div
+                        key={index}
                         className="flex-shrink-0 w-full md:w-1/3 px-2"
                       >
                         <div className="bg-white rounded-xl p-4 md:p-6 border border-gray-200 overflow-hidden h-full shadow-sm hover:shadow-md transition-all duration-300 group hover:bg-orange-50">
                           <div className="flex items-center gap-1 mb-4">
                             {[...Array(5)].map((_, i) => (
-                              <Star 
-                                key={i} 
-                                className={`w-4 h-4 md:w-5 md:h-5 ${i < alumnus.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 group-hover:text-orange-400 transition-colors duration-200'}`} 
+                              <Star
+                                key={i}
+                                className={`w-4 h-4 md:w-5 md:h-5 ${i < alumnus.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 group-hover:text-orange-400 transition-colors duration-200'}`}
                               />
                             ))}
                           </div>
-                          
+
                           <p className="text-muted-foreground mb-4 md:mb-6 italic text-sm md:text-base group-hover:text-foreground transition-colors duration-200">"{alumnus.testimonial}"</p>
-                          
+
                           <div className="flex items-center">
-                            <img 
-                              src={alumnus.photoUrl} 
+                            <img
+                              src={alumnus.photoUrl}
                               alt={alumnus.name}
                               className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover mr-3 md:mr-4"
                               onError={(e) => {
@@ -1081,7 +1079,7 @@ const Home = () => {
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Carousel Indicators - Visible on mobile */}
                 {alumni.length > 1 && (
                   <div className="flex justify-center mt-6 space-x-2 pb-4">
@@ -1089,11 +1087,10 @@ const Home = () => {
                       <button
                         key={index}
                         onClick={() => setCurrentAlumniIndex(index * (windowWidth < 768 ? 1 : 3))}
-                        className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all duration-300 ${
-                          Math.floor(currentAlumniIndex / (windowWidth < 768 ? 1 : 3)) === index 
-                            ? 'bg-primary w-4 md:w-6' 
-                            : 'bg-gray-300 hover:bg-gray-400'
-                        }`}
+                        className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all duration-300 ${Math.floor(currentAlumniIndex / (windowWidth < 768 ? 1 : 3)) === index
+                          ? 'bg-primary w-4 md:w-6'
+                          : 'bg-gray-300 hover:bg-gray-400'
+                          }`}
                       />
                     ))}
                   </div>
@@ -1118,12 +1115,12 @@ const Home = () => {
               Find answers to common questions about our courses and platform
             </p>
           </div>
-          
+
           <div className="max-w-3xl mx-auto">
             <div className="space-y-4">
               {faqs.map((faq, index) => (
                 <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                  <button 
+                  <button
                     className="flex justify-between items-center w-full p-6 text-left"
                     onClick={() => setOpenFaqIndex(openFaqIndex === index ? null : index)}
                   >
