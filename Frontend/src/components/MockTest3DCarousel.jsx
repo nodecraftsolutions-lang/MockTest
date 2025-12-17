@@ -17,38 +17,26 @@ const GRADIENTS = [
     "from-fuchsia-500 to-purple-600"
 ];
 
-const MockTest3DCarousel = () => {
+const MockTest3DCarousel = ({ items: initialItems }) => {
     const [items, setItems] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [activeIndex, setActiveIndex] = useState(0);
     const [isAutoPlaying, setIsAutoPlaying] = useState(true);
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
 
     useEffect(() => {
-        const fetchCompanies = async () => {
-            try {
-                const res = await api.get("/companies");
-                if (res.data.success && res.data.data.companies) {
-                    const companies = res.data.data.companies.map((company, index) => ({
-                        id: company._id,
-                        title: company.name,
-                        company: company.name,
-                        description: company.description || (company.descriptionHtml ? company.descriptionHtml.replace(/<[^>]*>?/gm, "") : "No description available"),
-                        color: GRADIENTS[index % GRADIENTS.length],
-                        logo: company.logoUrl,
-                    }));
-                    setItems(companies);
-                }
-            } catch (error) {
-                console.error("Failed to fetch companies:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchCompanies();
-    }, []);
+        if (initialItems && initialItems.length > 0) {
+            const processedItems = initialItems.map((company, index) => ({
+                id: company._id,
+                title: company.name,
+                company: company.name,
+                description: company.description || (company.descriptionHtml ? company.descriptionHtml.replace(/<[^>]*>?/gm, "") : "No description available"),
+                color: GRADIENTS[index % GRADIENTS.length],
+                logo: company.logoUrl,
+            }));
+            setItems(processedItems);
+        }
+    }, [initialItems]);
 
     useEffect(() => {
         let interval;
@@ -86,7 +74,7 @@ const MockTest3DCarousel = () => {
         }
     };
 
-    if (loading || items.length === 0) {
+    if (!items || items.length === 0) {
         return null;
     }
 

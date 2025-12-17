@@ -49,6 +49,7 @@ const Home = () => {
   const [courses, setCourses] = useState([]);
   const [instructors, setInstructors] = useState([]);
   const [alumni, setAlumni] = useState([]);
+  const [mockTests, setMockTests] = useState([]); // Add this
   const [loading, setLoading] = useState(true);
   const [currentInstructorIndex, setCurrentInstructorIndex] = useState(0);
   const [currentAlumniIndex, setCurrentAlumniIndex] = useState(0);
@@ -136,7 +137,41 @@ const Home = () => {
       }
     };
 
+    const fetchInstructors = async () => {
+      try {
+        const response = await api.get('/admin/instructors');
+        if (response.data.success) {
+          // If no instructors, use mock data. If there are, map them.
+          // For now, let's assume if the API returns success with empty array, we might want mock data or nothing.
+          // Let's rely on what we get.
+          if (response.data.data && response.data.data.length > 0) {
+            setInstructors(response.data.data);
+          } else {
+            // Fallback to mock instructors if none found
+            setInstructors([]);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch instructors:', error);
+        // Fallback or leave empty
+      }
+    };
+
+    // Add this
+    const fetchMockTests = async () => {
+      try {
+        const res = await api.get("/companies");
+        if (res.data.success) {
+          setMockTests(res.data.data.companies || []);
+        }
+      } catch (error) {
+        console.error("Error fetching mock tests:", error);
+      }
+    };
+
     fetchCourses();
+    fetchInstructors();
+    fetchMockTests();
   }, []);
 
   // Fetch featured alumni
@@ -856,9 +891,11 @@ const Home = () => {
       )}
 
       {/* Mock Tests 3D Carousel Section */}
-      <section>
-        <MockTest3DCarousel />
-      </section>
+      {mockTests.length > 0 && (
+        <section>
+          <MockTest3DCarousel items={mockTests} />
+        </section>
+      )}
 
       {/* Instructors Section with Carousel - Only show if there are instructors - Reduced padding from py-20 to py-12 */}
       {instructors.length > 0 && (
