@@ -5,6 +5,7 @@ import api from '../api/axios';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import SEO from '../components/SEO';
+import MockTest3DCarousel from '../components/MockTest3DCarousel';
 
 const ImageSlider = () => {
   const images = [
@@ -853,6 +854,11 @@ const Home = () => {
           </div>
         </section>
       )}
+
+      {/* Mock Tests 3D Carousel Section */}
+      <section>
+        <MockTest3DCarousel />
+      </section>
 
       {/* Instructors Section with Carousel - Only show if there are instructors - Reduced padding from py-20 to py-12 */}
       {instructors.length > 0 && (
