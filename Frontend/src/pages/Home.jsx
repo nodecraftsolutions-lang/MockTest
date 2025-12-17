@@ -518,28 +518,48 @@ const Home = () => {
 
   const faqs = [
     {
-      question: "How do I enroll in a course?",
-      answer: "Simply browse our course catalog, select the course you're interested in, and click the 'Enroll Now' button. You'll be guided through the payment process and gain immediate access to the course materials."
+      question: "How do I enroll for a mock test?",
+      answer: "Simply sign up on PrepZon, choose the exam or company-specific mock test you want, and start practicing instantly. Free tests are available to try before upgrading to paid plans."
     },
     {
-      question: "Do I get a certificate upon completion?",
-      answer: "Yes, all our courses come with a certificate of completion that you can add to your resume or LinkedIn profile. The certificate includes a verification link that employers can use to confirm your achievement."
+      question: "Do you provide free mock tests?",
+      answer: "Yes. PrepZon offers free sample mock tests so students can experience the platform before purchasing full-length paid mock tests."
     },
     {
-      question: "Can I access the courses on mobile devices?",
-      answer: "Absolutely! Our platform is fully responsive and works on all devices. We also have dedicated mobile apps for iOS and Android for an optimized learning experience on the go."
+      question: "Can I attempt mock tests on mobile devices?",
+      answer: "Absolutely. PrepZon is fully mobile-friendly. You can attempt mock tests on mobile, tablet, or desktop anytime, anywhere."
     },
     {
-      question: "Already Trained Elsewhere?",
-      answer: "You can still join Prepzon to test your knowledge with our mock tests. Identify your weak areas, get explanations, and keep improving until you’re fully job-ready."
+      question: "Will I get answers and explanations after the test?",
+      answer: "Yes. Every mock test includes detailed solutions and explanations to help you understand concepts and improve accuracy."
     },
     {
-      question: "How long do I have access to course materials?",
-      answer: "Access upto 12 months from the date of purchase."
+      question: "How long will I have access to the mock tests?",
+      answer: "Access duration depends on the test package you choose. Most paid mock tests come with extended access so you can attempt them multiple times."
     },
     {
-      question: "Do you offer corporate plans?",
-      answer: "Yes, we offer customized corporate training plans for teams and organizations. Please contact our sales team for more information about volume discounts and tailored learning paths."
+      question: "Are the mock tests updated as per latest exam patterns?",
+      answer: "Yes. Our mock tests are regularly updated based on the latest exam trends, syllabus changes, and difficulty levels."
+    },
+    {
+      question: "Do you provide certificates or live training?",
+      answer: "Currently, PrepZon focuses only on mock tests and practice assessments. We do not offer certificates, live classes, or recorded sessions at this stage."
+    },
+    {
+      question: "Which exams does PrepZon support?",
+      answer: "PrepZon currently provides mock tests for:\n• Engineering & medical entrance exams (JEE, NEET, etc.)\n• Management & higher studies exams (CAT, MAT, GATE, etc.)\n• Selected IT company placement tests (coming in phases)"
+    },
+    {
+      question: "How can I contact support if I face issues?",
+      answer: "You can reach our support team via chat, WhatsApp, or email. We’re here to help you with test access, results, or technical issues."
+    },
+    {
+      question: "Is PrepZon suitable for beginners?",
+      answer: "Yes. PrepZon is ideal for beginners as well as repeat aspirants who want structured practice and performance tracking through mock tests."
+    },
+    {
+      question: "Can I upgrade from free tests to paid tests later?",
+      answer: "Yes. You can start with free tests and upgrade to paid mock test packages anytime based on your preparation needs."
     }
   ];
 
@@ -643,42 +663,42 @@ const Home = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {/* Live Interactive Classes */}
+            {/* Real Exam–Style Mock Tests */}
             <div className="bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300 border border-gray-200 hover:border-primary/30 group hover:-translate-y-2">
               <div className="flex items-start mb-4">
                 <div className="bg-gradient-to-br from-primary to-orange-500 text-orange-500 p-3 rounded-xl mr-4 group-hover:scale-110 transition-transform duration-300">
                   <div className="font-bold text-4xl">1</div>
                 </div>
-                <h3 className="text-xl font-bold text-foreground mt-1">Live Interactive Classes</h3>
+                <h3 className="text-xl font-bold text-foreground mt-1">Real Exam–Style Mock Tests</h3>
               </div>
               <p className="text-muted-foreground leading-relaxed text-sm">
-                Join our Campus2Corporate training program with daily Zoom sessions led by industry experts. Get practical knowledge, corporate exposure, and live doubt-solving sessions every day.
+                Practice with high-quality mock tests designed to match the latest exam patterns. Our tests help you experience real exam pressure and improve speed, accuracy, and confidence.
               </p>
             </div>
 
-            {/* Recorded Sessions + Study Notes */}
+            {/* Detailed Performance Analysis */}
             <div className="bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300 border border-gray-200 hover:border-primary/30 group hover:-translate-y-2">
               <div className="flex items-start mb-4">
                 <div className="bg-gradient-to-br from-primary to-orange-500 text-orange-500 p-3 rounded-xl mr-4 group-hover:scale-110 transition-transform duration-300">
                   <div className="font-bold text-4xl">2</div>
                 </div>
-                <h3 className="text-xl font-bold text-foreground mt-1">Recorded Sessions + Study Notes</h3>
+                <h3 className="text-xl font-bold text-foreground mt-1">Detailed Performance Analysis</h3>
               </div>
               <p className="text-muted-foreground leading-relaxed text-sm">
-                Missed a class? No worries! Access all recorded sessions, notes, and study materials anytime — valid for 1 year after enrollment.
+                Get instant results with section-wise scores, accuracy reports, time analysis, and solutions. Understand your strengths, identify weak areas, and focus on smart improvement.
               </p>
             </div>
 
-            {/* Mock Tests (Free & Paid) */}
+            {/* Free & Paid Test Series */}
             <div className="bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300 border border-gray-200 hover:border-primary/30 group hover:-translate-y-2">
               <div className="flex items-start mb-4">
                 <div className="bg-gradient-to-br from-primary to-orange-500 text-orange-500 p-3 rounded-xl mr-4 group-hover:scale-110 transition-transform duration-300">
                   <div className="font-bold text-4xl">3</div>
                 </div>
-                <h3 className="text-xl font-bold text-foreground mt-1">Mock Tests (Free & Paid)</h3>
+                <h3 className="text-xl font-bold text-foreground mt-1">Free & Paid Test Series</h3>
               </div>
               <p className="text-muted-foreground leading-relaxed text-sm">
-                Test your skills with real-exam-style mock tests for TCS, Infosys, Wipro, Accenture, Capgemini, Cognizant, and more. Get instant results with answers and detailed explanations.
+                Start with free sample tests and upgrade to full-length paid test series for deeper practice. Choose exam-specific mock tests and prepare at your own pace.
               </p>
             </div>
           </div>
@@ -697,24 +717,24 @@ const Home = () => {
           </div>
 
           <div className="max-w-6xl mx-auto">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-                { text: "One course to crack multiple MNC exams", icon: "🎯" },
-                { text: "Access course material for 1 full year", icon: "📅" },
-                { text: "Free & paid mock tests for self-evaluation", icon: "📝" },
-                { text: "Resume preparation & interview guidance after course completion", icon: "📄" },
-                { text: "Open discussion forum to clarify doubts and connect with trainers", icon: "💬" },
-                { text: "Daily notifications for class reminders, new courses, and updates", icon: "🔔" },
-                { text: "24/7 support for students via chat, WhatsApp, or email", icon: "🎧" },
-                { text: "Flexible learning options – Live or Recorded classes", icon: "📺" },
-                { text: "End-to-end placement support and job readiness guidance", icon: "💼" }
+                { title: "Exam-Focused Mock Tests", text: "Practice with mock tests designed strictly as per real exam patterns, difficulty levels, and time limits.", icon: "✅" },
+                { title: "Detailed Performance Insights", text: "Get instant scorecards with section-wise analysis, accuracy, time management insights, and correct answers with explanations.", icon: "📊" },
+                { title: "Free & Paid Practice Tests", text: "Start with free sample tests and upgrade to full-length paid mock tests for deeper preparation and confidence building.", icon: "🆓" },
+                { title: "Regularly Updated Test Content", text: "Our mock tests are continuously updated based on latest exam trends and question patterns.", icon: "🔄" },
+                { title: "Anytime, Anywhere Access", text: "Attempt tests on mobile or desktop at your convenience — no fixed schedules, no restrictions.", icon: "🌐" },
+                { title: "Student Support & Guidance", text: "Get prompt assistance for test access, results, and technical queries via chat, WhatsApp, or email.", icon: "💬" },
+                { title: "Self-Evaluation & Improvement", text: "Track your progress over time, identify weak areas, and improve systematically with every test attempt.", icon: "🧠" },
+                { title: "Built for Serious Aspirants", text: "PrepZon is designed for students who believe consistent practice is the key to success.", icon: "🎯" }
               ].map((item, index) => (
-                <div key={index} className="group relative bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-200 p-5 hover:border-primary/30 hover:-translate-y-2">
+                <div key={index} className="group relative bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-200 p-6 pt-10 hover:border-primary/30 hover:-translate-y-2">
                   <div className="absolute -top-4 -left-4 w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-orange-500 flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
                     {item.icon}
                   </div>
-                  <div className="pt-5">
-                    <p className="text-base text-foreground font-medium leading-relaxed">{item.text}</p>
+                  <div className="pt-2">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">{item.title}</h3>
+                    <p className="text-sm text-gray-600 font-medium leading-relaxed">{item.text}</p>
                   </div>
                 </div>
               ))}
@@ -1171,7 +1191,7 @@ const Home = () => {
                     <ChevronDown className={`w-5 h-5 text-primary flex-shrink-0 transition-transform duration-200 ${openFaqIndex === index ? 'rotate-180' : ''}`} />
                   </button>
                   <div className={`px-6 transition-all duration-300 ease-in-out ${openFaqIndex === index ? 'pb-6 max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground whitespace-pre-line">
                       {faq.answer}
                     </p>
                   </div>
