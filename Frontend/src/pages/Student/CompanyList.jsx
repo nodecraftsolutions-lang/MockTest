@@ -43,10 +43,10 @@ const CompanyList = () => {
       <div className="mb-4">
         <h1 className="text-3xl font-extrabold text-gray-900 mb-1 tracking-tight flex items-center gap-2">
           <Building className="w-8 h-8 text-primary-600" />
-          Mock Test Companies
+          Mock Tests
         </h1>
         <p className="text-gray-600 text-lg">
-          Select a company below to view its mock tests.
+          Select an exam below to attempt real exam–pattern mock tests
         </p>
       </div>
 
@@ -55,7 +55,7 @@ const CompanyList = () => {
         <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl shadow-lg">
           <Building className="w-16 h-16 text-primary-400 mb-4 animate-bounce" />
           <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            No companies available
+            No tests available
           </h3>
           <p className="text-gray-600 mb-2">
             Please check back later for more mock test opportunities.
