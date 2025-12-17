@@ -1,9 +1,9 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Facebook, 
-  Twitter, 
-  Instagram, 
-  Linkedin, 
+import {
+  Facebook,
+  Twitter,
+  Instagram,
+  Linkedin,
   Youtube,
   Mail,
   Phone,
@@ -71,7 +71,7 @@ const Footer = () => {
     ],
     company: [
       { name: 'About Us', path: '/about' },
-      
+
     ],
     support: [
       { name: 'Contact Us', action: handleContact },
@@ -98,11 +98,10 @@ const Footer = () => {
                 alt="PrepZon Logo"
                 className="h-12 w-auto"
               />
-              
+
             </div>
             <p className="text-black mb-6 max-w-md">
-              PrepZon is a next-generation EdTech platform built to bridge the gap between college learning and corporate readiness. We provide a complete suite of Live Interactive Training, Recorded Sessions, and Real-Time Mock Tests covering both Top IT Company Placements and Competitive Exams.
-
+              PrepZon is a next-generation EdTech platform focused exclusively on providing high-quality, exam-oriented mock tests for college entrance examinations. Our platform helps students assess their preparation level, understand real exam patterns, and improve performance through structured practice and detailed analysis.
             </p>
             <div className="flex space-x-4">
               {socialLinks.map((social, index) => {
@@ -118,7 +117,7 @@ const Footer = () => {
                 } else if (social.label === 'YouTube') {
                   brandColor = "text-red-600 hover:text-red-700";
                 }
-                
+
                 return (
                   <a
                     key={index}
@@ -142,15 +141,15 @@ const Footer = () => {
               {footerLinks.products.map((item, index) => (
                 <li key={index}>
                   {item.action ? (
-                    <button 
+                    <button
                       onClick={item.action}
                       className="text-blue-800 hover:text-blue-600 transition-colors text-left w-full"
                     >
                       {item.name}
                     </button>
                   ) : (
-                    <Link 
-                      to={item.path} 
+                    <Link
+                      to={item.path}
                       className="text-blue-800 hover:text-blue-600 transition-colors"
                     >
                       {item.name}
@@ -168,15 +167,15 @@ const Footer = () => {
               {footerLinks.company.map((item, index) => (
                 <li key={index}>
                   {item.action ? (
-                    <button 
+                    <button
                       onClick={item.action}
                       className="text-blue-800 hover:text-blue-600 transition-colors text-left w-full"
                     >
                       {item.name}
                     </button>
                   ) : (
-                    <Link 
-                      to={item.path} 
+                    <Link
+                      to={item.path}
                       className="text-blue-800 hover:text-blue-600 transition-colors"
                     >
                       {item.name}
@@ -194,15 +193,15 @@ const Footer = () => {
               {footerLinks.support.map((item, index) => (
                 <li key={index}>
                   {item.action ? (
-                    <button 
+                    <button
                       onClick={item.action}
                       className="text-blue-800 hover:text-blue-600 transition-colors text-left w-full"
                     >
                       {item.name}
                     </button>
                   ) : (
-                    <Link 
-                      to={item.path} 
+                    <Link
+                      to={item.path}
                       className="text-blue-800 hover:text-blue-600 transition-colors"
                     >
                       {item.name}
