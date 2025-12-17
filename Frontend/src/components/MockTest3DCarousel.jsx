@@ -97,10 +97,10 @@ const MockTest3DCarousel = () => {
                     Exam Ready
                 </span>
                 <h2 className="text-3xl md:text-5xl font-bold text-foreground">
-                    Crack Your <span className="text-primary">Dream Company</span>
+                    Crack Your <span className="text-primary">Exam</span>
                 </h2>
                 <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-                    Company-specific mock tests designed to match real exam patterns.
+                    Simulated mock tests designed to match real exam patterns.
                 </p>
             </div>
 
@@ -204,7 +204,7 @@ const MockTest3DCarousel = () => {
                                             <span
                                                 className={`block w-full py-1.5 px-3 rounded-lg font-medium text-xs transition-all duration-300 ${isActive ? 'bg-primary text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                                             >
-                                                {isActive ? (isAuthenticated ? "Start Mock Test" : "Sign in to Practice") : "View Details"}
+                                                {isActive ? "Start Practice" : "View Details"}
                                             </span>
                                         </div>
                                     </div>
